@@ -1,0 +1,51 @@
+# data/snapshot/ is committed on purpose. Do not add a pattern that ignores it.
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Node
+node_modules/
+frontend/dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment: .env holds local values and is never committed; .env.example is.
+.env
+.env.local
+.env.*.local
+
+# Key files (AGENTS.md: never written into the repository)
+*-key.json
+*.pem
+service-account*
+
+# Claude Code: settings.json is shared and committed; settings.local.json is personal.
+.claude/settings.local.json
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

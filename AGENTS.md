@@ -1,0 +1,78 @@
+# AGENTS.md: CLIO Findings Explorer
+
+Project instructions for any coding agent working in this repository. Read this file fully before acting. `CLAUDE.md` is a one-line pointer to it.
+
+**Version:** 2 (2026-10-05, revised after the first agent review). This file grows as the project does. When a rule here turns out to be wrong or missing, say so in your report; do not work around it.
+
+## What this project is
+
+A public, read-only web app that presents curated Kenya civil-liberties findings from a committed snapshot of CLIO output. It is a course final project (AI Dev Tools Zoomcamp 2026) and is graded by peer review against a published rubric.
+
+- Product definition: `product-spec.md`
+- API contract: `openapi.yaml` (the source of truth for the API)
+- Stack: FastAPI and Pydantic v2 on Python 3.12, SQLAlchemy 2.0 and Alembic on PostgreSQL 16, React 18 with TypeScript and Vite, Docker Compose, GitHub Actions, Cloud Run and Neon.
+
+This repository is not CLIO. It has no access to CLIO's repository, pipeline or BigQuery project, and must not try to get any.
+
+## Who does what
+
+- **The agent (you)** writes and edits code, runs tests, Docker and local tooling, and reports what it did.
+- **Sam** reviews, commits, pushes, tags and deploys. He alone runs `ops/export_snapshot.py`, the only script that reads CLIO's BigQuery. Deploy credentials live in GitHub Actions and are never available to the agent.
+- **Planning and review** happen in a separate session with no access to this filesystem. Its prompts arrive through Sam. Treat a prompt's factual claims about this repo as things to check, and report any that are wrong.
+
+## Hard rules
+
+1. **No git writes.** Never run `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `branch -d`/`-D`, `update-ref` or `commit-tree`, and never `gh pr create`, `gh pr merge` or `gh release create`. Read commands (`status`, `diff`, `log`, `show`, `fetch`) and `git add` / `git restore --staged` are fine. Leave the tree modified, stage only if asked, and describe the change. The `block-autonomous-git` hook enforces the common forms once it is installed; the rule holds whether or not the hook catches a given command. A hook block is a signal to stop and report, not something to route around.
+2. **Spec first.** A route's method and path must exist in `openapi.yaml` before the router is written or changed. To change the API, edit `openapi.yaml` first and stop so Sam can commit that edit separately, then regenerate `frontend/src/api/schema.d.ts`, then change the backend models and tests.
+3. **One place for HTTP in the frontend.** Every backend call goes through `frontend/src/api/client.ts`. No `fetch` anywhere else.
+4. **Diagnose before fixing.** When something fails, find and state the cause, with the evidence, before changing code. Do not stack speculative fixes.
+5. **No unverified factual claims.** Any statement about the data (a count, a date, a classification) must come from a query against the snapshot, and the query goes in your report. "It should be" is not a source.
+6. **No causation or targeting claims.** A conflict-event spike and a network anomaly in the same week are a correlation. Never write that one caused the other or that anyone was targeted, in code, fixtures, prose or tests.
+7. **Docs change in the same change.** If a change alters behaviour that `README.md`, `product-spec.md`, `openapi.yaml` or anything in `docs/` describes, update that document in the same piece of work.
+8. **Stop at stop points.** When a prompt says STOP, stop and report. Do not continue to the next step on your own judgment.
+
+## Data rules
+
+- `data/snapshot/` is read-only for the agent. Do not edit, regenerate or "fix" snapshot files.
+- `ops/export_snapshot.py` is run by Sam only. You may write and test it against fixtures; you never run it against BigQuery.
+- Nothing flagged synthetic enters the snapshot, the database, the curated content or the UI. "Flagged synthetic" means a column whose `*_is_synthetic` flag is true in any row, as recorded in the manifest's synthetic-data audit. CLIO's Lumen-derived signal and its composite pressure score are excluded entirely.
+- One exception, for tests only: fixtures under `ops/tests/` may contain an obviously fake column flagged synthetic, to prove the export refuses it.
+- **Curated content is separate from the snapshot.** Text written by a person (finding titles, summaries, caveats, teasers, regime-state and band definitions, source notes) lives in `content/`, is committed, and is loaded by the same seed step. The agent may draft it; every factual claim in it follows rule 5.
+- A finding with zero caveats is invalid. Keep the database constraint and the model validator that enforce this.
+
+## Secrets and network
+
+- Read `.env.example`; never create or edit `.env` with real values, and never print a secret in output or a report.
+- Never write key files (`*-key.json`, `*.pem`, `service-account*`) into the repository.
+- Package installs from PyPI and npm are fine. No calls to BigQuery, other GCP APIs or any CLIO endpoint.
+- Reading public documentation on the web is fine.
+- Stay inside this repository's directory, with one exception: the session scratchpad directory may be used for temporary files. Do not read `~/.ssh`, `~/.config/gcloud` or other projects.
+
+## How to work
+
+- **Check the prompt against the repo first.** Start each task with a short read-only look at the files involved, and report anything that contradicts the prompt before building on it.
+- **Small steps.** One concern per change. Run the relevant tests before reporting.
+- **Tests.** Backend unit tests live in `backend/tests/unit/`, integration tests in `backend/tests/integration/`, with separate pytest markers. Integration tests run against a real Postgres loaded with the real snapshot. Do not delete or weaken a test to make it pass; report it.
+- **Report format.** End every task with: what changed (files), what you ran and the result, what you did not do, anything in the prompt that was wrong, and any command Sam needs to run himself.
+- **Workflow log.** After each task, append an entry to `docs/ai-workflow-log.md`: the task as given, what you produced, what was verified and how. This is written as the work happens, never reconstructed later.
+
+## Commands
+
+Commands are added here when they exist and have been run successfully. Do not add a command you have not run.
+
+| Purpose | Command |
+|---|---|
+| Validate the API contract as OpenAPI 3.1 | `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` |
+| Run the git-guard hook tests | `python3 -m unittest discover -s agent-hooks/tests -v` |
+
+## Repository layout (target)
+
+```
+README.md            product-spec.md      AGENTS.md           CLAUDE.md
+openapi.yaml         docker-compose.yml   .env.example
+frontend/            backend/             data/snapshot/      content/
+.github/workflows/   docs/                security/           ops/
+agent-capabilities/  agent-hooks/         mcp-server/         custom-agent/
+```
+
+Create a directory only when the task at hand needs it.
