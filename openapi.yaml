@@ -1,0 +1,592 @@
+openapi: 3.1.0
+info:
+  title: CLIO Findings Explorer API
+  version: 0.2.1
+  summary: Read-only API for curated Kenya civil-liberties findings.
+  description: |
+    Contract for the CLIO Findings Explorer backend. This file is hand-authored and is the
+    source of truth: it is edited first, in its own commit, before any router or frontend
+    code that depends on the change.
+
+    All endpoints are read-only and need no authentication. Data comes from a versioned,
+    committed snapshot of CLIO output loaded into Postgres. The API never calls BigQuery.
+
+    Status of this version (v0.2.1, 2026-10-05, before the snapshot export; revised after
+    the first agent review of v0.1.0):
+    paths, parameters and envelope fields are settled. Three things are PROVISIONAL until
+    the snapshot exists and its grain has been checked, and are marked `x-provisional`:
+    the allowed values of the band fields, the contents of each evidence card's
+    `supporting` object, and the per-source fields in `/api/methodology`.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: http://localhost:8080
+    description: Local Docker Compose (frontend nginx proxies /api to the backend)
+  - url: http://localhost:8000
+    description: Backend directly, local development
+tags:
+  - name: system
+    description: Health and methodology
+  - name: timeline
+    description: Weekly regime classification series
+  - name: findings
+    description: Curated findings and their evidence cards
+paths:
+  /api/health:
+    get:
+      tags: [system]
+      operationId: getHealth
+      summary: Liveness and readiness
+      description: |
+        Reports whether the database is reachable, which migration is applied, which
+        snapshot is loaded and how many rows each table holds. Returns 503 with the same
+        body shape when the database is unreachable or the snapshot is not loaded.
+      responses:
+        "200":
+          description: Service is ready.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: Service is running but not ready.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /api/timeline:
+    get:
+      tags: [timeline]
+      operationId: getTimeline
+      summary: Weekly regime series for the timeline strip
+      description: |
+        Series of classified weeks, oldest first. "Sparse" means only weeks that exist
+        in the snapshot are returned; missing weeks are not filled in. A week carries
+        `finding_slug` when a curated finding exists for it.
+
+        Edge cases: a country with no data returns 200 with an empty `weeks` array.
+        `from` later than `to` returns 200 with an empty `weeks` array. `state` simply
+        filters the returned weeks. A malformed parameter returns 422.
+      parameters:
+        - name: country
+          in: query
+          description: ISO 3166-1 alpha-2 country code.
+          schema:
+            type: string
+            pattern: "^[A-Z]{2}$"
+            default: KE
+        - name: from
+          in: query
+          description: Earliest week start date to include (inclusive).
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: Latest week start date to include (inclusive).
+          schema:
+            type: string
+            format: date
+        - name: state
+          in: query
+          description: Return only weeks in this regime state.
+          schema:
+            $ref: "#/components/schemas/RegimeState"
+      responses:
+        "200":
+          description: The weekly series.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimelineResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/findings:
+    get:
+      tags: [findings]
+      operationId: listFindings
+      summary: List curated findings
+      responses:
+        "200":
+          description: All curated findings, newest week first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FindingListResponse"
+  /api/findings/{slug}:
+    get:
+      tags: [findings]
+      operationId: getFinding
+      summary: One finding in full
+      description: |
+        Title, classification badges, plain-language summary, caveats and sources.
+        `caveats` is never empty: a finding with no caveat cannot be stored or served.
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: The finding.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FindingDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/findings/{slug}/evidence/acled:
+    get:
+      tags: [findings]
+      operationId: getAcledEvidence
+      summary: ACLED conflict-event evidence card
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: The ACLED evidence card for this finding.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceCardResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/findings/{slug}/evidence/ooni:
+    get:
+      tags: [findings]
+      operationId: getOoniEvidence
+      summary: OONI internet-measurement evidence card
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: The OONI evidence card for this finding.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceCardResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/findings/{slug}/evidence/google-transparency:
+    get:
+      tags: [findings]
+      operationId: getGoogleTransparencyEvidence
+      summary: Google Transparency Report evidence card
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: The Google Transparency Report evidence card for this finding.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceCardResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/methodology:
+    get:
+      tags: [system]
+      operationId: getMethodology
+      summary: Classification scheme, source notes and snapshot manifest
+      responses:
+        "200":
+          description: The methodology page content.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MethodologyResponse"
+components:
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      description: Finding identifier, for example `finance-bill-2024`.
+      schema:
+        type: string
+        pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+        maxLength: 80
+  responses:
+    NotFound:
+      description: |
+        No finding has this slug. This is the only meaning of 404. A finding that exists
+        but has no data from a source returns 200 with `has_data: false`.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: A path or query parameter is malformed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+  schemas:
+    RegimeState:
+      type: string
+      description: CLIO regime classification for a country-week.
+      enum: [STABLE, MOBILISATION, ESCALATION, CRISIS]
+    Band:
+      type: string
+      description: |
+        A CLIO band label. Only the confidence band is exposed in v0.2.0. The allowed
+        values will be fixed as an enum once the snapshot is exported and confirmed.
+      x-provisional: true
+      minLength: 1
+    EvidenceSource:
+      type: string
+      enum: [acled, ooni, google_transparency]
+    CaveatSeverity:
+      type: string
+      description: |
+        `limitation` states what the evidence cannot show. `do_not_conclude` names a
+        specific inference the reader must not draw.
+      enum: [limitation, do_not_conclude]
+    SnapshotVersion:
+      type: string
+      description: Version of the loaded snapshot, from `data/snapshot/MANIFEST.json`.
+      examples: ["2026-10-06.1"]
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          description: Human-readable reason.
+    ValidationError:
+      type: object
+      description: FastAPI's default request-validation body, kept as is.
+      required: [detail]
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            required: [loc, msg, type]
+            properties:
+              loc:
+                type: array
+                items:
+                  type: [string, integer]
+              msg:
+                type: string
+              type:
+                type: string
+            additionalProperties: true
+    Health:
+      type: object
+      required: [status, database, snapshot_version, migration_head, row_counts]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        database:
+          type: string
+          enum: [reachable, unreachable]
+        snapshot_version:
+          oneOf:
+            - $ref: "#/components/schemas/SnapshotVersion"
+            - type: "null"
+        migration_head:
+          type: [string, "null"]
+          description: Alembic revision currently applied.
+        row_counts:
+          type: object
+          description: Row count per table. Empty when the database is unreachable.
+          additionalProperties:
+            type: integer
+            minimum: 0
+    TimelineWeek:
+      type: object
+      required: [week_start_date, country_iso, regime_state, confidence_band, finding_slug]
+      properties:
+        week_start_date:
+          type: string
+          format: date
+        country_iso:
+          type: string
+          pattern: "^[A-Z]{2}$"
+        regime_state:
+          $ref: "#/components/schemas/RegimeState"
+        confidence_band:
+          $ref: "#/components/schemas/Band"
+        finding_slug:
+          type: [string, "null"]
+          description: Slug of the curated finding for this week, if one exists.
+    TimelineResponse:
+      type: object
+      required: [snapshot_version, country, weeks]
+      properties:
+        snapshot_version:
+          $ref: "#/components/schemas/SnapshotVersion"
+        country:
+          type: string
+          pattern: "^[A-Z]{2}$"
+        weeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelineWeek"
+    FindingSummary:
+      type: object
+      required: [slug, title, week_start_date, country_iso, regime_state, confidence_band, teaser]
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        week_start_date:
+          type: string
+          format: date
+        country_iso:
+          type: string
+          pattern: "^[A-Z]{2}$"
+        regime_state:
+          $ref: "#/components/schemas/RegimeState"
+        confidence_band:
+          $ref: "#/components/schemas/Band"
+        teaser:
+          type: string
+          description: One line of plain text for the list view.
+    FindingListResponse:
+      type: object
+      required: [snapshot_version, findings]
+      properties:
+        snapshot_version:
+          $ref: "#/components/schemas/SnapshotVersion"
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/FindingSummary"
+    Caveat:
+      type: object
+      required: [severity, caveat_md]
+      properties:
+        severity:
+          $ref: "#/components/schemas/CaveatSeverity"
+        caveat_md:
+          type: string
+          description: Markdown text of the caveat.
+    SourceRef:
+      type: object
+      required: [source, name, provenance_note]
+      properties:
+        source:
+          $ref: "#/components/schemas/EvidenceSource"
+        name:
+          type: string
+          description: Display name of the source.
+        provenance_note:
+          type: string
+        url:
+          type: string
+          format: uri
+    FindingDetail:
+      type: object
+      required:
+        - slug
+        - title
+        - week_start_date
+        - country_iso
+        - regime_state
+        - confidence_band
+        - summary_md
+        - caveats
+        - sources
+        - evidence_available
+        - published_at
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        week_start_date:
+          type: string
+          format: date
+        country_iso:
+          type: string
+          pattern: "^[A-Z]{2}$"
+        regime_state:
+          $ref: "#/components/schemas/RegimeState"
+        confidence_band:
+          $ref: "#/components/schemas/Band"
+        summary_md:
+          type: string
+          description: Plain-language summary, in Markdown.
+        caveats:
+          type: array
+          minItems: 1
+          description: Ordered caveats. Never empty.
+          items:
+            $ref: "#/components/schemas/Caveat"
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceRef"
+        evidence_available:
+          type: array
+          description: |
+            Sources whose evidence card has data for this finding (`has_data` true).
+            Every source still returns a card.
+          items:
+            $ref: "#/components/schemas/EvidenceSource"
+        published_at:
+          type: string
+          format: date-time
+    FindingDetailResponse:
+      type: object
+      required: [snapshot_version, finding]
+      properties:
+        snapshot_version:
+          $ref: "#/components/schemas/SnapshotVersion"
+        finding:
+          $ref: "#/components/schemas/FindingDetail"
+    EvidenceCard:
+      type: object
+      required:
+        - slug
+        - source
+        - has_data
+        - period_start
+        - period_end
+        - period_grain
+        - headline_metric
+        - metric_value
+        - provenance_note
+        - supporting
+      properties:
+        slug:
+          type: string
+        source:
+          $ref: "#/components/schemas/EvidenceSource"
+          description: |
+            Note the spelling: the enum value is `google_transparency`, the URL segment
+            is `google-transparency`.
+        has_data:
+          type: boolean
+          description: |
+            False when this source has no data for the finding's window, for example a
+            week before the source began collecting. The card is still returned, with
+            `metric_value` null and a `provenance_note` that says why.
+        period_start:
+          type: [string, "null"]
+          format: date
+          description: First day of the period the numbers cover. Null when `has_data` is false.
+        period_end:
+          type: [string, "null"]
+          format: date
+          description: Last day of the period the numbers cover. Null when `has_data` is false.
+        period_grain:
+          type: string
+          description: |
+            Reporting grain of this source. It is not always a week: a source that
+            reports per half-year covers a much longer period than the finding's week,
+            and the UI must show that.
+          enum: [week, month, half_year, other]
+        headline_metric:
+          type: string
+          description: Label of the single number the card leads with.
+        metric_value:
+          type: [number, string, "null"]
+          description: The headline value. Null when the source has no data for the window.
+        provenance_note:
+          type: string
+          description: Where the numbers come from and what window they cover.
+        supporting:
+          type: object
+          description: |
+            Source-specific detail behind the headline. The fields differ per source and
+            will be given their own schemas once the snapshot is exported.
+          x-provisional: true
+          additionalProperties: true
+    EvidenceCardResponse:
+      type: object
+      required: [snapshot_version, evidence]
+      properties:
+        snapshot_version:
+          $ref: "#/components/schemas/SnapshotVersion"
+        evidence:
+          $ref: "#/components/schemas/EvidenceCard"
+    RegimeStateDefinition:
+      type: object
+      required: [state, definition]
+      properties:
+        state:
+          $ref: "#/components/schemas/RegimeState"
+        definition:
+          type: string
+    SourceNote:
+      type: object
+      required: [source, name, note]
+      x-provisional: true
+      properties:
+        source:
+          $ref: "#/components/schemas/EvidenceSource"
+        name:
+          type: string
+        note:
+          type: string
+          description: Collection method, grain and known limits of this source.
+    SnapshotTable:
+      type: object
+      required: [file, source_table, sql, row_count, exported_at]
+      properties:
+        file:
+          type: string
+        source_table:
+          type: string
+        sql:
+          type: string
+          description: The exact SQL that produced this file.
+        exported_at:
+          type: string
+          format: date-time
+        row_count:
+          type: integer
+          minimum: 0
+    SnapshotManifest:
+      type: object
+      required: [version, exported_at, tables]
+      properties:
+        version:
+          $ref: "#/components/schemas/SnapshotVersion"
+        exported_at:
+          type: string
+          format: date-time
+        tables:
+          type: array
+          items:
+            $ref: "#/components/schemas/SnapshotTable"
+    MethodologyResponse:
+      type: object
+      required: [snapshot_version, regime_states, confidence_bands, sources, manifest]
+      properties:
+        snapshot_version:
+          $ref: "#/components/schemas/SnapshotVersion"
+        regime_states:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegimeStateDefinition"
+        confidence_bands:
+          type: array
+          description: Each confidence band and what it means.
+          x-provisional: true
+          items:
+            type: object
+            required: [band, definition]
+            properties:
+              band:
+                $ref: "#/components/schemas/Band"
+              definition:
+                type: string
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceNote"
+        manifest:
+          $ref: "#/components/schemas/SnapshotManifest"
