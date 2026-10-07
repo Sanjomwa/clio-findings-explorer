@@ -55,10 +55,10 @@ Dropped from the plan: the 2010 constitutional referendum as a "true negative". 
 ## 6. Data
 
 - **Source:** a one-time, human-run export of CLIO's materialized BigQuery output to `data/snapshot/`, with a `MANIFEST.json` recording, for every file, the source table, the exact SQL, the row count and the export time.
-- **Synthetic data is excluded.** The export fails if any column flagged synthetic would be included. CLIO's Lumen-derived signal and its composite pressure score are not exported, stored or served.
+- **Synthetic data is excluded.** The export refuses any source table that carries a synthetic flag column at all (a column whose name ends in `is_synthetic`), whatever its values. CLIO's Lumen-derived signal and its composite pressure score are not exported, stored or served.
 - **Storage:** PostgreSQL, five tables: `regime_weeks`, `findings`, `finding_evidence`, `finding_caveats`, `snapshot_meta`.
 - **Curated content** is separate from the snapshot. Titles, summaries, caveats, definitions and source notes are written by a person, live in `content/`, and are loaded by the same seed step. `data/snapshot/` holds only what CLIO exported.
-- **The manifest** records the exact SQL and export time for every file, and the API serves both, so any number can be traced to the query that produced it. It also records a synthetic-data audit listing any column whose `*_is_synthetic` flag was true in any row; the export fails if such a column would be included.
+- **The manifest** records the exact SQL and export time for every file, and the API serves both, so any number can be traced to the query that produced it. It also records a synthetic-data audit: the source tables checked for synthetic flag columns and the result. The export fails if any source table has one.
 - **A finding with no caveat cannot exist.** This is enforced in the database and in the API models.
 
 ## 7. System
@@ -106,7 +106,7 @@ The project succeeds if it does three things CLIO's own README says CLIO cannot 
 - **Independence is stated correctly.** The ACLED card is labelled as the classifier's input. No text calls the three cards independent confirmations.
 - **At least one finding shows a limit of the method.** The 2008 finding does this.
 - **Attribution.** Every card carries its source's required citation details, and the repository states the data's licence terms separately from the MIT licence on the code.
-- **No synthetic data.** The export refuses any column flagged synthetic, proven by a test.
+- **No synthetic data.** The export refuses any source table that carries a synthetic flag column, proven by a test.
 
 ### 9.3 A reader can use it
 

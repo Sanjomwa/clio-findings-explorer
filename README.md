@@ -14,3 +14,5 @@ This is a course final project for AI Dev Tools Zoomcamp 2026.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+The data in `data/snapshot/` is third-party derived data under its sources' own terms, not MIT: see [data/README.md](data/README.md).

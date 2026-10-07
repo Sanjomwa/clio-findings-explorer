@@ -35,8 +35,8 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 
 - `data/snapshot/` is read-only for the agent. Do not edit, regenerate or "fix" snapshot files.
 - `ops/export_snapshot.py` is run by Sam only. You may write and test it against fixtures; you never run it against BigQuery.
-- Nothing flagged synthetic enters the snapshot, the database, the curated content or the UI. "Flagged synthetic" means a column whose `*_is_synthetic` flag is true in any row, as recorded in the manifest's synthetic-data audit. CLIO's Lumen-derived signal and its composite pressure score are excluded entirely.
-- One exception, for tests only: fixtures under `ops/tests/` may contain an obviously fake column flagged synthetic, to prove the export refuses it.
+- Nothing flagged synthetic enters the snapshot, the database, the curated content or the UI. The export enforces this strictly: it refuses any source table that carries a synthetic flag column at all (any column whose name ends in `is_synthetic`), whatever its values, and the manifest's synthetic-data audit records the tables checked and the result. CLIO's Lumen-derived signal and its composite pressure score are excluded entirely.
+- One exception, for tests only: fixtures under `ops/tests/` may contain an obviously fake synthetic flag column, to prove the export refuses it.
 - **Curated content is separate from the snapshot.** Text written by a person (finding titles, summaries, caveats, teasers, regime-state and band definitions, source notes) lives in `content/`, is committed, and is loaded by the same seed step. The agent may draft it; every factual claim in it follows rule 5.
 - A finding with zero caveats is invalid. Keep the database constraint and the model validator that enforce this.
 
@@ -64,6 +64,7 @@ Commands are added here when they exist and have been run successfully. Do not a
 |---|---|
 | Validate the API contract as OpenAPI 3.1 | `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` |
 | Run the git-guard hook tests | `python3 -m unittest discover -s agent-hooks/tests -v` |
+| Run the snapshot export tests (fake bq, fixtures only) | `python3 -m unittest discover -s ops/tests -v` |
 
 ## Repository layout (target)
 
