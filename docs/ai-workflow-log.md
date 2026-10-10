@@ -172,3 +172,15 @@ A running record of the work coding agents do in this repository, appended after
     - Earlier lines of this entry still describe the five-file version, as they were at the time.
     - Whether CLIO's pressure domains are new categories or one-to-one renamings of ACLED's own categories was not checked. There is no access to CLIO; flagged to Sam.
   - **Second revision:** Sam confirmed that `protest_events` is ACLED's "Protests" count and `disorder_events` is ACLED's "Riots" count, one to one. As instructed, these six columns were removed from `acled_signal_context` in the column list, SQL, fixtures and tests: `protest_events`, `disorder_events`, `disorder_fatalities`, `violence_events`, `violence_fatalities`, `suppression_events`. `total_events` and `total_fatalities` stay. The typed-values test now checks the signal row's keys against `SIGNAL_COLUMNS`, and a guard asserts that none of the six names is in any pinned SQL. The `data/README.md` sentence about per-domain totals was replaced with one naming the all-type totals and the derived statistics. `python3 -m unittest discover -s ops/tests -v`: `Ran 53 tests ... OK`. `python3 -m unittest discover -s agent-hooks/tests -v`: `Ran 28 tests ... OK`.
+
+## 2026-10-10: openapi.yaml v0.3.0, Part 1
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Task 0 read-only checks, then edit `openapi.yaml` 0.2.1 to 0.3.0 (seven-state `RegimeState`; `Band` replaced by `ConfidenceLevel` and `FamilyBand`; `confidence_band` renamed `confidence_level`; new `WeekClassification` on the finding detail only; `MethodologyResponse` gets `confidence_levels` and `family_bands`; `x-provisional` kept only on `EvidenceCard.supporting` and `SourceNote`), validate, then STOP before Part 2.
+- **Produced:** the edited `openapi.yaml`. `pre_transition_target` uses the file's existing nullable-ref style, `oneOf: [$ref, {type: "null"}]`.
+- **Verified:**
+  - Tree clean at `5f31729` before editing.
+  - A stdlib script over `regime_weeks.ndjson` (1,523 rows) matched every expected count: states 1341/123/27/21/11, confidence 976/473/74, bands only NORMAL/ELEVATED/SEVERE/UNKNOWN, pre-transition targets REPRESSION, CONFLICT, CONTESTATION, MOBILISATION.
+  - `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` printed `openapi.yaml: OK`.
+  - grep for `Band"`, `confidence_band`, `confidence_bands` matches only `FamilyBand`.
+- **Not done / open:** An in-script rename first turned `confidence_bands` into `confidence_levels` by accident; the first script run aborted on an assertion before writing, and the corrected run wrote the file. No other file was changed. Part 2 not started.

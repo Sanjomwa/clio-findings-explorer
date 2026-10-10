@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: CLIO Findings Explorer API
-  version: 0.2.1
+  version: 0.3.0
   summary: Read-only API for curated Kenya civil-liberties findings.
   description: |
     Contract for the CLIO Findings Explorer backend. This file is hand-authored and is the
@@ -11,12 +11,11 @@ info:
     All endpoints are read-only and need no authentication. Data comes from a versioned,
     committed snapshot of CLIO output loaded into Postgres. The API never calls BigQuery.
 
-    Status of this version (v0.2.1, 2026-10-05, before the snapshot export; revised after
-    the first agent review of v0.1.0):
-    paths, parameters and envelope fields are settled. Three things are PROVISIONAL until
-    the snapshot exists and its grain has been checked, and are marked `x-provisional`:
-    the allowed values of the band fields, the contents of each evidence card's
-    `supporting` object, and the per-source fields in `/api/methodology`.
+    Status of this version (v0.3.0, 2026-10-10, after snapshot 2026-10-10.1):
+    paths, parameters and envelope fields are settled. Regime states, confidence levels and
+    family bands are now fixed enums. Still PROVISIONAL, and marked `x-provisional`: the
+    contents of each evidence card's `supporting` object and the per-source fields in
+    `/api/methodology`.
   license:
     name: MIT
     identifier: MIT
@@ -230,15 +229,49 @@ components:
   schemas:
     RegimeState:
       type: string
-      description: CLIO regime classification for a country-week.
-      enum: [STABLE, MOBILISATION, ESCALATION, CRISIS]
-    Band:
+      description: |
+        CLIO regime classification for a country-week. CLIO defines seven states; in snapshot
+        2026-10-10.1 (Kenya) CONTESTATION and REPRESSION never occur.
+      enum: [STABLE, MOBILISATION, CONTESTATION, ESCALATION, CRISIS, REPRESSION, CONFLICT]
+    ConfidenceLevel:
       type: string
       description: |
-        A CLIO band label. Only the confidence band is exposed in v0.2.0. The allowed
-        values will be fixed as an enum once the snapshot is exported and confirmed.
-      x-provisional: true
-      minLength: 1
+        CLIO's confidence in the week's classification. LOW is defined by CLIO but does not
+        occur in snapshot 2026-10-10.1.
+      enum: [HIGH, MEDIUM, LOW, INSUFFICIENT_DATA]
+    FamilyBand:
+      type: string
+      description: |
+        Band for one pressure family (protest, violence or suppression) relative to its own
+        baseline. UNKNOWN means the baseline could not support a band.
+      enum: [NORMAL, ELEVATED, SEVERE, UNKNOWN]
+    WeekClassification:
+      type: object
+      required:
+        - protest_band
+        - violence_band
+        - suppression_band
+        - previous_regime
+        - pre_transition_target
+      properties:
+        protest_band:
+          $ref: "#/components/schemas/FamilyBand"
+        violence_band:
+          $ref: "#/components/schemas/FamilyBand"
+        suppression_band:
+          $ref: "#/components/schemas/FamilyBand"
+        previous_regime:
+          $ref: "#/components/schemas/RegimeState"
+        pre_transition_target:
+          description: |
+            Set when the week met the conditions for this state for the first time and is held
+            at its current state until a second consecutive qualifying week. Parsed from
+            `pre_transition:<STATE>` in CLIO's classification_reason; null when absent. The raw
+            classification_reason is not served, because its sub-labels do not describe the
+            bands.
+          oneOf:
+            - $ref: "#/components/schemas/RegimeState"
+            - type: "null"
     EvidenceSource:
       type: string
       enum: [acled, ooni, google_transparency]
@@ -304,7 +337,7 @@ components:
             minimum: 0
     TimelineWeek:
       type: object
-      required: [week_start_date, country_iso, regime_state, confidence_band, finding_slug]
+      required: [week_start_date, country_iso, regime_state, confidence_level, finding_slug]
       properties:
         week_start_date:
           type: string
@@ -314,8 +347,8 @@ components:
           pattern: "^[A-Z]{2}$"
         regime_state:
           $ref: "#/components/schemas/RegimeState"
-        confidence_band:
-          $ref: "#/components/schemas/Band"
+        confidence_level:
+          $ref: "#/components/schemas/ConfidenceLevel"
         finding_slug:
           type: [string, "null"]
           description: Slug of the curated finding for this week, if one exists.
@@ -334,7 +367,7 @@ components:
             $ref: "#/components/schemas/TimelineWeek"
     FindingSummary:
       type: object
-      required: [slug, title, week_start_date, country_iso, regime_state, confidence_band, teaser]
+      required: [slug, title, week_start_date, country_iso, regime_state, confidence_level, teaser]
       properties:
         slug:
           type: string
@@ -348,8 +381,8 @@ components:
           pattern: "^[A-Z]{2}$"
         regime_state:
           $ref: "#/components/schemas/RegimeState"
-        confidence_band:
-          $ref: "#/components/schemas/Band"
+        confidence_level:
+          $ref: "#/components/schemas/ConfidenceLevel"
         teaser:
           type: string
           description: One line of plain text for the list view.
@@ -394,7 +427,8 @@ components:
         - week_start_date
         - country_iso
         - regime_state
-        - confidence_band
+        - confidence_level
+        - classification
         - summary_md
         - caveats
         - sources
@@ -413,8 +447,10 @@ components:
           pattern: "^[A-Z]{2}$"
         regime_state:
           $ref: "#/components/schemas/RegimeState"
-        confidence_band:
-          $ref: "#/components/schemas/Band"
+        confidence_level:
+          $ref: "#/components/schemas/ConfidenceLevel"
+        classification:
+          $ref: "#/components/schemas/WeekClassification"
         summary_md:
           type: string
           description: Plain-language summary, in Markdown.
@@ -564,7 +600,7 @@ components:
             $ref: "#/components/schemas/SnapshotTable"
     MethodologyResponse:
       type: object
-      required: [snapshot_version, regime_states, confidence_bands, sources, manifest]
+      required: [snapshot_version, regime_states, confidence_levels, family_bands, sources, manifest]
       properties:
         snapshot_version:
           $ref: "#/components/schemas/SnapshotVersion"
@@ -572,16 +608,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RegimeStateDefinition"
-        confidence_bands:
+        confidence_levels:
           type: array
-          description: Each confidence band and what it means.
-          x-provisional: true
+          description: Each confidence level and what it means.
+          items:
+            type: object
+            required: [level, definition]
+            properties:
+              level:
+                $ref: "#/components/schemas/ConfidenceLevel"
+              definition:
+                type: string
+        family_bands:
+          type: array
+          description: Each family band and what it means.
           items:
             type: object
             required: [band, definition]
             properties:
               band:
-                $ref: "#/components/schemas/Band"
+                $ref: "#/components/schemas/FamilyBand"
               definition:
                 type: string
         sources:
