@@ -66,6 +66,10 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Run the hook tests (git guard and spec-first guard) | `python3 -m unittest discover -s agent-hooks/tests -v` |
 | Run the MCP server tests | `uv run --directory mcp-server pytest -v` |
 | Run the snapshot export tests (fake bq, fixtures only) | `python3 -m unittest discover -s ops/tests -v` |
+| Start the local database | `docker compose up -d db` |
+| Seed (migrate, then load snapshot and content), then exit | `docker compose run --rm seed` |
+| Run the backend unit tests | `uv run --directory backend pytest tests/unit -v` |
+| Run the backend integration tests (db running; `DATABASE_URL` set as in `backend/README.md`) | `uv run --directory backend pytest tests/integration -v` |
 
 ## Repository layout (target)
 

@@ -226,3 +226,24 @@ A running record of the work coding agents do in this repository, appended after
   - The Write of `GET /api/undeclared` was blocked by spec-first-guard, and `ls` confirmed no file and no `backend/`.
   - The Write of `GET /api/health` succeeded; the file and `backend/app/routers`, `backend/app`, `backend` were then removed and `ls backend` confirmed it is gone.
 - **Not done / open:** Only the `Write` tool was exercised live; `Edit` and `MultiEdit` are covered by unit tests only.
+
+## 2026-10-10: Phase 1b, database schema, migrations, seed and the db/seed compose services
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Task 0 read-only checks; build `backend/` (uv project, SQLAlchemy 2.0 models, Alembic migration, `python -m app.seed`), the `db` and `seed` compose services, unit and integration tests, and the docs they change; then STOP. No FastAPI, no `content/`, no git writes.
+- **Produced:**
+  - `backend/` (models, migration `0001_initial_schema`, seed modules, Dockerfile, README, tests and fixtures).
+  - `docker-compose.yml` (`db`, `seed`; project name `clio-findings-explorer`) and `docker-compose.content.yml` (optional content mount).
+  - Docs: `product-spec.md` §6 Storage line, `AGENTS.md` Commands rows, `backend/README.md`.
+- **Verified:**
+  - Task 0: tree clean at `0d67d31`; `backend/`, `docker-compose.yml`, `content/` absent; a stdlib script over the NDJSON confirmed row counts 1523/85/550/85, key uniqueness and every null count in the prompt's table; port 55432 was free.
+  - `uv run pytest tests/unit`: 26 passed. `uv run pytest tests/integration` (separate `clio_findings_test` database): 18 passed, covering migration up/down/up, real-snapshot counts, `snapshot_meta`, idempotent second run, the caveat trigger cases and an enum CHECK.
+  - `docker compose run --rm seed` twice: first run migrated and loaded, second printed "snapshot already loaded"; both exit 0. The image runs as uid 10001.
+  - `content/` still does not exist.
+- **Not done / open:**
+  - Findings FK is `DEFERRABLE INITIALLY DEFERRED` (not in the prompt) so the seed can reload snapshot tables in one transaction; the seed pre-checks and fails clearly if a reload would orphan a finding.
+  - `content/` is mounted through a separate `docker-compose.content.yml`, because a plain bind mount of a missing `./content` makes Docker create that directory on the host.
+  - `snapshot_meta` "exactly one row" is a unique index on a constant, so the table has only the specified columns.
+  - `velocity_band` and `conversion_band` have no CHECK (the prompt listed none).
+  - `uv sync` and the image build were slow on this network (first lock about 80 s).
+  - Follow-up (doc-only): added `backend/tests/fixtures/README.md` and a sentence in `data/README.md` stating that the test fixtures carry the snapshot's third-party terms; unit tests re-run after.

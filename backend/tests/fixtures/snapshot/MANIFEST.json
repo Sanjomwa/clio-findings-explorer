@@ -1,0 +1,97 @@
+{
+ "version": "fixture-1",
+ "exported_at": "2026-10-10T07:32:54Z",
+ "tables": [
+  {
+   "file": "regime_weeks.ndjson",
+   "source_table": "intelligence.acled_pressure_regimes",
+   "sql": "SELECT\n  week_start_date,\n  country,\n  iso2,\n  primary_regime,\n  confidence_level,\n  previous_regime,\n  transition_detected,\n  transition_type,\n  regime_duration_weeks,\n  weeks_in_current_regime,\n  regime_held_by_exit_persistence,\n  fallback_used,\n  methodology_caveat_required,\n  protest_band,\n  violence_band,\n  suppression_band,\n  velocity_band,\n  conversion_band,\n  classification_reason,\n  regime_methodology_version,\n  feature_version,\n  computed_at\nFROM intelligence.acled_pressure_regimes\nWHERE country = 'Kenya'\nORDER BY\n  week_start_date,\n  country,\n  iso2,\n  primary_regime,\n  confidence_level,\n  previous_regime,\n  transition_detected,\n  transition_type,\n  regime_duration_weeks,\n  weeks_in_current_regime,\n  regime_held_by_exit_persistence,\n  fallback_used,\n  methodology_caveat_required,\n  protest_band,\n  violence_band,\n  suppression_band,\n  velocity_band,\n  conversion_band,\n  classification_reason,\n  regime_methodology_version,\n  feature_version,\n  computed_at",
+   "row_count": 2,
+   "sha256": "17776c10dc8d8b9becc979c275ae4266b2fd4198de5d49c2d420f2645a74393d",
+   "exported_at": "2026-10-10T07:32:45Z"
+  },
+  {
+   "file": "acled_signal_context.ndjson",
+   "source_table": "features.acled_pressure_signals",
+   "sql": "SELECT\n  week_start_date,\n  total_events,\n  total_fatalities,\n  signal_valid,\n  protest_pressure_z,\n  violence_pressure_z,\n  suppression_z,\n  protest_active_baseline_weeks,\n  violence_active_baseline_weeks,\n  suppression_active_baseline_weeks,\n  sparse_protest_baseline_flag,\n  sparse_violence_baseline_flag,\n  sparse_suppression_baseline_flag,\n  zero_variance_flag,\n  low_event_density_flag,\n  high_methodology_risk_flag\nFROM features.acled_pressure_signals\nWHERE country = 'Kenya'\n  AND (\n    week_start_date BETWEEN DATE '2007-10-27' AND DATE '2008-02-16'\n    OR week_start_date BETWEEN DATE '2022-05-14' AND DATE '2022-09-03'\n    OR week_start_date BETWEEN DATE '2023-04-22' AND DATE '2023-08-12'\n    OR week_start_date BETWEEN DATE '2024-03-30' AND DATE '2024-07-20'\n    OR week_start_date BETWEEN DATE '2025-03-29' AND DATE '2025-07-19'\n  )\nORDER BY\n  week_start_date,\n  total_events,\n  total_fatalities,\n  signal_valid,\n  protest_pressure_z,\n  violence_pressure_z,\n  suppression_z,\n  protest_active_baseline_weeks,\n  violence_active_baseline_weeks,\n  suppression_active_baseline_weeks,\n  sparse_protest_baseline_flag,\n  sparse_violence_baseline_flag,\n  sparse_suppression_baseline_flag,\n  zero_variance_flag,\n  low_event_density_flag,\n  high_methodology_risk_flag",
+   "row_count": 2,
+   "sha256": "28bcde729826c043a5f5dfae0569f4b5ac2d16075a85aa04bfc25dd12d907a1e",
+   "exported_at": "2026-10-10T07:32:48Z"
+  },
+  {
+   "file": "ooni_weekly_signals.ndjson",
+   "source_table": "features.ooni_weekly_signals",
+   "sql": "SELECT\n  week_start_date,\n  test_name,\n  anomalous_total_scored,\n  anomalous_count,\n  anomalous_rate,\n  anomalous_baseline_rate_12w,\n  anomalous_zscore_12w,\n  anomalous_low_sample_flag,\n  anomalous_sparse_baseline_flag,\n  blocked_total_observations,\n  blocked_count,\n  blocked_rate,\n  blocked_baseline_rate_12w,\n  blocked_zscore_12w,\n  blocked_low_sample_flag,\n  blocked_sparse_baseline_flag,\n  feature_version\nFROM features.ooni_weekly_signals\nWHERE country = 'KE'\nORDER BY\n  week_start_date,\n  test_name,\n  anomalous_total_scored,\n  anomalous_count,\n  anomalous_rate,\n  anomalous_baseline_rate_12w,\n  anomalous_zscore_12w,\n  anomalous_low_sample_flag,\n  anomalous_sparse_baseline_flag,\n  blocked_total_observations,\n  blocked_count,\n  blocked_rate,\n  blocked_baseline_rate_12w,\n  blocked_zscore_12w,\n  blocked_low_sample_flag,\n  blocked_sparse_baseline_flag,\n  feature_version",
+   "row_count": 2,
+   "sha256": "6bea7182b8be26e8251309608e0103da98231640ce0c9e8a7ada5f4cb259b9f5",
+   "exported_at": "2026-10-10T07:32:51Z"
+  },
+  {
+   "file": "google_transparency_requests.ndjson",
+   "source_table": "stg.google_transparency_requests",
+   "sql": "SELECT\n  time_period,\n  period_date,\n  requestor,\n  product,\n  reason,\n  number_of_requests,\n  items_requested_removal,\n  items_removed_legal,\n  items_removed_policy\nFROM stg.google_transparency_requests\nWHERE country = 'Kenya'\nORDER BY\n  period_date,\n  requestor,\n  product,\n  reason,\n  time_period,\n  number_of_requests,\n  items_requested_removal,\n  items_removed_legal,\n  items_removed_policy",
+   "row_count": 2,
+   "sha256": "19b8056bea31b24a8fec34ab553dd90b0dc96a30359336bc73ce1b2e24a63fda",
+   "exported_at": "2026-10-10T07:32:54Z"
+  }
+ ],
+ "synthetic_audit": {
+  "rule": "The export refuses any source table that has a column whose name ends in 'is_synthetic', whatever its values.",
+  "tables_checked": [
+   "features.acled_pressure_signals",
+   "features.ooni_weekly_signals",
+   "intelligence.acled_pressure_regimes",
+   "stg.google_transparency_requests"
+  ],
+  "sql": [
+   "SELECT\n  table_name,\n  column_name,\n  data_type\nFROM features.INFORMATION_SCHEMA.COLUMNS\nWHERE table_name IN ('acled_pressure_signals', 'ooni_weekly_signals')\nORDER BY table_name, ordinal_position",
+   "SELECT\n  table_name,\n  column_name,\n  data_type\nFROM intelligence.INFORMATION_SCHEMA.COLUMNS\nWHERE table_name IN ('acled_pressure_regimes')\nORDER BY table_name, ordinal_position",
+   "SELECT\n  table_name,\n  column_name,\n  data_type\nFROM stg.INFORMATION_SCHEMA.COLUMNS\nWHERE table_name IN ('google_transparency_requests')\nORDER BY table_name, ordinal_position"
+  ],
+  "synthetic_flag_columns": [],
+  "result": "passed"
+ },
+ "finding_anchors": {
+  "anchors": [
+   "2024-06-22",
+   "2022-08-06",
+   "2008-01-19",
+   "2023-07-15",
+   "2025-06-21"
+  ],
+  "weeks_before": 12,
+  "weeks_after": 4,
+  "rule": "A window is the anchor week, the 12 weeks before it and the 4 weeks after it (17 weeks, by week_start_date)."
+ },
+ "attribution": {
+  "acled": {
+   "name": "Armed Conflict Location & Event Data (ACLED)",
+   "licence": "Contractual licence (ACLED terms of use); non-commercial use",
+   "access_date": "2026-03-26",
+   "filter": "Kenya",
+   "manipulation": "Weekly aggregation and classification by CLIO",
+   "files": [
+    "regime_weeks.ndjson",
+    "acled_signal_context.ndjson"
+   ]
+  },
+  "ooni": {
+   "name": "Open Observatory of Network Interference (OONI)",
+   "licence": "CC BY-NC-SA 4.0",
+   "filter": "Kenya",
+   "manipulation": "Weekly aggregation by CLIO",
+   "files": [
+    "ooni_weekly_signals.ndjson"
+   ]
+  },
+  "google_transparency": {
+   "name": "Google Transparency Report",
+   "licence": "Reuse terms not determined",
+   "filter": "Kenya",
+   "manipulation": "Filtered to Kenya. period_date derived by CLIO from the reporting period label.",
+   "files": [
+    "google_transparency_requests.ndjson"
+   ]
+  }
+ }
+}

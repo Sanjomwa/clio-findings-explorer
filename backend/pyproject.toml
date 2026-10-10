@@ -1,0 +1,32 @@
+[project]
+name = "clio-findings-backend"
+version = "0.1.0"
+description = "CLIO Findings Explorer backend: schema, migrations and seed"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "sqlalchemy>=2",
+    "alembic",
+    "psycopg[binary]>=3",
+    "pyyaml",
+]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "unit: no database needed",
+    "integration: needs the compose Postgres db service",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]

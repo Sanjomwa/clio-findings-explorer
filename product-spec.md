@@ -74,7 +74,7 @@ Dropped from the plan: the 2010 constitutional referendum as a "true negative". 
 
 - **Source:** a one-time, human-run export of CLIO's materialized BigQuery output to `data/snapshot/`, with a `MANIFEST.json` recording, for every file, the source table, the exact SQL, the row count and the export time.
 - **Synthetic data is excluded.** The export refuses any source table that carries a synthetic flag column at all (a column whose name ends in `is_synthetic`), whatever its values. CLIO's Lumen-derived signal and its composite pressure score are not exported, stored or served.
-- **Storage:** PostgreSQL, five tables: `regime_weeks`, `findings`, `finding_evidence`, `finding_caveats`, `snapshot_meta`.
+- **Storage:** PostgreSQL. Snapshot tables mirror the exported files (`regime_weeks`, `acled_signal_context`, `ooni_weekly_signals`, `google_transparency_requests`), with `snapshot_meta` and `snapshot_tables` holding the manifest. Curated content lives in `findings` and `finding_caveats`. Evidence-card storage is settled before the endpoints are built.
 - **Curated content** is separate from the snapshot. Titles, summaries, caveats, definitions and source notes are written by a person, live in `content/`, and are loaded by the same seed step. `data/snapshot/` holds only what CLIO exported.
 - **The manifest** records the exact SQL and export time for every file, and the API serves both, so any number can be traced to the query that produced it. It also records a synthetic-data audit: the source tables checked for synthetic flag columns and the result. The export fails if any source table has one.
 - **A finding with no caveat cannot exist.** This is enforced in the database and in the API models.

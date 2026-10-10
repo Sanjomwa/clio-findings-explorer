@@ -1,6 +1,6 @@
 # Data in this repository
 
-The files in `data/snapshot/` are third-party derived data. They are **not** covered by the MIT licence in [LICENSE](../LICENSE), which applies to the code only. Each file stays under the terms of the source it was derived from. `data/snapshot/MANIFEST.json` records, for every file, the source table, the exact SQL, the row count, a sha256 checksum and the export time, plus the attribution details below.
+The files in `data/snapshot/` are third-party derived data. They are **not** covered by the MIT licence in [LICENSE](../LICENSE), which applies to the code only. Each file stays under the terms of the source it was derived from. `data/snapshot/MANIFEST.json` records, for every file, the source table, the exact SQL, the row count, a sha256 checksum and the export time, plus the attribution details below. The test fixtures in `backend/tests/fixtures/snapshot/` contain a few rows copied unchanged from these files and carry the same terms.
 
 | Source | Files | Terms | Filter | Manipulation |
 |---|---|---|---|---|

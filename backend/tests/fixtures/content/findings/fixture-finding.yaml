@@ -1,0 +1,14 @@
+slug: fixture-finding
+week_start_date: 2024-06-22
+iso2: KE
+position: 1
+title: Fixture finding for tests
+teaser: Test-only text; not curated content.
+summary_md: |
+  Test-only summary used by the seed tests. It makes no claim about the data.
+published_at: 2026-10-20T00:00:00Z
+caveats:
+  - severity: limitation
+    caveat_md: Test-only limitation.
+  - severity: do_not_conclude
+    caveat_md: Test-only do-not-conclude note.
