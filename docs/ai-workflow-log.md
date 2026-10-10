@@ -262,3 +262,20 @@ A running record of the work coding agents do in this repository, appended after
   - Validator, MCP tests and hook tests: see the report.
 - **Not done / open:** the prompt did not define the 17-week window; the 12-before/4-after reading is inferred from the data. `x-provisional` now remains only on `SourceNote`.
 - **Follow-up:** Sam confirmed the 17-week window rule (12 weeks before, the anchor, 4 weeks after; `finding_anchors` in `MANIFEST.json`); stated it in `AcledSupporting.series`, renamed the MCP test to `test_version_is_0_4_0`, validator and MCP tests re-run.
+
+## 2026-10-11: Phase 1c-2, the eight endpoints and the `backend` compose service
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** FastAPI app with the eight `/api` operations of `openapi.yaml` v0.4.0, evidence-card logic, unit and integration tests (every response validated against the contract), the `backend` compose service, docs. No `openapi.yaml` change, no `content/`, no git writes, then STOP.
+- **Produced:**
+  - `backend/app/`: `main.py` (`create_app`), `routers/` (health, timeline, findings, evidence, methodology, common), `schemas.py`, `evidence/` (pure `acled.py`, `ooni.py`, `google.py`; `service.py` fetches rows), `classification.py` (`pre_transition:` parser), `deps.py` (read-only session per request).
+  - Tests: `tests/unit/test_evidence.py`, `tests/integration/test_api.py`, test-only fixtures in `tests/fixtures/content_evidence/findings/` (slugs `test-week-<date>`).
+  - `backend/Dockerfile` (CMD uvicorn), `docker-compose.yml` (`seed` explicit command, new `backend`), `docker-compose.content.yml` (backend mount), `backend/README.md`, `AGENTS.md` Commands.
+  - New dependencies: `fastapi`, `uvicorn`; dev: `openapi-core`, `httpx`.
+- **Verified:**
+  - `spec_lookup` with no arguments: version 0.4.0, eight operations; each operation read before its router was written.
+  - Unit tests 44 passed; integration tests 58 passed, including every real value in the prompt's table, the 17-week ACLED series (2024-03-30 to 2024-07-20), median 11.5, timeline 1523 weeks, CRISIS 27, `ZZ` empty, 404, 422 and both 503 cases. Each response body is validated with `openapi-core`; a deliberately wrong body (`regime_state: BOGUS`) was confirmed to be rejected.
+  - `docker compose up -d --build`: seed exited 0, backend started; `curl /api/health` returned `ok` with the seeded counts; `/api/timeline?state=CRISIS` returned 27 weeks.
+- **`spec-first-guard`:** it did not block any router write during this build (all eight paths and methods were in the contract before the routers were written). It was not tested adversarially in this step; its own tests are in `agent-hooks/tests`.
+- **Not done / open:** see the report (contract points that were hard to implement as written).
+- **Follow-up (contract v0.4.1, commit `b738309`):** three contract fixes decided by Sam, in two steps. Step 1 (contract only): `/api/findings` ordered by curated position, ACLED prior-12-week medians nullable, 503 `Error` response on the seven non-health operations, MCP test pinned to 0.4.1; validator and MCP tests (7 passed) run, then stopped for Sam's commit. Step 2 (code): the `NO_SNAPSHOT` 503 response declared on the seven routers, app version 0.4.1, `backend/README.md` updated; added a unit test for the null-median case (anchor with no earlier weeks gives `comparison` null and null medians) and an integration test, validated against the contract, that each of the seven operations returns 503 `{"detail": "No snapshot is loaded."}` when `snapshot_meta` is empty. Verified: unit 45 passed, integration 65 passed, ruff clean. The running compose `backend` image was not rebuilt (only the declared version string and docs changed).

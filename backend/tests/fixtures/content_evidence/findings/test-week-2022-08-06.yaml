@@ -1,0 +1,14 @@
+slug: test-week-2022-08-06
+week_start_date: 2022-08-06
+iso2: KE
+position: 4
+title: Test-only fixture for the week of 2022-08-06
+teaser: Test-only text; not curated content.
+summary_md: |
+  Test-only summary. It makes no claim about the data.
+published_at: 2026-10-20T00:00:00Z
+caveats:
+  - severity: limitation
+    caveat_md: Test-only limitation; makes no claim.
+  - severity: do_not_conclude
+    caveat_md: Test-only do-not-conclude note; makes no claim.

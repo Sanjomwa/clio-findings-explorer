@@ -1,4 +1,4 @@
-# Phase 1b: database and seed only. The backend and frontend services arrive in later steps.
+# db, seed and backend. The frontend service arrives in a later step.
 name: clio-findings-explorer
 
 services:
@@ -26,8 +26,32 @@ services:
       CONTENT_DIR: /content
     volumes:
       - ./data/snapshot:/data/snapshot:ro
-    # alembic upgrade head, then the seed, then exit (the Dockerfile CMD).
+    # alembic upgrade head, then the seed, then exit.
+    command: ["sh", "-c", "alembic upgrade head && python -m app.seed"]
     restart: "no"
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      CONTENT_DIR: /content
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
 volumes:
   pgdata:

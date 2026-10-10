@@ -1,8 +1,17 @@
-# Add once content/ exists:  docker compose -f docker-compose.yml -f docker-compose.content.yml run --rm seed
+# Add once content/ exists:  docker compose -f docker-compose.yml -f docker-compose.content.yml up -d --build
+# (the seed and backend services both get the mount; seed also runs with `run --rm seed`).
 # (or set COMPOSE_FILE). Kept separate because a plain bind mount of a missing ./content would make
 # Docker create that directory on the host; create_host_path: false fails instead of creating it.
 services:
   seed:
+    volumes:
+      - type: bind
+        source: ./content
+        target: /content
+        read_only: true
+        bind:
+          create_host_path: false
+  backend:
     volumes:
       - type: bind
         source: ./content

@@ -1,7 +1,8 @@
 # backend
 
-Phase 1b: the Postgres 16 schema (SQLAlchemy 2.0 models, Alembic migrations) and the seed step
-that loads `data/snapshot/` and, when it exists, `content/`. FastAPI endpoints arrive in Phase 1c.
+The Postgres 16 schema (SQLAlchemy 2.0 models, Alembic migrations), the seed step that loads
+`data/snapshot/` and, when it exists, `content/`, and the read-only FastAPI app that serves the eight
+`/api` operations of `openapi.yaml` (v0.4.1).
 
 ## Layout
 
@@ -9,6 +10,11 @@ that loads `data/snapshot/` and, when it exists, `content/`. FastAPI endpoints a
 pyproject.toml  uv.lock  .python-version  Dockerfile  alembic.ini
 alembic/versions/0001_initial_schema.py   the schema of record, including the caveat trigger
 app/db/        base.py, models.py (typed models mirroring the migration), session.py
+app/main.py    create_app(); routers carry full literal paths (no include_router prefix)
+app/routers/   health, timeline, findings, evidence, methodology (+ common helpers)
+app/schemas.py Pydantic v2 response models mirroring the contract's schemas
+app/evidence/  acled.py, ooni.py, google.py: pure functions, rows in, card dict out; service.py fetches rows
+app/deps.py    read-only session per request (SET TRANSACTION READ ONLY), snapshot metadata
 app/seed/      snapshot.py (verify, cast, load), content.py (YAML validation, sync), __main__.py
 tests/unit/         no database
 tests/integration/  needs the compose db service
@@ -42,6 +48,30 @@ database, then loads in one transaction. A second run prints `snapshot already l
 it prints `no content/ directory: 0 findings`. Content files in `content/findings/<slug>.yaml` are validated
 strictly (see `app/seed/content.py`).
 
+## Run the API
+
+In compose (db, then seed, then backend; API on `127.0.0.1:8000`):
+
+```bash
+docker compose up -d --build
+curl -s localhost:8000/api/health
+```
+
+Locally (db running and seeded, `DATABASE_URL` set as below):
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+`CONTENT_DIR` (default `<repo>/content`) is read for `methodology.yaml`
+(`regime_states`, `confidence_levels`, `family_bands`: lists of `{state|level|band, definition}`).
+If the file is absent those arrays are empty; definitions are never invented. Evidence cards are computed
+per request from the snapshot tables, as each evidence operation's description in `openapi.yaml` states.
+Error bodies: 404 `{"detail": "..."}` for an unknown slug, FastAPI's default body for 422, and `/api/health`
+returns 503 with the `Health` body when the database is unreachable or no snapshot is loaded; the other
+seven operations return 503 with `{"detail": "..."}` when no snapshot is loaded.
+
 ## Migrations and seed from the host
 
 ```bash
@@ -63,4 +93,7 @@ uv run pytest tests/integration -v
 ```
 
 Integration tests create and drop a separate database, `clio_findings_test`, on the same server, so the
-seeded dev database is not touched. `uv run ruff check .` runs the linter.
+seeded dev database is not touched. `tests/integration/test_api.py` seeds the real snapshot plus the
+test-only findings in `tests/fixtures/content_evidence/` and validates every response (200, 404, 422, 503)
+against `openapi.yaml` with `openapi-core`. Unit tests for the evidence functions are in
+`tests/unit/test_evidence.py`. `uv run ruff check .` runs the linter.

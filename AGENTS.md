@@ -68,6 +68,8 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Run the snapshot export tests (fake bq, fixtures only) | `python3 -m unittest discover -s ops/tests -v` |
 | Start the local database | `docker compose up -d db` |
 | Seed (migrate, then load snapshot and content), then exit | `docker compose run --rm seed` |
+| Start db, seed and the API (`127.0.0.1:8000`; leaves them running) | `docker compose up -d --build` |
+| Check the API is up | `curl -s localhost:8000/api/health` |
 | Run the backend unit tests | `uv run --directory backend pytest tests/unit -v` |
 | Run the backend integration tests (db running; `DATABASE_URL` set as in `backend/README.md`) | `uv run --directory backend pytest tests/integration -v` |
 
