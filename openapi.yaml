@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: CLIO Findings Explorer API
-  version: 0.4.0
+  version: 0.4.1
   summary: Read-only API for curated Kenya civil-liberties findings.
   description: |
     Contract for the CLIO Findings Explorer backend. This file is hand-authored and is the
@@ -11,7 +11,10 @@ info:
     All endpoints are read-only and need no authentication. Data comes from a versioned,
     committed snapshot of CLIO output loaded into Postgres. The API never calls BigQuery.
 
-    Status of this version (v0.4.0, 2026-10-11, after snapshot 2026-10-10.1):
+    Status of this version (v0.4.1, 2026-10-11, after snapshot 2026-10-10.1; changes from
+    v0.4.0: `/api/findings` is ordered by curated position, the ACLED prior-12-week medians
+    are nullable, and the seven non-health operations document a 503 for "no snapshot is
+    loaded"):
     paths, parameters and envelope fields are settled, and so are regime states, confidence
     levels and family bands. The evidence-card shapes are now fixed: each card's headline,
     comparison and `supporting` object are defined, and each evidence operation states how
@@ -102,18 +105,25 @@ paths:
                 $ref: "#/components/schemas/TimelineResponse"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/NoSnapshot"
   /api/findings:
     get:
       tags: [findings]
       operationId: listFindings
       summary: List curated findings
+      description: |
+        Ordered by curated position (`findings.position`, set in the curated content), not by
+        week.
       responses:
         "200":
-          description: All curated findings, newest week first.
+          description: All curated findings, ordered by curated position.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FindingListResponse"
+        "503":
+          $ref: "#/components/responses/NoSnapshot"
   /api/findings/{slug}:
     get:
       tags: [findings]
@@ -135,6 +145,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/NoSnapshot"
   /api/findings/{slug}/evidence/acled:
     get:
       tags: [findings]
@@ -150,7 +162,8 @@ paths:
         - Headline: "Conflict events recorded in the week (all event types)". `metric_value` is
           `total_events` for the anchor week.
         - Comparison: label "Median of the 12 weeks before", value the median of `total_events`
-          over the 12 weeks immediately before the anchor week.
+          over the 12 weeks immediately before the anchor week. If the snapshot has no earlier
+          weeks than the anchor, `comparison` is null.
         - Period: `period_start` is the anchor date, `period_end` is the anchor date plus 6
           days, `period_grain` is `week`.
         - `has_data` is false only if the anchor week has no row.
@@ -169,6 +182,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/NoSnapshot"
   /api/findings/{slug}/evidence/ooni:
     get:
       tags: [findings]
@@ -205,6 +220,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/NoSnapshot"
   /api/findings/{slug}/evidence/google-transparency:
     get:
       tags: [findings]
@@ -239,6 +256,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/NoSnapshot"
   /api/methodology:
     get:
       tags: [system]
@@ -251,6 +270,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MethodologyResponse"
+        "503":
+          $ref: "#/components/responses/NoSnapshot"
 components:
   parameters:
     Slug:
@@ -267,6 +288,12 @@ components:
       description: |
         No finding has this slug. This is the only meaning of 404. A finding that exists
         but has no data from a source returns 200 with `has_data: false`.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NoSnapshot:
+      description: No snapshot is loaded.
       content:
         application/json:
           schema:
@@ -691,11 +718,15 @@ components:
         week:
           $ref: "#/components/schemas/AcledSignalWeek"
         prior_12_week_median_events:
-          type: number
-          description: Median of `total_events` over the 12 weeks before the anchor week.
+          type: [number, "null"]
+          description: |
+            Median of `total_events` over the 12 weeks before the anchor week. Null when the
+            anchor has no earlier weeks in the snapshot.
         prior_12_week_median_fatalities:
-          type: number
-          description: Median of `total_fatalities` over the 12 weeks before the anchor week.
+          type: [number, "null"]
+          description: |
+            Median of `total_fatalities` over the 12 weeks before the anchor week. Null when
+            the anchor has no earlier weeks in the snapshot.
         series:
           type: array
           description: |
