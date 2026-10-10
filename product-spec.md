@@ -1,6 +1,6 @@
 # CLIO Findings Explorer: product spec
 
-**Version:** 0.3 (2026-10-05, revised after a read-only check of CLIO's data: findings re-selected, success criteria added). Written before any code. The full plan, schedule and rubric mapping are in the Cowork-side project plan; this file is the product definition the code is built against.
+**Version:** 0.4 (2026-10-10, after snapshot 2026-10-10.1: five anchor weeks set, display rules for classifications added). Written before any code. The full plan, schedule and rubric mapping are in the Cowork-side project plan; this file is the product definition the code is built against.
 
 ## 1. Problem
 
@@ -12,7 +12,7 @@ Someone who wants to answer "was there coordinated civil-liberties pressure in K
 
 A public, read-only web app that presents a small set of curated findings about Kenya. Each finding is one specific week that CLIO's regime-classification engine has classified, shown with:
 
-- the regime state (STABLE, MOBILISATION, ESCALATION, CONFLICT or CRISIS) and a confidence band
+- the regime state and the confidence level. CLIO defines seven states (STABLE, MOBILISATION, CONTESTATION, ESCALATION, CRISIS, REPRESSION, CONFLICT); five occur in the Kenya snapshot.
 - a plain-language summary
 - one evidence card per source (ACLED, OONI, Google Transparency), each served by its own API endpoint; a source with no data for that week says so
 - a limitations box that cannot be dismissed, stating what the evidence does not establish
@@ -27,22 +27,40 @@ Every number on screen comes from a versioned snapshot of CLIO output that is co
 ## 4. Expected behaviour
 
 1. A visitor lands on a **timeline** of classified weeks for Kenya, 1,523 weeks from 1997-01-11 to 2026-03-14. Weeks are coloured by regime state. Weeks that have a curated finding are highlighted.
-2. Clicking a highlighted week opens the **finding** page: title, state and confidence badges, summary, the limitations box, then three evidence cards that load independently.
+2. Clicking a highlighted week opens the **finding** page: title, state and confidence badges, summary, the limitations box, then three evidence cards that load independently. The finding page also shows the week's three family bands (protest, violence, suppression), shown as they are.
 3. Each **evidence card** shows one headline number, the supporting detail for that source, the period the numbers cover, and a provenance note. Sources do not all report weekly: where a source reports per half-year, the card shows that longer period and says so. If a source has no data for the window (for example, the week predates the source), the card is still shown and says so plainly. The API returns it with `has_data: false`; 404 means only that the finding does not exist.
 4. A **findings list** shows all curated findings with a one-line teaser each.
-5. A **methodology** page explains the regime states, the confidence bands, each source's limits, and the snapshot version and export date.
+5. A **methodology** page explains the regime states, the confidence levels, the family bands, each source's limits, and the snapshot version and export date.
 6. Every page shows the snapshot version and date. The product is an archive of curated findings, and it says so. It is not a live monitor.
+
+### 4.1 How classifications are described
+
+CLIO's reason codes are not shown as descriptions of the bands. In particular, `STABLE:ALL_NORMAL` means only that the week was STABLE with usable data; its bands can still be raised. The app shows the bands themselves and uses this wording:
+
+- STABLE weeks with usable data: "STABLE: no regime rule was met this week. Bands can still be raised; a first raised week is held at STABLE until a second consecutive one follows."
+- Weeks with a pre-transition flag, added to the above: "Raised: would have entered <TARGET> if the next week also qualified."
+- STABLE weeks with INSUFFICIENT_DATA confidence: "STABLE (insufficient data)".
+- No STABLE week is described as "all signals normal".
 
 ## 5. Content
 
-Three findings are committed and a fourth is being selected. The choices below follow a read-only check of CLIO's Kenya output on 2026-10-05; several differ from the original plan because the data did not support what the plan assumed.
+Five anchor weeks are set. Three findings is the floor if the schedule slips; the README states the real number. The choices below follow a read-only check of CLIO's Kenya output on 2026-10-05 and the exported snapshot 2026-10-10.1; several differ from the original plan because the data did not support what the plan assumed.
 
 | Slug | Anchor week | What it shows | Sources with data |
 |---|---|---|---|
 | `finance-bill-2024` | 2024-06-22 (22 to 28 June) | A CRISIS classification with HIGH confidence in the week Parliament was stormed. The flagship. | ACLED, OONI, Google Transparency |
 | `general-election-2022` | 2022-08-06 | A CRISIS classification with HIGH confidence in election week, driven by violence and suppression while protest stayed normal. What drove it is checked before the finding is written. | ACLED, Google Transparency |
 | `post-election-violence-2008` | 2008-01-19 | A limits case. The classifier read INSUFFICIENT_DATA until this week and never reached CRISIS, so it shows what sparse early data cannot support. | ACLED |
-| (fourth, to be selected) | a week between 2023-05-27 and 2025-06-28 | Chosen from the weeks where all three sources have data. | ACLED, OONI, Google Transparency |
+| `july-2023` (working slug) | 2023-07-15 | A CRISIS classification with HIGH confidence, with all three sources holding data. The event behind it is confirmed before the finding is written. | ACLED, OONI, Google Transparency |
+| `june-july-2025` (working slug) | 2025-06-21 | A second limits case. The classifier read STABLE with HIGH confidence in a week of 115 events and 43 fatalities, and again on 2025-07-05 (141 events, 62 fatalities). It shows a pattern of pressure that CLIO's current rules do not classify. | ACLED, OONI, Google Transparency |
+
+**Approved notes for weeks next to anchors**, for use in Phase 2 content:
+
+- 2024-06-15: "Protest raised and suppression severe; held at STABLE as a first qualifying week. The next week was classified CRISIS."
+- 2023-07-08: "Protest severe and suppression raised; held at STABLE as a first qualifying week before 2023-07-15."
+- 2025-07-05: "Suppression severe; held at STABLE because the week before did not qualify, and the week after returned to normal, so REPRESSION was never assigned."
+
+A further caveat for the 2025 finding, about how CLIO's current rules treat riot events, is pending Sam's wording and is not written yet.
 
 CLIO's weeks start on Saturday. Each finding is anchored to one `week_start_date`; a finding about a longer episode describes the rest in its summary.
 
@@ -77,7 +95,7 @@ The API has eight read-only endpoints under `/api`: health, timeline, findings l
 
 ## 8. Non-goals
 
-1. It does not reproduce CLIO's dashboard. A handful of curated findings and a timeline; nothing more.
+1. It does not reproduce CLIO's dashboard. Five curated findings at most, and a timeline; nothing more.
 2. It does not touch CLIO's live pipeline or BigQuery after the one export.
 3. It does not present synthetic or placeholder data as real.
 4. It does not accept writes. No accounts, no auth, no comments, no admin.
@@ -104,7 +122,7 @@ The project succeeds if it does three things CLIO's own README says CLIO cannot 
 - **Limits are visible.** Every finding has at least one caveat, enforced in the database and the API. A source with no data returns a card that says so. Weeks with INSUFFICIENT_DATA confidence look different on the timeline from confident STABLE weeks.
 - **No causal language.** An automated check over the curated content rejects wording that asserts causation or targeting.
 - **Independence is stated correctly.** The ACLED card is labelled as the classifier's input. No text calls the three cards independent confirmations.
-- **At least one finding shows a limit of the method.** The 2008 finding does this.
+- **At least one finding shows a limit of the method.** The 2008 and 2025 findings do this.
 - **Attribution.** Every card carries its source's required citation details, and the repository states the data's licence terms separately from the MIT licence on the code.
 - **No synthetic data.** The export refuses any source table that carries a synthetic flag column, proven by a test.
 
@@ -125,4 +143,4 @@ The project succeeds if it does three things CLIO's own README says CLIO cannot 
 
 ### 9.6 What does not count as success
 
-Traffic, the number of findings, the number of features, or parity with CLIO's dashboard. Three honest findings are better than four with one overclaimed.
+Traffic, the number of findings, the number of features, or parity with CLIO's dashboard. Three honest findings are better than five with one overclaimed.

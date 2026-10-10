@@ -184,3 +184,12 @@ A running record of the work coding agents do in this repository, appended after
   - `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` printed `openapi.yaml: OK`.
   - grep for `Band"`, `confidence_band`, `confidence_bands` matches only `FamilyBand`.
 - **Not done / open:** An in-script rename first turned `confidence_bands` into `confidence_levels` by accident; the first script run aborted on an assertion before writing, and the corrected run wrote the file. No other file was changed. Part 2 not started.
+
+## 2026-10-10: product-spec.md v0.4, Part 2
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** After Part 1 was committed (`7edd5f5`, confirmed with `git log`; the prompt's hash was an unfilled `<hash>` placeholder), edit `product-spec.md` to v0.4: version line, §2 states, §4 family bands and new §4.1 display wording, §5 five anchors and approved notes, §8 item 1, §9.2 limits wording. Change nothing else. Then STOP.
+- **Produced:** the edited `product-spec.md`. All wording is verbatim from the prompt. The family-bands sentence was placed inside §4 item 2 (the finding page item). The §5 notes sit after the "Dropped from the plan" paragraph and "How the sources relate" is untouched; no new riots caveat was written.
+- **Verified:** tree was clean at `7edd5f5` before editing; each replacement matched exactly once; no number was written beyond those in the prompt.
+- **Not done / open:** sentences now possibly wrong were left and reported as questions (see report).
+  - **Follow-up edits:** Sam answered the open questions, and three edits were made to `product-spec.md`: §4 item 5 now names the confidence levels and family bands, the §5 second sentence now cites snapshot 2026-10-10.1, and the §9.6 last sentence now says "five". README.md left unchanged as instructed.
