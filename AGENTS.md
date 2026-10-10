@@ -23,7 +23,7 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 ## Hard rules
 
 1. **No git writes.** Never run `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `branch -d`/`-D`, `update-ref` or `commit-tree`, and never `gh pr create`, `gh pr merge` or `gh release create`. Read commands (`status`, `diff`, `log`, `show`, `fetch`) and `git add` / `git restore --staged` are fine. Leave the tree modified, stage only if asked, and describe the change. The `block-autonomous-git` hook enforces the common forms once it is installed; the rule holds whether or not the hook catches a given command. A hook block is a signal to stop and report, not something to route around.
-2. **Spec first.** A route's method and path must exist in `openapi.yaml` before the router is written or changed. To change the API, edit `openapi.yaml` first and stop so Sam can commit that edit separately, then regenerate `frontend/src/api/schema.d.ts`, then change the backend models and tests.
+2. **Spec first.** A route's method and path must exist in `openapi.yaml` before the router is written or changed. To change the API, edit `openapi.yaml` first and stop so Sam can commit that edit separately, then regenerate `frontend/src/api/schema.d.ts`, then change the backend models and tests. Routers use literal paths (and a literal `APIRouter` prefix, if any) so `spec-first-guard` can check them.
 3. **One place for HTTP in the frontend.** Every backend call goes through `frontend/src/api/client.ts`. No `fetch` anywhere else.
 4. **Diagnose before fixing.** When something fails, find and state the cause, with the evidence, before changing code. Do not stack speculative fixes.
 5. **No unverified factual claims.** Any statement about the data (a count, a date, a classification) must come from a query against the snapshot, and the query goes in your report. "It should be" is not a source.
@@ -63,7 +63,8 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Purpose | Command |
 |---|---|
 | Validate the API contract as OpenAPI 3.1 | `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` |
-| Run the git-guard hook tests | `python3 -m unittest discover -s agent-hooks/tests -v` |
+| Run the hook tests (git guard and spec-first guard) | `python3 -m unittest discover -s agent-hooks/tests -v` |
+| Run the MCP server tests | `uv run --directory mcp-server pytest -v` |
 | Run the snapshot export tests (fake bq, fixtures only) | `python3 -m unittest discover -s ops/tests -v` |
 
 ## Repository layout (target)

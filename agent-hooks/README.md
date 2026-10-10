@@ -1,6 +1,6 @@
 # Agent hooks
 
-Claude Code hooks that enforce rules from [AGENTS.md](../AGENTS.md). Standard library Python only.
+Claude Code hooks that enforce rules from [AGENTS.md](../AGENTS.md). Python; `block-autonomous-git` uses the standard library only, `spec-first-guard` also needs PyYAML.
 
 ## block-autonomous-git
 
@@ -42,9 +42,45 @@ This is a string parser for the Bash tool's command text. It catches the common 
 - **Destructive commands that are not on the list:** plain `git restore <file>` (discards working-tree changes), `git checkout -- <file>`, `git stash`, `git clean`, `git branch -m`/`-M`/`-f`, and `gh api` calls that write. AGENTS.md does not forbid these, so the hook allows them.
 - **Tools other than Bash:** the hook is registered on the Bash tool only.
 
+## spec-first-guard
+
+`spec_first_guard.py` enforces AGENTS.md hard rule 2: a route's method and path must exist in `openapi.yaml` before the router is written or changed.
+
+### What it checks
+
+It runs before every `Write`, `Edit` and `MultiEdit`. For a `.py` file under `backend/app/routers/` it:
+
+1. rebuilds the file as it would be after the edit (`Write`: the content; `Edit`: the current file with `old_string` replaced, honouring `replace_all`; `MultiEdit`: the edits applied in order);
+2. parses it with `ast` and extracts every route: `@<router>.get/post/put/patch/delete/head/options(<path>)` and `@<router>.api_route(<path>, methods=[...])`, with the literal `prefix=` of the `APIRouter(...)` assignment added to the path;
+3. compares each `(METHOD, full_path)` with the operations in `openapi.yaml` at the repository root, by exact string match (`{name}` path parameters are written the same way in FastAPI and OpenAPI).
+
+Routes that are not declared block the call. The message lists them, says to edit `openapi.yaml` first, and says to stop so Sam can commit that edit separately.
+
+### What it allows
+
+- Any file that is not a `.py` file under `backend/app/routers/`. The spec is not even opened for these.
+- A router file with no routes, or only declared routes.
+
+### Failure behaviour
+
+Fails closed with exit 2 on: unreadable or non-object stdin; an edit that cannot be applied (`old_string` not found, ambiguous without `replace_all`, file missing); a resulting file that does not parse; a path, prefix or `methods` list that is not a literal (routers must use literal paths so the guard can check them); an unreadable or malformed `openapi.yaml`; and any unexpected exception.
+
+### YAML
+
+The hook imports PyYAML only when it has a router file to check. The system `python3` here (3.12.3) has PyYAML 6.0.1, so the hook is registered as plain `python3`, the same as the git hook. Measured per call: 0.18 to 0.22 s. If PyYAML ever goes missing the hook blocks router writes (fail closed) with a message saying so. The fallback is to register it as `uv run --no-project --with pyyaml python3 "${CLAUDE_PROJECT_DIR}/agent-hooks/spec_first_guard.py"`. That form was tried: about 0.25 s once cached, and it also works with `UV_OFFLINE=1` after the first run has cached PyYAML.
+
+### Known gaps
+
+- **Routes registered without decorators:** `router.add_api_route(...)`, `app.add_api_route(...)`, `APIRoute(...)` and `Mount` are not seen.
+- **Routers mounted with an extra prefix:** `app.include_router(router, prefix="/api")` changes the real path, but the guard sees only the `APIRouter(prefix=...)` and the decorator path. Keep the full path in the router.
+- **Files written outside `backend/app/routers/`:** a route declared in `main.py` or any other module is not checked, nor is a router written through `Bash` (`cat > ...`, `sed -i`).
+- **Other name patterns:** only `<name>.get(...)`-style decorators on a plain variable are read. A decorator on an attribute (`self.router.get`) is ignored.
+- **Spec side:** only `paths` operations are compared. Parameters, responses and models are not checked against the contract.
+- **MultiEdit:** the field names (`edits` with `old_string`, `new_string`, `replace_all`) follow the older Claude Code tool; the current hooks reference documents only `Write` and `Edit`.
+
 ## Registration
 
-Registered as a project hook in [`.claude/settings.json`](../.claude/settings.json):
+Both hooks are registered as project hooks in [`.claude/settings.json`](../.claude/settings.json). `spec-first-guard` is a second `PreToolUse` entry with matcher `Write|Edit|MultiEdit`:
 
 ```json
 {
@@ -56,6 +92,15 @@ Registered as a project hook in [`.claude/settings.json`](../.claude/settings.js
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PROJECT_DIR}/agent-hooks/block_autonomous_git.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/agent-hooks/spec_first_guard.py\""
           }
         ]
       }
@@ -78,4 +123,4 @@ From the repository root:
 python3 -m unittest discover -s agent-hooks/tests -v
 ```
 
-The tests run the hook as a subprocess with a PreToolUse JSON payload on stdin, the way Claude Code calls it, and check the exit code and stderr. They cover every denied command, the allowed commands, chained, nested and prefixed forms, false-positive traps, untokenizable commands, and fail-closed handling of bad input and internal errors.
+The tests run the hook as a subprocess with a PreToolUse JSON payload on stdin, the way Claude Code calls it, and check the exit code and stderr. The `spec-first-guard` tests use a fixture spec under `tests/fixtures/` in a temporary project, plus one test that checks all eight operations of the real `openapi.yaml`. The git-hook tests cover every denied command, the allowed commands, chained, nested and prefixed forms, false-positive traps, untokenizable commands, and fail-closed handling of bad input and internal errors.

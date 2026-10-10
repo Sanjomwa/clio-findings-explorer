@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "findings-explorer-tools": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--directory", "${CLAUDE_PROJECT_DIR:-.}/mcp-server", "python", "server.py"]
+    }
+  }
+}

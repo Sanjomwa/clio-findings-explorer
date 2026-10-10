@@ -1,6 +1,6 @@
 # Agent permissions
 
-**Version:** 1 (2026-10-05). What a coding agent may and may not do in this repository. `AGENTS.md` holds the full rules; this page summarises the boundaries in one place. If the two disagree, `AGENTS.md` wins and this page is corrected.
+**Version:** 2 (2026-10-10). What a coding agent may and may not do in this repository. `AGENTS.md` holds the full rules; this page summarises the boundaries in one place. If the two disagree, `AGENTS.md` wins and this page is corrected.
 
 ## Filesystem scope
 
@@ -9,6 +9,14 @@ The agent works only inside this repository's directory, plus its own session sc
 ## Git
 
 The agent never runs `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `branch -d`/`-D`, `update-ref` or `commit-tree`, and never `gh pr create`, `gh pr merge` or `gh release create`. Read commands (`status`, `diff`, `log`, `show`, `fetch`) and `git add` / `git restore --staged` are allowed. The `block-autonomous-git` hook ([agent-hooks/README.md](../agent-hooks/README.md)) enforces the common forms; the rule holds whether or not the hook catches a given command. Sam commits, pushes, tags and deploys.
+
+## API contract
+
+A route's method and path must be in `openapi.yaml` before the router is written. The `spec-first-guard` hook ([agent-hooks/README.md](../agent-hooks/README.md)) blocks any `Write`, `Edit` or `MultiEdit` of a `.py` file under `backend/app/routers/` that declares a route not in the spec, and fails closed on anything it cannot check. The rule holds whether or not the hook catches a given change.
+
+## MCP server
+
+The project MCP server `findings-explorer-tools` ([mcp-server/README.md](../mcp-server/README.md)) has one tool, `spec_lookup`. It is read-only: it reads `openapi.yaml` and nothing else, writes no files and makes no network calls. Claude Code asks Sam to approve a project-scoped server before first use.
 
 ## Network
 

@@ -193,3 +193,36 @@ A running record of the work coding agents do in this repository, appended after
 - **Verified:** tree was clean at `7edd5f5` before editing; each replacement matched exactly once; no number was written beyond those in the prompt.
 - **Not done / open:** sentences now possibly wrong were left and reported as questions (see report).
   - **Follow-up edits:** Sam answered the open questions, and three edits were made to `product-spec.md`: §4 item 5 now names the confidence levels and family bands, the §5 second sentence now cites snapshot 2026-10-10.1, and the §9.6 last sentence now says "five". README.md left unchanged as instructed.
+
+## 2026-10-10: Phase 1a, spec-first-guard and the MCP server, Part A
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Task 0 read-only checks; build the `spec-first-guard` PreToolUse hook and tests, the `findings-explorer-tools` MCP server with `spec_lookup` and tests, register both, update the docs; then STOP before the live demo (Part B).
+- **Produced:**
+  - `agent-hooks/spec_first_guard.py`, `agent-hooks/tests/test_spec_first_guard.py` and `agent-hooks/tests/fixtures/openapi.yaml`; a second PreToolUse entry in `.claude/settings.json` (Bash entry unchanged).
+  - `mcp-server/` (`server.py`, `pyproject.toml`, `uv.lock`, tests, README) and `.mcp.json`.
+  - Docs: `agent-hooks/README.md`, `docs/permissions.md` v2, `AGENTS.md` (rule 2 sentence, two Commands rows).
+- **Verified:**
+  - Tree clean at `372d4cf`; `backend/`, `mcp-server/` and `.mcp.json` did not exist.
+  - `python3 -m unittest discover -s agent-hooks/tests -v`: 69 tests OK (28 git-hook, 41 new).
+  - `uv run --directory mcp-server pytest -v`: 7 passed.
+  - Hook per-call time with system python3 (PyYAML 6.0.1): 0.18 to 0.22 s. The uv fallback also worked with `UV_OFFLINE=1`.
+  - The MCP server answered `initialize` and a `spec_lookup` call over stdio when started from `/tmp`.
+- **Not done / open:**
+  - Part B (live `/mcp` check and guard demo) needs a new session.
+  - The hooks reference documents `Write` and `Edit` input but not `MultiEdit`; its field names are implemented from the older tool shape.
+  - The first `mcp-server` run resolved `mcp` 2.x, where `mcp.server.fastmcp` no longer exists; pinned `mcp<2`.
+  - `${CLAUDE_PROJECT_DIR}` is not set in Claude Code's own environment, so `.mcp.json` uses `${CLAUDE_PROJECT_DIR:-.}`, which resolves relative to the launch directory.
+
+## 2026-10-10: Phase 1a, spec-first-guard and the MCP server, Part B
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Live demo of the guard hook and the MCP server: confirm Part A files are present, check MCP status, call `spec_lookup` twice, try to write an undeclared-route router (blocked) and a `GET /api/health` router (allowed, then deleted), write the demo document, log it, then STOP. No Part A file changed.
+- **Produced:** `security/hook-demos/spec-first-guard.md`; this entry.
+- **Verified:**
+  - `git status --short` showed `.mcp.json`, `mcp-server/` and `agent-hooks/spec_first_guard.py` present, and no `backend/`.
+  - `claude mcp list`: `findings-explorer-tools` Connected.
+  - `spec_lookup` with no arguments returned version 0.3.0 and 8 operations; with `/api/findings/{slug}` it returned `found: true`, `getFinding`, responses 200/404/422.
+  - The Write of `GET /api/undeclared` was blocked by spec-first-guard, and `ls` confirmed no file and no `backend/`.
+  - The Write of `GET /api/health` succeeded; the file and `backend/app/routers`, `backend/app`, `backend` were then removed and `ls backend` confirmed it is gone.
+- **Not done / open:** Only the `Write` tool was exercised live; `Edit` and `MultiEdit` are covered by unit tests only.
