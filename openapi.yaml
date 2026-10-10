@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: CLIO Findings Explorer API
-  version: 0.3.0
+  version: 0.4.0
   summary: Read-only API for curated Kenya civil-liberties findings.
   description: |
     Contract for the CLIO Findings Explorer backend. This file is hand-authored and is the
@@ -11,11 +11,12 @@ info:
     All endpoints are read-only and need no authentication. Data comes from a versioned,
     committed snapshot of CLIO output loaded into Postgres. The API never calls BigQuery.
 
-    Status of this version (v0.3.0, 2026-10-10, after snapshot 2026-10-10.1):
-    paths, parameters and envelope fields are settled. Regime states, confidence levels and
-    family bands are now fixed enums. Still PROVISIONAL, and marked `x-provisional`: the
-    contents of each evidence card's `supporting` object and the per-source fields in
-    `/api/methodology`.
+    Status of this version (v0.4.0, 2026-10-11, after snapshot 2026-10-10.1):
+    paths, parameters and envelope fields are settled, and so are regime states, confidence
+    levels and family bands. The evidence-card shapes are now fixed: each card's headline,
+    comparison and `supporting` object are defined, and each evidence operation states how
+    its numbers are derived. Still PROVISIONAL, and marked `x-provisional`: only the
+    per-source fields in `/api/methodology` (`SourceNote`).
   license:
     name: MIT
     identifier: MIT
@@ -139,6 +140,22 @@ paths:
       tags: [findings]
       operationId: getAcledEvidence
       summary: ACLED conflict-event evidence card
+      description: |
+        Evidence card for the finding's anchor week, computed at request time from the
+        `acled_signal_context` snapshot table.
+
+        The source is the classifier's own input, so this card is not independent
+        corroboration of the classification.
+
+        - Headline: "Conflict events recorded in the week (all event types)". `metric_value` is
+          `total_events` for the anchor week.
+        - Comparison: label "Median of the 12 weeks before", value the median of `total_events`
+          over the 12 weeks immediately before the anchor week.
+        - Period: `period_start` is the anchor date, `period_end` is the anchor date plus 6
+          days, `period_grain` is `week`.
+        - `has_data` is false only if the anchor week has no row.
+        - `supporting.series` holds the anchor's 17-week window, from 12 weeks before the anchor
+          to 4 weeks after it, oldest first.
       parameters:
         - $ref: "#/components/parameters/Slug"
       responses:
@@ -157,6 +174,24 @@ paths:
       tags: [findings]
       operationId: getOoniEvidence
       summary: OONI internet-measurement evidence card
+      description: |
+        Evidence card for the finding's anchor week, computed at request time from the
+        `ooni_weekly_signals` snapshot table (one row per test per week).
+
+        - Over the anchor week's rows, the card picks the test with the highest non-null
+          `anomalous_zscore_12w`. Ties are broken by `test_name`, alphabetically.
+        - Headline: "Anomalous measurement rate, for the test furthest above its own 12-week
+          baseline". `metric_value` is that test's `anomalous_rate`.
+        - Comparison: label "<test_name>: standard deviations from its own 12-week baseline",
+          value that test's z-score.
+        - If every z-score in the week is null, `metric_value` and `comparison` are null,
+          `has_data` stays true, and the provenance note says no baseline was available.
+        - `has_data` is false when the anchor week has no OONI rows. OONI weekly signals cover
+          only 2023-05-27 to 2025-06-28.
+        - Period: the anchor week (`period_start` the anchor date, `period_end` that plus 6
+          days), `period_grain` `week`.
+        - The contract sets no threshold: the card reports the number and its baseline
+          comparison and does not label any value as normal or abnormal.
       parameters:
         - $ref: "#/components/parameters/Slug"
       responses:
@@ -175,6 +210,22 @@ paths:
       tags: [findings]
       operationId: getGoogleTransparencyEvidence
       summary: Google Transparency Report evidence card
+      description: |
+        Evidence card computed at request time from the `google_transparency_requests` snapshot
+        table. Google reports per half-year, so the card covers the half-year containing the
+        finding's anchor week: 1 Jan to 30 Jun, or 1 Jul to 31 Dec. In the snapshot that
+        half-year's `period_date` is `YYYY-06-01` or `YYYY-12-01`.
+
+        - Headline: "Removal requests in Google's government-requests report for Kenya, this
+          half-year". `metric_value` is the sum of `number_of_requests` over that half-year's
+          rows.
+        - Comparison: null.
+        - Period: `period_start` and `period_end` are the half-year's first and last day,
+          `period_grain` is `half_year`.
+        - `has_data` is false when the snapshot has no rows for that half-year. The provenance
+          note then says the snapshot has no rows for that period; it never claims zero
+          requests. For periods before July 2012 it says the snapshot's Google data begins with
+          July to December 2012.
       parameters:
         - $ref: "#/components/parameters/Slug"
       responses:
@@ -284,7 +335,7 @@ components:
     SnapshotVersion:
       type: string
       description: Version of the loaded snapshot, from `data/snapshot/MANIFEST.json`.
-      examples: ["2026-10-06.1"]
+      examples: ["2026-10-10.1"]
     Error:
       type: object
       required: [detail]
@@ -493,7 +544,9 @@ components:
         - period_grain
         - headline_metric
         - metric_value
+        - comparison
         - provenance_note
+        - snapshot_files
         - supporting
       properties:
         slug:
@@ -530,16 +583,263 @@ components:
         metric_value:
           type: [number, string, "null"]
           description: The headline value. Null when the source has no data for the window.
+        comparison:
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/EvidenceComparison"
+          description: |
+            The figure the headline is set against, or null when the source gives none.
+            How it is derived is stated in each evidence operation's description.
         provenance_note:
           type: string
           description: Where the numbers come from and what window they cover.
-        supporting:
-          type: object
+        snapshot_files:
+          type: array
+          items:
+            type: string
           description: |
-            Source-specific detail behind the headline. The fields differ per source and
-            will be given their own schemas once the snapshot is exported.
-          x-provisional: true
-          additionalProperties: true
+            Files in `data/snapshot/` (and so tables in `MANIFEST.json`) that the card's
+            numbers come from.
+        supporting:
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/AcledSupporting"
+            - $ref: "#/components/schemas/OoniSupporting"
+            - $ref: "#/components/schemas/GoogleTransparencySupporting"
+          description: |
+            Source-specific detail behind the headline; the `kind` field says which
+            shape it is. Null when `has_data` is false.
+    EvidenceComparison:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value:
+          type: number
+    AcledSignalWeek:
+      type: object
+      description: One row of the `acled_signal_context` snapshot table.
+      required:
+        - week_start_date
+        - total_events
+        - total_fatalities
+        - signal_valid
+        - protest_pressure_z
+        - violence_pressure_z
+        - suppression_z
+        - protest_active_baseline_weeks
+        - violence_active_baseline_weeks
+        - suppression_active_baseline_weeks
+        - sparse_protest_baseline_flag
+        - sparse_violence_baseline_flag
+        - sparse_suppression_baseline_flag
+        - zero_variance_flag
+        - low_event_density_flag
+        - high_methodology_risk_flag
+      properties:
+        week_start_date:
+          type: string
+          format: date
+        total_events:
+          type: integer
+        total_fatalities:
+          type: integer
+        signal_valid:
+          type: boolean
+        protest_pressure_z:
+          type: [number, "null"]
+        violence_pressure_z:
+          type: [number, "null"]
+        suppression_z:
+          type: [number, "null"]
+        protest_active_baseline_weeks:
+          type: integer
+        violence_active_baseline_weeks:
+          type: integer
+        suppression_active_baseline_weeks:
+          type: integer
+        sparse_protest_baseline_flag:
+          type: boolean
+        sparse_violence_baseline_flag:
+          type: boolean
+        sparse_suppression_baseline_flag:
+          type: boolean
+        zero_variance_flag:
+          type: boolean
+        low_event_density_flag:
+          type: boolean
+        high_methodology_risk_flag:
+          type: boolean
+    AcledSupporting:
+      type: object
+      required:
+        - kind
+        - classifier_input
+        - week
+        - prior_12_week_median_events
+        - prior_12_week_median_fatalities
+        - series
+      properties:
+        kind:
+          const: acled
+        classifier_input:
+          const: true
+          description: |
+            This source is the classification's own input, so it is not independent
+            corroboration of the classification.
+        week:
+          $ref: "#/components/schemas/AcledSignalWeek"
+        prior_12_week_median_events:
+          type: number
+          description: Median of `total_events` over the 12 weeks before the anchor week.
+        prior_12_week_median_fatalities:
+          type: number
+          description: Median of `total_fatalities` over the 12 weeks before the anchor week.
+        series:
+          type: array
+          description: |
+            The anchor's 17-week window: the 12 weeks before the anchor, the anchor, then
+            the 4 weeks after, oldest first. This is the rule in `finding_anchors` in
+            `data/snapshot/MANIFEST.json`.
+          items:
+            $ref: "#/components/schemas/AcledSignalWeek"
+    OoniTestWeek:
+      type: object
+      description: One row of the `ooni_weekly_signals` snapshot table (one test, one week).
+      required:
+        - week_start_date
+        - test_name
+        - anomalous_total_scored
+        - anomalous_count
+        - anomalous_rate
+        - anomalous_baseline_rate_12w
+        - anomalous_zscore_12w
+        - anomalous_low_sample_flag
+        - anomalous_sparse_baseline_flag
+        - blocked_total_observations
+        - blocked_count
+        - blocked_rate
+        - blocked_baseline_rate_12w
+        - blocked_zscore_12w
+        - blocked_low_sample_flag
+        - blocked_sparse_baseline_flag
+        - feature_version
+      properties:
+        week_start_date:
+          type: string
+          format: date
+        test_name:
+          type: string
+        anomalous_total_scored:
+          type: [integer, "null"]
+        anomalous_count:
+          type: [integer, "null"]
+        anomalous_rate:
+          type: [number, "null"]
+        anomalous_baseline_rate_12w:
+          type: [number, "null"]
+        anomalous_zscore_12w:
+          type: [number, "null"]
+        anomalous_low_sample_flag:
+          type: boolean
+        anomalous_sparse_baseline_flag:
+          type: boolean
+        blocked_total_observations:
+          type: integer
+        blocked_count:
+          type: integer
+        blocked_rate:
+          type: number
+        blocked_baseline_rate_12w:
+          type: [number, "null"]
+        blocked_zscore_12w:
+          type: [number, "null"]
+        blocked_low_sample_flag:
+          type: boolean
+        blocked_sparse_baseline_flag:
+          type: boolean
+        feature_version:
+          type: string
+    OoniSupporting:
+      type: object
+      required: [kind, top_test, tests, note]
+      properties:
+        kind:
+          const: ooni
+        top_test:
+          type: [string, "null"]
+          description: |
+            The test the headline is about; null when every `anomalous_zscore_12w` in
+            the week is null.
+        tests:
+          type: array
+          description: The anchor week's rows, one per test, sorted by `test_name`.
+          items:
+            $ref: "#/components/schemas/OoniTestWeek"
+        note:
+          type: string
+          description: Fixed text on what these measurements can and cannot show.
+          const: >-
+            These OONI tests detect blocking of specific apps and sites. A general
+            network shutdown produces no measurements, so it cannot show up as an
+            anomaly here.
+    GoogleTransparencyRow:
+      type: object
+      required:
+        - requestor
+        - product
+        - reason
+        - number_of_requests
+        - items_requested_removal
+        - items_removed_legal
+        - items_removed_policy
+      properties:
+        requestor:
+          type: string
+        product:
+          type: string
+        reason:
+          type: string
+        number_of_requests:
+          type: integer
+        items_requested_removal:
+          type: integer
+        items_removed_legal:
+          type: integer
+        items_removed_policy:
+          type: integer
+    GoogleTransparencySupporting:
+      type: object
+      required: [kind, time_period, totals, rows]
+      properties:
+        kind:
+          const: google_transparency
+        time_period:
+          type: string
+          description: The half-year as Google labels it, e.g. "January - June 2024".
+        totals:
+          type: object
+          description: The four count fields summed over `rows`.
+          required:
+            - number_of_requests
+            - items_requested_removal
+            - items_removed_legal
+            - items_removed_policy
+          properties:
+            number_of_requests:
+              type: integer
+            items_requested_removal:
+              type: integer
+            items_removed_legal:
+              type: integer
+            items_removed_policy:
+              type: integer
+        rows:
+          type: array
+          description: Sorted by requestor, product, reason.
+          items:
+            $ref: "#/components/schemas/GoogleTransparencyRow"
     EvidenceCardResponse:
       type: object
       required: [snapshot_version, evidence]

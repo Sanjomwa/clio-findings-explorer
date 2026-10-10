@@ -42,6 +42,14 @@ CLIO's reason codes are not shown as descriptions of the bands. In particular, `
 - STABLE weeks with INSUFFICIENT_DATA confidence: "STABLE (insufficient data)".
 - No STABLE week is described as "all signals normal".
 
+### 4.2 What each evidence card leads with
+
+**ACLED.** The card leads with the number of conflict events recorded in the anchor week, all event types, set against the median of the 12 weeks before. It covers the anchor week (Saturday to Friday). It has no data only if the snapshot has no row for that week. ACLED is the classifier's own input, so the card says it is not independent corroboration.
+
+**OONI.** The card leads with the anomalous measurement rate of the one test that is furthest above its own 12-week baseline that week, and shows how many standard deviations that is. Ties go to the test name that comes first alphabetically. If no test has a baseline, the card shows no number and says so. It covers the anchor week, and has no data when the week has no OONI rows; OONI weekly signals cover only 2023-05-27 to 2025-06-28. The card never calls a value normal or significant. It carries a fixed note: these tests detect blocking of specific apps and sites, and a general network shutdown produces no measurements, so it cannot show up as an anomaly.
+
+**Google Transparency.** The card leads with the total removal requests in Google's government-requests report for Kenya for the half-year that contains the anchor week (January to June, or July to December), with no comparison figure. The period is half a year, not a week, and the card says so. It has no data when the snapshot has no rows for that half-year. It then says the snapshot has no rows for that period, never that there were zero requests; for periods before July 2012 it adds that the snapshot's Google data begins with July to December 2012.
+
 ## 5. Content
 
 Five anchor weeks are set. Three findings is the floor if the schedule slips; the README states the real number. The choices below follow a read-only check of CLIO's Kenya output on 2026-10-05 and the exported snapshot 2026-10-10.1; several differ from the original plan because the data did not support what the plan assumed.
@@ -74,7 +82,7 @@ Dropped from the plan: the 2010 constitutional referendum as a "true negative". 
 
 - **Source:** a one-time, human-run export of CLIO's materialized BigQuery output to `data/snapshot/`, with a `MANIFEST.json` recording, for every file, the source table, the exact SQL, the row count and the export time.
 - **Synthetic data is excluded.** The export refuses any source table that carries a synthetic flag column at all (a column whose name ends in `is_synthetic`), whatever its values. CLIO's Lumen-derived signal and its composite pressure score are not exported, stored or served.
-- **Storage:** PostgreSQL. Snapshot tables mirror the exported files (`regime_weeks`, `acled_signal_context`, `ooni_weekly_signals`, `google_transparency_requests`), with `snapshot_meta` and `snapshot_tables` holding the manifest. Curated content lives in `findings` and `finding_caveats`. Evidence-card storage is settled before the endpoints are built.
+- **Storage:** PostgreSQL. Snapshot tables mirror the exported files (`regime_weeks`, `acled_signal_context`, `ooni_weekly_signals`, `google_transparency_requests`), with `snapshot_meta` and `snapshot_tables` holding the manifest. Curated content lives in `findings` and `finding_caveats`. Evidence cards are computed at request time from the snapshot tables; there is no separate evidence table.
 - **Curated content** is separate from the snapshot. Titles, summaries, caveats, definitions and source notes are written by a person, live in `content/`, and are loaded by the same seed step. `data/snapshot/` holds only what CLIO exported.
 - **The manifest** records the exact SQL and export time for every file, and the API serves both, so any number can be traced to the query that produced it. It also records a synthetic-data audit: the source tables checked for synthetic flag columns and the result. The export fails if any source table has one.
 - **A finding with no caveat cannot exist.** This is enforced in the database and in the API models.

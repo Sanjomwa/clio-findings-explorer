@@ -247,3 +247,18 @@ A running record of the work coding agents do in this repository, appended after
   - `velocity_band` and `conversion_band` have no CHECK (the prompt listed none).
   - `uv sync` and the image build were slow on this network (first lock about 80 s).
   - Follow-up (doc-only): added `backend/tests/fixtures/README.md` and a sentence in `data/README.md` stating that the test fixtures carry the snapshot's third-party terms; unit tests re-run after.
+
+## 2026-10-11: Phase 1c-1, evidence-card contract (openapi.yaml v0.4.0)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Contract change only: fix the evidence-card shapes and derivation rules in `openapi.yaml` (0.3.0 to 0.4.0), update `product-spec.md` §4.2 and §6, move the MCP server test pin to 0.4.0, then STOP. No backend, frontend, snapshot or git writes.
+- **Produced:**
+  - `openapi.yaml`: `comparison`, `snapshot_files`, typed `supporting` (`AcledSupporting`, `OoniSupporting`, `GoogleTransparencySupporting` and row schemas), derivation rules in the three evidence operations' descriptions, snapshot-version example `2026-10-10.1`.
+  - `product-spec.md`: new §4.2, one sentence changed in §6.
+  - `mcp-server/tests/test_spec_lookup.py`: expected version 0.4.0.
+- **Verified:**
+  - Column names and null/type profile of the three snapshot tables read from the NDJSON files; they match the prompt.
+  - The ACLED 17-week window is 12 weeks before to 4 weeks after the anchor: a stdlib script showed five runs of 17 consecutive weeks, e.g. 2007-10-27 to 2008-02-16 for anchor 2008-01-19.
+  - Validator, MCP tests and hook tests: see the report.
+- **Not done / open:** the prompt did not define the 17-week window; the 12-before/4-after reading is inferred from the data. `x-provisional` now remains only on `SourceNote`.
+- **Follow-up:** Sam confirmed the 17-week window rule (12 weeks before, the anchor, 4 weeks after; `finding_anchors` in `MANIFEST.json`); stated it in `AcledSupporting.series`, renamed the MCP test to `test_version_is_0_4_0`, validator and MCP tests re-run.

@@ -13,8 +13,8 @@ def test_lists_eight_operations():
     assert ("GET", "/api/health") in {(o["method"], o["path"]) for o in r["operations"]}
 
 
-def test_version_is_0_3_0():
-    assert server.spec_lookup()["version"] == "0.3.0"
+def test_version_is_0_4_0():
+    assert server.spec_lookup()["version"] == "0.4.0"
 
 
 def test_path_filter():
