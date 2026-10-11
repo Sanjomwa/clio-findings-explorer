@@ -3,7 +3,16 @@
     "findings-explorer-tools": {
       "type": "stdio",
       "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PROJECT_DIR:-.}/mcp-server", "python", "server.py"]
+      "args": [
+        "run",
+        "--directory",
+        "${CLAUDE_PROJECT_DIR:-.}/mcp-server",
+        "python",
+        "server.py"
+      ],
+      "env": {
+        "FINDINGS_DB_URL": "${FINDINGS_DB_URL:-postgresql://clio:clio-local-only@127.0.0.1:55432/clio_findings}"
+      }
     }
   }
 }

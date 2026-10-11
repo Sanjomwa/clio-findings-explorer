@@ -51,4 +51,4 @@ def test_undeclared_method():
 def test_tool_registered():
     import asyncio
     tools = asyncio.run(server.mcp.list_tools())
-    assert [t.name for t in tools] == ["spec_lookup"]
+    assert sorted(t.name for t in tools) == sorted(["spec_lookup", "query_snapshot"])

@@ -1,11 +1,13 @@
 """findings-explorer-tools: read-only MCP server (stdio).
 
-One tool, `spec_lookup`, reads openapi.yaml at the repository root on every
-call. No file writes, no network. See mcp-server/README.md.
+Tool `spec_lookup` reads openapi.yaml at the repository root on every
+call. Tool `query_snapshot` runs one validated read query against the local database.
+See mcp-server/README.md.
 """
 
 from pathlib import Path
 
+import snapshot_query
 import yaml
 from mcp.server.fastmcp import FastMCP
 
@@ -114,6 +116,25 @@ def spec_lookup(path: str | None = None, method: str | None = None) -> dict:
     An undeclared path or method returns found=false and the declared paths.
     """
     return lookup(path, method)
+
+
+@mcp.tool()
+def query_snapshot(sql: str) -> dict:
+    """Run one read-only SQL query against the local snapshot database, to check a data claim.
+
+    Read-only: the query runs in a READ ONLY transaction under a NOLOGIN role that can only
+    SELECT, and is rolled back. Rejected before reaching the database (error returned): more
+    than one statement; anything but SELECT, a set operation of SELECTs, or WITH ... SELECT;
+    INSERT/UPDATE/DELETE/MERGE/CREATE/DROP/ALTER/TRUNCATE/COPY/GRANT anywhere (including in
+    CTEs); SELECT ... INTO; FOR UPDATE/SHARE; calls to pg_*, lo_*, dblink*, set_config,
+    query_to_xml, or current_setting with a second argument; anything the parser cannot read.
+    Statement timeout 5 s. At most 200 rows are returned: `truncated` is true when there were
+    more. Returns columns, rows, row_count and truncated, or {"error": ...}.
+
+    The result is evidence for checking a claim, not the claim itself: quote the exact query
+    you ran alongside any figure you take from it.
+    """
+    return snapshot_query.run(sql)
 
 
 if __name__ == "__main__":

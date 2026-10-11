@@ -16,7 +16,7 @@ A route's method and path must be in `openapi.yaml` before the router is written
 
 ## MCP server
 
-The project MCP server `findings-explorer-tools` ([mcp-server/README.md](../mcp-server/README.md)) has one tool, `spec_lookup`. It is read-only: it reads `openapi.yaml` and nothing else, writes no files and makes no network calls. Claude Code asks Sam to approve a project-scoped server before first use.
+The project MCP server `findings-explorer-tools` ([mcp-server/README.md](../mcp-server/README.md)) has two tools, both read-only. `spec_lookup` reads `openapi.yaml` and nothing else. `query_snapshot` runs one parser-checked read query against the local snapshot database: a `READ ONLY` transaction, a 5 s timeout, a 200-row cap, and `SET LOCAL ROLE snapshot_reader`, a no-login role with `SELECT` only (the local database user is a superuser, so the role, not the transaction, is what blocks server-file functions). Neither tool writes files. Claude Code asks Sam to approve a project-scoped server before first use.
 
 ## Network
 

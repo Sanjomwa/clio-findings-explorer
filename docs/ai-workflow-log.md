@@ -279,3 +279,27 @@ A running record of the work coding agents do in this repository, appended after
 - **`spec-first-guard`:** it did not block any router write during this build (all eight paths and methods were in the contract before the routers were written). It was not tested adversarially in this step; its own tests are in `agent-hooks/tests`.
 - **Not done / open:** see the report (contract points that were hard to implement as written).
 - **Follow-up (contract v0.4.1, commit `b738309`):** three contract fixes decided by Sam, in two steps. Step 1 (contract only): `/api/findings` ordered by curated position, ACLED prior-12-week medians nullable, 503 `Error` response on the seven non-health operations, MCP test pinned to 0.4.1; validator and MCP tests (7 passed) run, then stopped for Sam's commit. Step 2 (code): the `NO_SNAPSHOT` 503 response declared on the seven routers, app version 0.4.1, `backend/README.md` updated; added a unit test for the null-median case (anchor with no earlier weeks gives `comparison` null and null medians) and an integration test, validated against the contract, that each of the seven operations returns 503 `{"detail": "No snapshot is loaded."}` when `snapshot_meta` is empty. Verified: unit 45 passed, integration 65 passed, ruff clean. The running compose `backend` image was not rebuilt (only the declared version string and docs changed).
+
+## 2026-10-11: Phase 1c-3 Part A, the `query_snapshot` MCP tool
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Second tool `query_snapshot` in `findings-explorer-tools`: migration `0002_snapshot_reader_role`, sqlglot validation, read-only transaction under `SET LOCAL ROLE snapshot_reader`, 200-row cap, tests and docs; no endpoints, `openapi.yaml`, `ci.yml`, frontend or git writes. Part A only, then STOP.
+- **Produced:**
+  - `backend/alembic/versions/0002_snapshot_reader_role.py`; backend integration tests for the role and the downgrade; health test head expectation moved to `0002`.
+  - `mcp-server/snapshot_query.py`, the tool in `server.py`, dependencies `psycopg[binary]` and `sqlglot`, unit and integration tests, `integration` marker.
+  - `.mcp.json` `env` block; `mcp-server/README.md`, `docs/permissions.md`, `AGENTS.md` (rule 5 sentence, Commands rows) updated.
+- **Verified:** see the report. The `env` expansion source was checked by the planning side (Claude Code docs, "Environment variable expansion in .mcp.json"); two fetches by this session failed, a third by `curl` returned the same section.
+- **Decisions and deviations:** the query runs through a server-side cursor (bounded memory, Postgres itself refuses a second statement). The downgrade drops the role only if no other database depends on it (roles are cluster-wide). `mcp-server/README.md` still said version 0.3.0 and one tool; corrected.
+
+## 2026-10-11: Phase 1c-3 Part B, live demo of `query_snapshot`
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** With the Part A changes left untouched and uncommitted, confirm `findings-explorer-tools` is connected with two tools, call `query_snapshot` through MCP four times (regime count, `DELETE`, `pg_read_file`, `SELECT *`), write `security/mcp-demos/query-snapshot.md`, append this entry, then STOP. No git writes and no edits to any Part A file other than this log.
+- **Produced:** `security/mcp-demos/query-snapshot.md`; this entry.
+- **Verified:**
+  - `git status --short` showed the Part A changes present before and after.
+  - `claude mcp list`: `findings-explorer-tools` ✔ Connected; the session exposed `spec_lookup` and `query_snapshot`.
+  - Regime counts STABLE 1341, ESCALATION 123, CRISIS 27, CONFLICT 21, MOBILISATION 11 (as expected).
+  - `DELETE FROM findings` and `SELECT pg_read_file('PG_VERSION')` were rejected by the parser with an error.
+  - `SELECT * FROM regime_weeks` returned `row_count` 200, `truncated` true, 22 columns. The response was too large for the client, so the fields were read from the saved output file with `jq`.
+- **Not done / open:** the live demo does not show Postgres itself refusing the same statements; that is covered by the Part A integration tests.

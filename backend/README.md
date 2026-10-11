@@ -9,6 +9,7 @@ The Postgres 16 schema (SQLAlchemy 2.0 models, Alembic migrations), the seed ste
 ```
 pyproject.toml  uv.lock  .python-version  Dockerfile  alembic.ini
 alembic/versions/0001_initial_schema.py   the schema of record, including the caveat trigger
+alembic/versions/0002_snapshot_reader_role.py   NOLOGIN read-only role for the MCP query_snapshot tool
 app/db/        base.py, models.py (typed models mirroring the migration), session.py
 app/main.py    create_app(); routers carry full literal paths (no include_router prefix)
 app/routers/   health, timeline, findings, evidence, methodology (+ common helpers)

@@ -26,7 +26,7 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 2. **Spec first.** A route's method and path must exist in `openapi.yaml` before the router is written or changed. To change the API, edit `openapi.yaml` first and stop so Sam can commit that edit separately, then regenerate `frontend/src/api/schema.d.ts`, then change the backend models and tests. Routers use literal paths (and a literal `APIRouter` prefix, if any) so `spec-first-guard` can check them.
 3. **One place for HTTP in the frontend.** Every backend call goes through `frontend/src/api/client.ts`. No `fetch` anywhere else.
 4. **Diagnose before fixing.** When something fails, find and state the cause, with the evidence, before changing code. Do not stack speculative fixes.
-5. **No unverified factual claims.** Any statement about the data (a count, a date, a classification) must come from a query against the snapshot, and the query goes in your report. "It should be" is not a source.
+5. **No unverified factual claims.** Any statement about the data (a count, a date, a classification) must come from a query against the snapshot, and the query goes in your report. "It should be" is not a source. Inside Claude Code, use `query_snapshot` to run the query and quote it.
 6. **No causation or targeting claims.** A conflict-event spike and a network anomaly in the same week are a correlation. Never write that one caused the other or that anyone was targeted, in code, fixtures, prose or tests.
 7. **Docs change in the same change.** If a change alters behaviour that `README.md`, `product-spec.md`, `openapi.yaml` or anything in `docs/` describes, update that document in the same piece of work.
 8. **Stop at stop points.** When a prompt says STOP, stop and report. Do not continue to the next step on your own judgment.
@@ -64,12 +64,13 @@ Commands are added here when they exist and have been run successfully. Do not a
 |---|---|
 | Validate the API contract as OpenAPI 3.1 | `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` |
 | Run the hook tests (git guard and spec-first guard) | `python3 -m unittest discover -s agent-hooks/tests -v` |
-| Run the MCP server tests | `uv run --directory mcp-server pytest -v` |
+| Run the MCP server tests (integration tests need the seeded db; otherwise skipped) | `uv run --directory mcp-server pytest -v` |
 | Run the snapshot export tests (fake bq, fixtures only) | `python3 -m unittest discover -s ops/tests -v` |
 | Start the local database | `docker compose up -d db` |
 | Seed (migrate, then load snapshot and content), then exit | `docker compose run --rm seed` |
 | Start db, seed and the API (`127.0.0.1:8000`; leaves them running) | `docker compose up -d --build` |
 | Check the API is up | `curl -s localhost:8000/api/health` |
+| Apply migrations to the dev database (rebuild the image first if a migration is new) | `docker compose build seed && docker compose run --rm seed` |
 | Run the backend unit tests | `uv run --directory backend pytest tests/unit -v` |
 | Run the backend integration tests (db running; `DATABASE_URL` set as in `backend/README.md`) | `uv run --directory backend pytest tests/integration -v` |
 

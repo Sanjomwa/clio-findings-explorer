@@ -74,7 +74,7 @@ def test_health_ok(client):
     assert r.status_code == 200
     assert body["status"] == "ok" and body["database"] == "reachable"
     assert body["snapshot_version"] == VERSION
-    assert body["migration_head"] == "0001"
+    assert body["migration_head"] == "0002"
     assert body["row_counts"]["regime_weeks"] == 1523
     assert body["row_counts"]["acled_signal_context"] == 85
     assert body["row_counts"]["ooni_weekly_signals"] == 550
