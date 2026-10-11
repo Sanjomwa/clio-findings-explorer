@@ -303,3 +303,12 @@ A running record of the work coding agents do in this repository, appended after
   - `DELETE FROM findings` and `SELECT pg_read_file('PG_VERSION')` were rejected by the parser with an error.
   - `SELECT * FROM regime_weeks` returned `row_count` 200, `truncated` true, 22 columns. The response was too large for the client, so the fields were read from the saved output file with `jq`.
 - **Not done / open:** the live demo does not show Postgres itself refusing the same statements; that is covered by the Part A integration tests.
+
+## 2026-10-11: Phase 1d, CI workflow
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** One GitHub Actions workflow running every existing suite, validated locally, plus docs. No deploy, Schemathesis, frontend, app-code change or git write.
+- **Stopped once, then continued:** at the lint gate `ruff@0.17.0` found 3 / 10 / 24 findings in `mcp-server` / `agent-hooks` / `ops` because only `backend` had a ruff config. Sam decided: root `ruff.toml` with backend's selection, pinned to the `backend/uv.lock` version (0.17.0), safe `--fix` only, per-file ignores for the 21 leftovers (more than 15). This is the one explicit exception to "no app code changes", for lint only.
+- **Produced:** `.github/workflows/ci.yml` (six jobs), `ruff.toml`, safe lint fixes in `ops/export_snapshot.py` and `ops/tests/test_export_snapshot.py` (import and annotation modernisation only), `docs/ci.md`, two `AGENTS.md` Commands rows. No dependency changes (`pytest-cov` is added at run time with `--with`, not to the dev group, so `uv.lock` is untouched).
+- **Verified:** suite counts before and after the lint change were identical (hooks 69, ops 53, backend unit 45, backend integration 67, MCP 54). actionlint 1.7.7 clean. The integration steps were reproduced against a throwaway Postgres on port 55433 (migrate, seed, 67 integration tests at 93% coverage, 54 MCP tests with no SKIPPED). The compose-smoke checks were run against the already-running dev stack after `docker compose up -d --build` (no `down`). The SKIPPED guard was checked against a dead database (9 SKIPPED lines).
+- **Not done:** no `act` run; the first real run is on GitHub after Sam pushes.

@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Local-only placeholder values from .env.example for throwaway containers; not secrets.
+  POSTGRES_USER: clio
+  POSTGRES_PASSWORD: clio-local-only
+  POSTGRES_DB: clio_findings
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      # ruff version = the one pinned in backend/uv.lock; config is the root ruff.toml.
+      - run: uvx ruff@0.17.0 check backend mcp-server agent-hooks ops
+
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uvx openapi-spec-validator --schema 3.1.0 openapi.yaml
+
+  hooks-and-ops:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      # The spec-first guard imports PyYAML; the tests spawn the hooks with sys.executable.
+      - name: Hook tests
+        run: uv run --no-project --with pyyaml python -m unittest discover -s agent-hooks/tests -v
+      - name: Snapshot export tests
+        run: uv run --no-project --with pyyaml python -m unittest discover -s ops/tests -v
+
+  backend-unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      # Coverage is reported, not enforced.
+      - run: uv run --directory backend --with pytest-cov pytest tests/unit -v --cov=app --cov-report=term-missing
+
+  integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clio -d clio_findings"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://clio:clio-local-only@localhost:5432/clio_findings
+      FINDINGS_DB_URL: postgresql://clio:clio-local-only@localhost:5432/clio_findings
+      SNAPSHOT_DIR: ${{ github.workspace }}/data/snapshot
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: |
+            backend/uv.lock
+            mcp-server/uv.lock
+      - name: Migrate
+        run: uv run --directory backend alembic upgrade head
+      - name: Seed
+        run: uv run --directory backend python -m app.seed
+      - name: Backend integration tests
+        run: uv run --directory backend --with pytest-cov pytest tests/integration -v --cov=app --cov-report=term
+      - name: MCP server tests (unit and integration)
+        # The integration tests skip silently when the database is unreachable, so a
+        # skip here must fail the step.
+        run: |
+          set -o pipefail
+          uv run --directory mcp-server pytest -v -rs | tee mcp-pytest.log
+          if grep -q SKIPPED mcp-pytest.log; then
+            echo "::error::MCP tests were skipped; the seeded database was not used"
+            exit 1
+          fi
+
+  compose-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Create .env from the placeholder template
+        run: cp .env.example .env
+      - name: Build and start the stack
+        run: |
+          docker compose up -d --build
+          for i in $(seq 1 36); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q backend)" 2>/dev/null || true)
+            echo "backend health: ${status:-unknown} (attempt $i)"
+            [ "$status" = "healthy" ] && exit 0
+            sleep 5
+          done
+          echo "::error::backend did not become healthy within 3 minutes"
+          exit 1
+      - name: Check the API
+        run: |
+          curl -fsS localhost:8000/api/health | tee health.json
+          curl -fsS localhost:8000/api/timeline -o timeline.json
+          python3 - <<'PY'
+          import json
+          manifest = json.load(open("data/snapshot/MANIFEST.json"))
+          health = json.load(open("health.json"))
+          timeline = json.load(open("timeline.json"))
+          assert health["snapshot_version"] == manifest["version"], (health["snapshot_version"], manifest["version"])
+          assert len(timeline["weeks"]) == 1523, len(timeline["weeks"])
+          print("ok:", health["snapshot_version"], len(timeline["weeks"]), "weeks")
+          PY
+      - name: Compose logs (on failure)
+        if: failure()
+        run: docker compose logs
+      - name: Tear down (throwaway runner)
+        if: always()
+        run: docker compose down -v

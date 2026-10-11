@@ -73,6 +73,8 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Apply migrations to the dev database (rebuild the image first if a migration is new) | `docker compose build seed && docker compose run --rm seed` |
 | Run the backend unit tests | `uv run --directory backend pytest tests/unit -v` |
 | Run the backend integration tests (db running; `DATABASE_URL` set as in `backend/README.md`) | `uv run --directory backend pytest tests/integration -v` |
+| Lint all Python (the CI lint job) | `uvx ruff@0.17.0 check backend mcp-server agent-hooks ops` |
+| Lint the CI workflow | `docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.7 -color` |
 
 ## Repository layout (target)
 

@@ -16,7 +16,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from unittest import mock
 
@@ -164,7 +164,7 @@ class TestDefaults(ExportTestCase):
         code, _, stderr = self.run_export(version=None)
         self.assertEqual(code, 0, stderr)
         manifest = json.loads((self.out / "MANIFEST.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["version"], datetime.now(timezone.utc).date().isoformat() + ".1")
+        self.assertEqual(manifest["version"], datetime.now(UTC).date().isoformat() + ".1")
 
     def test_existing_empty_out_is_filled(self):
         self.out.mkdir()

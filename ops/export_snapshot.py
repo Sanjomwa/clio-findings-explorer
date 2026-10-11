@@ -38,9 +38,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from collections.abc import Callable, Sequence
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Callable, Optional, Sequence
 
 # --- Finding windows ---------------------------------------------------------
 
@@ -447,7 +447,7 @@ def attribution(acled_access_date: str) -> dict:
 _TABLE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$")
 
 
-def denied_term(text: str) -> Optional[str]:
+def denied_term(text: str) -> str | None:
     lowered = text.lower()
     for term in DENY_TERMS:
         if term in lowered:
@@ -475,7 +475,7 @@ def check_static(exports: Sequence[Export]) -> None:
 # --- --out -------------------------------------------------------------------
 
 
-def find_worktree(path: Path) -> Optional[Path]:
+def find_worktree(path: Path) -> Path | None:
     """The nearest directory at or above `path` that holds a .git entry."""
     for candidate in (path, *path.parents):
         if (candidate / ".git").exists():
@@ -488,7 +488,7 @@ _SCRIPT_REPO = Path(__file__).resolve().parents[1]
 REPO_ROOT = _SCRIPT_REPO if (_SCRIPT_REPO / ".git").exists() else None
 
 
-def check_out_dir(out: Path, repo_root: Optional[Path] = REPO_ROOT) -> Path:
+def check_out_dir(out: Path, repo_root: Path | None = REPO_ROOT) -> Path:
     """Resolve --out and refuse it unless it is safe to write. Writes nothing."""
     out = out.expanduser().resolve()
     tree = find_worktree(out)
@@ -548,7 +548,7 @@ def _cast_timestamp(value) -> str:
         raise _CastError
     if isinstance(value, (int, float)) or (isinstance(value, str) and _NUMBER_RE.match(value.strip())):
         # Epoch seconds.
-        moment = datetime.fromtimestamp(float(value), tz=timezone.utc)
+        moment = datetime.fromtimestamp(float(value), tz=UTC)
     elif isinstance(value, str):
         text = value.strip()
         if text.endswith(" UTC"):
@@ -566,10 +566,10 @@ def _cast_timestamp(value) -> str:
         if moment.tzinfo is None:
             # The schema check guarantees a TIMESTAMP column, which BigQuery
             # renders in UTC.
-            moment = moment.replace(tzinfo=timezone.utc)
+            moment = moment.replace(tzinfo=UTC)
     else:
         raise _CastError
-    return moment.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return moment.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def cast_value(value, kind: str):
@@ -755,11 +755,11 @@ def _human_bytes(n: int) -> str:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def default_snapshot_version() -> str:
-    return datetime.now(timezone.utc).date().isoformat() + ".1"
+    return datetime.now(UTC).date().isoformat() + ".1"
 
 
 def _write_json_lines(path: Path, rows: list[dict]) -> None:
@@ -857,7 +857,7 @@ def _iso_date(text: str) -> str:
         value = date.fromisoformat(text)
     except ValueError:
         raise argparse.ArgumentTypeError(f"not a valid date: {text!r}") from None
-    if value > datetime.now(timezone.utc).date():
+    if value > datetime.now(UTC).date():
         raise argparse.ArgumentTypeError(f"date is in the future: {text}")
     return text
 
@@ -868,7 +868,7 @@ def _snapshot_version(text: str) -> str:
     return text
 
 
-def parse_args(argv: Optional[Sequence[str]]) -> argparse.Namespace:
+def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Export a CLIO snapshot from BigQuery (run by Sam only; see ops/README.md).",
     )
@@ -884,8 +884,8 @@ def parse_args(argv: Optional[Sequence[str]]) -> argparse.Namespace:
 
 
 def main(
-    argv: Optional[Sequence[str]] = None,
-    runner: Optional[Runner] = None,
+    argv: Sequence[str] | None = None,
+    runner: Runner | None = None,
     exports: Sequence[Export] = EXPORTS,
 ) -> int:
     args = parse_args(argv)

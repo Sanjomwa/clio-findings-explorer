@@ -1,0 +1,20 @@
+# Shared lint config for backend/, mcp-server/, agent-hooks/ and ops/.
+# Same selection, line length and target as backend/pyproject.toml [tool.ruff]
+# (backend's own section is kept and takes precedence for files under backend/).
+line-length = 100
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[lint.per-file-ignores]
+"**/tests/**" = ["E501"]
+# Existing long lines (hook messages, docstrings, export SQL/text) in non-backend code;
+# reflowing them is churn with no behaviour benefit.
+"agent-hooks/*.py" = ["E501"]
+"ops/*.py" = ["E501"]
+# Fail-closed hook: re-raised errors deliberately carry a fixed user-facing message.
+"agent-hooks/spec_first_guard.py" = ["B904"]
+# zip() over equal-length sequences by construction; adding strict= is a behaviour edit.
+"ops/export_snapshot.py" = ["B905"]
+"ops/tests/test_export_snapshot.py" = ["B905"]
