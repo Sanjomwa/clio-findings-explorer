@@ -18,6 +18,10 @@ A route's method and path must be in `openapi.yaml` before the router is written
 
 The project MCP server `findings-explorer-tools` ([mcp-server/README.md](../mcp-server/README.md)) has two tools, both read-only. `spec_lookup` reads `openapi.yaml` and nothing else. `query_snapshot` runs one parser-checked read query against the local snapshot database: a `READ ONLY` transaction, a 5 s timeout, a 200-row cap, and `SET LOCAL ROLE snapshot_reader`, a no-login role with `SELECT` only (the local database user is a superuser, so the role, not the transaction, is what blocks server-file functions). Neither tool writes files. Claude Code asks Sam to approve a project-scoped server before first use.
 
+## Subagent: `evidence-reviewer`
+
+The reviewer ([custom-agent/evidence-reviewer/README.md](../custom-agent/evidence-reviewer/README.md)) is read-only by allowlist. Its `tools` are `mcp__findings-explorer-tools__query_snapshot`, `Read`, `Grep` and `Glob`; it has no `Write`, `Edit`, `Bash`, `WebFetch` or `WebSearch`, so it cannot change a draft, a finding or the snapshot, and it cannot fetch a cited source. It returns a verdict table and a separate step (`/new-finding`) applies it. `backend/tests/unit/test_agent_sync.py` fails if the allowlist in the canonical file changes or the `.claude/agents/` copy drifts.
+
 ## Network
 
 Package installs from PyPI and npm are allowed, as is reading public documentation. The agent makes no calls to BigQuery, other GCP APIs or any CLIO endpoint, and has no deploy credentials.

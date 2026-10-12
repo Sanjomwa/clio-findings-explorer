@@ -1,0 +1,5 @@
+# Test-only fixture: deliberately contains wording the content-language check must reject.
+slug: fixture-bad
+summary_md: >-
+  The network anomalies were caused by the protests, and the platform was
+  targeted in retaliation.

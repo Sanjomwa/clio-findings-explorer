@@ -312,3 +312,34 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** `.github/workflows/ci.yml` (six jobs), `ruff.toml`, safe lint fixes in `ops/export_snapshot.py` and `ops/tests/test_export_snapshot.py` (import and annotation modernisation only), `docs/ci.md`, two `AGENTS.md` Commands rows. No dependency changes (`pytest-cov` is added at run time with `--with`, not to the dev group, so `uv.lock` is untouched).
 - **Verified:** suite counts before and after the lint change were identical (hooks 69, ops 53, backend unit 45, backend integration 67, MCP 54). actionlint 1.7.7 clean. The integration steps were reproduced against a throwaway Postgres on port 55433 (migrate, seed, 67 integration tests at 93% coverage, 54 MCP tests with no SKIPPED). The compose-smoke checks were run against the already-running dev stack after `docker compose up -d --build` (no `down`). The SKIPPED guard was checked against a dead database (9 SKIPPED lines).
 - **Not done:** no `act` run; the first real run is on GitHub after Sam pushes.
+
+## 2026-10-12: Phase 2a Part A, evidence-reviewer, /new-finding, content/
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Build the `evidence-reviewer` subagent, the `/new-finding` workflow, the `content/` folder and formats, move the content mount into `docker-compose.yml`, add two content checks and docs; no real findings or methodology text, frontend, `openapi.yaml`, deployment or git writes. Part A only, then STOP.
+- **Produced:**
+  - `content/` (`findings/`, `drafts/`, `README.md`), `docs/reviews/.gitkeep`.
+  - `custom-agent/evidence-reviewer/{evidence-reviewer.md,README.md}` and the copy `.claude/agents/evidence-reviewer.md` (tools: `query_snapshot`, `Read`, `Grep`, `Glob`; model `opus`).
+  - `agent-capabilities/{new-finding.md,README.md}` and the copy `.claude/commands/new-finding.md`.
+  - `docker-compose.yml` content mount for `seed` and `backend`; `docker-compose.content.yml` deleted; `backend/README.md` updated.
+  - Unit tests `test_content_language.py`, `test_content_reviewed.py`, `test_agent_sync.py` with fixtures in `backend/tests/fixtures/{content_language,content_reviews}/` (33 new tests).
+  - `AGENTS.md` data rule, `docs/permissions.md` subagent section.
+- **Verified:** Claude Code docs for subagents and skills fetched and quoted in the report (symlinks are documented only for skill directories, so copies plus a sync test). Backend unit 78 passed, hooks 69, ops 53, MCP 45 passed and 9 skipped, ruff clean. The four workflow queries were parsed with the MCP server's `validate()`.
+- **Not verified at first:** Docker Desktop's daemon was not reachable from this WSL distro, so the database-dependent checks waited for a follow-up.
+- **Follow-up verification (Docker running):**
+  - `docker compose up -d --build`: seed reported `findings loaded: 0`; `/api/health` returned `status: ok`, snapshot `2026-10-10.1`, migration head `0002`, 0 findings.
+  - The four workflow queries run through `query_snapshot` for 2024-06-22: regime CRISIS, HIGH confidence, transition detected (protest SEVERE, violence ELEVATED, suppression SEVERE); ACLED 167 events, 56 fatalities, prior-12-week median 55.0 events (11.5 fatalities, 12 prior weeks); OONI 5 tests, highest anomalous rate and count whatsapp (48 of 1217, 0.0394), then telegram, signal, dnscheck and psiphon at zero; Google January - June 2024: 9 requests, 12 items requested for removal, 0 removed legal, 2 removed policy.
+  - Suites with the database up: backend integration 67 passed, MCP 54 passed (no skips), backend unit 78, hooks 69, ops 53, ruff clean.
+- **Fix after review:** Q3 in `agent-capabilities/new-finding.md` (and its `.claude/commands/` copy) ranked OONI tests by raw rate, so `whatsapp` came first. The contract (`getOoniEvidence`) picks the highest non-null `anomalous_zscore_12w`, ties broken by `test_name`. Q3 now selects both z-scores, orders by `anomalous_zscore_12w DESC NULLS LAST, test_name`, and the workflow states the rule. Re-run for 2024-06-22: signal first (z 1.2371), then whatsapp 0.9337, telegram 0.7691, psiphon 0.0, dnscheck -0.4149. The earlier follow-up bullet above that called whatsapp the top test is superseded by this.
+- **Prompt discrepancies:** `AGENTS.md` and `docs/ci.md` did not reference `docker-compose.content.yml` (only `backend/README.md` did); older log entries still mention it as history and were left.
+
+## 2026-10-12: Phase 2a Part B, /new-finding demo
+
+- **Agent:** Claude Code, Claude Sonnet 5.5 (session); `evidence-reviewer` subagent configured as `opus`.
+- **Task as given:** Confirm the subagent and command are registered and check `--debug` for unrecognised frontmatter; create a throwaway flawed draft for 2024-06-22; run `/new-finding demo-bad-finding` and expect a STOP; record the demo in `docs/agent-extension-demos/new-finding.md`; delete the draft and its review log. No reviewer or workflow edits, no git writes.
+- **Produced:** `docs/agent-extension-demos/new-finding.md`. The draft and `docs/reviews/demo-bad-finding.md` were created and then deleted, as instructed.
+- **Result:** the reviewer returned 4 VERIFIED, 1 CORRECTED (median 80 -> 55.0, 12 prior weeks), 1 UNSUPPORTED (causal sentence), 1 EXTERNAL with no source. Every expected verdict appeared. The workflow stopped at step 6 on the UNSUPPORTED row; `content/findings/` held only `.gitkeep`.
+- **Verified:** the four step-3 queries ran through `query_snapshot` (167 events, prior median 55.0, signal top OONI test by z-score). `git status --short` after deletion shows neither demo file.
+- **Not verified:** the `--debug` output is not visible from inside the session, so unrecognised-frontmatter warnings were not checked. `/agents` in this Claude Code version prints "The /agents wizard has been removed.", so registration was confirmed from the session's agent list and the file frontmatter, not from `/agents`. Sam's later debug-log check found no unrecognised-frontmatter warning; see "Post-run checks" in `docs/agent-extension-demos/new-finding.md`.
+- **Observation:** step 2 of the workflow says `sources` may be empty only if the draft makes no real-world event statement, which a mechanical shape check cannot judge. The demo draft has `sources: []` and a real-world claim, and reached the reviewer, which flagged it as EXTERNAL NO SOURCE. The wording may need tightening; the workflow was not changed.
+- **Follow-up:** the step 2 `sources` wording in `agent-capabilities/new-finding.md` (and its `.claude/commands/` copy) was tightened as Sam directed: `sources` must be a list, possibly empty, and whether real-world statements have sources is left to the reviewer's EXTERNAL rule. This supersedes the observation above.

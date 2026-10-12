@@ -38,6 +38,7 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 - Nothing flagged synthetic enters the snapshot, the database, the curated content or the UI. The export enforces this strictly: it refuses any source table that carries a synthetic flag column at all (any column whose name ends in `is_synthetic`), whatever its values, and the manifest's synthetic-data audit records the tables checked and the result. CLIO's Lumen-derived signal and its composite pressure score are excluded entirely.
 - One exception, for tests only: fixtures under `ops/tests/` may contain an obviously fake synthetic flag column, to prove the export refuses it.
 - **Curated content is separate from the snapshot.** Text written by a person (finding titles, summaries, caveats, teasers, regime-state and band definitions, source notes) lives in `content/`, is committed, and is loaded by the same seed step. The agent may draft it; every factual claim in it follows rule 5.
+- Findings enter `content/findings/` only through `/new-finding`, and each needs a verdict log in `docs/reviews/`.
 - A finding with zero caveats is invalid. Keep the database constraint and the model validator that enforce this.
 
 ## Secrets and network

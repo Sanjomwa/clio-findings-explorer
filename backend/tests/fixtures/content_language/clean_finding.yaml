@@ -1,0 +1,6 @@
+# Test-only fixture: neutral wording, including words that merely contain deny-list stems.
+slug: fixture-clean
+summary_md: >-
+  167 conflict events were recorded in the week. A network anomaly was observed in
+  the same week. The two are a correlation; the data does not show why either happened.
+  The caused-by-nothing label is a hyphenated stem and the word pulled-to is not led-to.

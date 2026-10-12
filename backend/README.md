@@ -41,12 +41,11 @@ From the repo root, with `.env` copied from `.env.example`:
 ```bash
 docker compose up -d db                  # Postgres on 127.0.0.1:55432
 docker compose run --rm seed             # alembic upgrade head, then python -m app.seed, then exit
-docker compose -f docker-compose.yml -f docker-compose.content.yml run --rm seed   # once content/ exists
 ```
 
 Seed behaviour: verifies every manifest file (sha256, line count, no unlisted files) before touching the
 database, then loads in one transaction. A second run prints `snapshot already loaded`. Without `content/`
-it prints `no content/ directory: 0 findings`. Content files in `content/findings/<slug>.yaml` are validated
+it prints `no content/ directory: 0 findings`; compose mounts `content/` read-only into `seed` and `backend`. Content files in `content/findings/<slug>.yaml` are validated
 strictly (see `app/seed/content.py`).
 
 ## Run the API
