@@ -343,3 +343,11 @@ A running record of the work coding agents do in this repository, appended after
 - **Not verified:** the `--debug` output is not visible from inside the session, so unrecognised-frontmatter warnings were not checked. `/agents` in this Claude Code version prints "The /agents wizard has been removed.", so registration was confirmed from the session's agent list and the file frontmatter, not from `/agents`. Sam's later debug-log check found no unrecognised-frontmatter warning; see "Post-run checks" in `docs/agent-extension-demos/new-finding.md`.
 - **Observation:** step 2 of the workflow says `sources` may be empty only if the draft makes no real-world event statement, which a mechanical shape check cannot judge. The demo draft has `sources: []` and a real-world claim, and reached the reviewer, which flagged it as EXTERNAL NO SOURCE. The wording may need tightening; the workflow was not changed.
 - **Follow-up:** the step 2 `sources` wording in `agent-capabilities/new-finding.md` (and its `.claude/commands/` copy) was tightened as Sam directed: `sources` must be a list, possibly empty, and whether real-world statements have sources is left to the reviewer's EXTERNAL rule. This supersedes the observation above.
+
+## 2026-10-12: Phase 2b-1 Part A, `citations` contract (v0.5.0)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Part A only: change the contract from v0.4.1 to v0.5.0 with a new required `citations` array on `FindingDetail` (public sources for real-world event statements, distinct from the data-source `sources`), update the MCP version pin and `product-spec.md` §4, then STOP so Sam can commit the contract. No implementation, no git writes.
+- **Produced:** `openapi.yaml` (version 0.5.0, status note, schema `Citation`, `citations` required on `FindingDetail`, cross-referencing descriptions on `sources` and `citations`; `FindingSummary` untouched), one sentence in `product-spec.md` §4 item 2, the expected version in `mcp-server/tests/test_spec_lookup.py`.
+- **Verified:** `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` reported OK. MCP tests: 45 passed, 9 skipped (integration tests skipped, database not running).
+- **Not done (Part B):** the `0.4.1` strings in `backend/app/main.py`, `backend/README.md` and `mcp-server/README.md`, and everything else in the implementation.

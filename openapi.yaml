@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: CLIO Findings Explorer API
-  version: 0.4.1
+  version: 0.5.0
   summary: Read-only API for curated Kenya civil-liberties findings.
   description: |
     Contract for the CLIO Findings Explorer backend. This file is hand-authored and is the
@@ -10,6 +10,9 @@ info:
 
     All endpoints are read-only and need no authentication. Data comes from a versioned,
     committed snapshot of CLIO output loaded into Postgres. The API never calls BigQuery.
+
+    v0.5.0 (2026-10-12): `FindingDetail` gains a required `citations` array, the public sources
+    for a finding's real-world event statements; `sources` is unchanged.
 
     Status of this version (v0.4.1, 2026-10-11, after snapshot 2026-10-10.1; changes from
     v0.4.0: `/api/findings` is ordered by curated position, the ACLED prior-12-week medians
@@ -483,6 +486,22 @@ components:
         caveat_md:
           type: string
           description: Markdown text of the caveat.
+    Citation:
+      type: object
+      required: [claim, citation, url]
+      properties:
+        claim:
+          type: string
+          minLength: 1
+          description: The exact sentence or phrase in the finding that the citation supports.
+        citation:
+          type: string
+          minLength: 1
+          description: Publisher, title and date, as one string.
+        url:
+          type: string
+          format: uri
+          pattern: "^https://"
     SourceRef:
       type: object
       required: [source, name, provenance_note]
@@ -510,6 +529,7 @@ components:
         - summary_md
         - caveats
         - sources
+        - citations
         - evidence_available
         - published_at
       properties:
@@ -540,8 +560,20 @@ components:
             $ref: "#/components/schemas/Caveat"
         sources:
           type: array
+          description: |
+            The data sources behind the evidence cards, with attribution. Distinct from
+            `citations`, which lists public sources for real-world event statements.
           items:
             $ref: "#/components/schemas/SourceRef"
+        citations:
+          type: array
+          description: |
+            Public sources for the finding's real-world event statements, one per supported
+            claim, in the order the claims appear. Distinct from `sources`, which lists the
+            data sources behind the evidence cards. May be empty when the finding makes no
+            real-world event statement.
+          items:
+            $ref: "#/components/schemas/Citation"
         evidence_available:
           type: array
           description: |

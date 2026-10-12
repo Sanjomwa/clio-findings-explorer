@@ -27,7 +27,7 @@ Every number on screen comes from a versioned snapshot of CLIO output that is co
 ## 4. Expected behaviour
 
 1. A visitor lands on a **timeline** of classified weeks for Kenya, 1,523 weeks from 1997-01-11 to 2026-03-14. Weeks are coloured by regime state. Weeks that have a curated finding are highlighted.
-2. Clicking a highlighted week opens the **finding** page: title, state and confidence badges, summary, the limitations box, then three evidence cards that load independently. The finding page also shows the week's three family bands (protest, violence, suppression), shown as they are.
+2. Clicking a highlighted week opens the **finding** page: title, state and confidence badges, summary, the limitations box, then three evidence cards that load independently. The finding page also shows the week's three family bands (protest, violence, suppression), shown as they are. It also lists the public sources for the finding's real-world event statements; these are separate from the data-source attribution on the evidence cards.
 3. Each **evidence card** shows one headline number, the supporting detail for that source, the period the numbers cover, and a provenance note. Sources do not all report weekly: where a source reports per half-year, the card shows that longer period and says so. If a source has no data for the window (for example, the week predates the source), the card is still shown and says so plainly. The API returns it with `has_data: false`; 404 means only that the finding does not exist.
 4. A **findings list** shows all curated findings with a one-line teaser each.
 5. A **methodology** page explains the regime states, the confidence levels, the family bands, each source's limits, and the snapshot version and export date.
