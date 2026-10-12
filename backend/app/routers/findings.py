@@ -11,6 +11,7 @@ from app.evidence.service import SOURCES, build_card
 from app.routers.common import NO_SNAPSHOT, SlugPath, get_finding_or_404
 from app.schemas import (
     Caveat,
+    Citation,
     FindingDetail,
     FindingDetailResponse,
     FindingListResponse,
@@ -98,6 +99,7 @@ def get_finding(slug: SlugPath, session: Annotated[Session, Depends(get_session)
             summary_md=finding.summary_md,
             caveats=[Caveat(severity=c.severity, caveat_md=c.caveat_md) for c in caveats],
             sources=[_source_ref(s, snapshot.attribution, snapshot.version) for s in SOURCES],
+            citations=[Citation(**c) for c in finding.citations],
             evidence_available=available,
             published_at=finding.published_at,
         ),

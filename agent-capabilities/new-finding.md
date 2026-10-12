@@ -15,13 +15,13 @@ Read `content/drafts/<slug>.yaml`. If it does not exist, STOP. If `content/findi
 
 ## 2. Validate the shape
 
-The draft is the finding format (`slug`, `week_start_date`, `iso2`, `position`, `title`, `teaser`, `summary_md`, `published_at`, `caveats`) plus a required `sources` list. Check, and STOP on the first failure:
+The draft is the finding format (`slug`, `week_start_date`, `iso2`, `position`, `title`, `teaser`, `summary_md`, `published_at`, `caveats`) with a required `citations` list. Check, and STOP on the first failure:
 
-- exactly those ten keys, no others;
+- exactly those ten keys, no others (a `sources` key is the old name of `citations`: STOP and say to rename it);
 - `slug` equals `<slug>`; `week_start_date` is `YYYY-MM-DD`; `published_at` is an ISO 8601 timestamp with a timezone; `position` is an integer >= 1 not used by another file in `content/findings/`; `iso2` is `KE`;
 - `title`, `teaser`, `summary_md` are non-blank strings;
 - `caveats` has at least one item, each exactly `{severity, caveat_md}` with severity `limitation` or `do_not_conclude`;
-- `sources` must be present and be a list (it may be empty). Each item, if any, has `claim`, `citation` and an `https` `url`. Whether every real-world event statement has a source is not a shape check; the reviewer's EXTERNAL rule enforces it and the workflow stops on EXTERNAL NO SOURCE.
+- `citations` must be present and be a list (it may be empty). Each item, if any, is exactly `{claim, citation, url}` with all three non-blank and `url` starting with `https://`. Whether every real-world event statement has a source is not a shape check; the reviewer's EXTERNAL rule enforces it and the workflow stops on EXTERNAL NO SOURCE.
 
 ## 3. Gather the week's numbers
 
@@ -69,7 +69,7 @@ A query that returns zero rows is a result ("no row"), not an error. An `error` 
 
 ## 4. Invoke `evidence-reviewer`
 
-Call the `evidence-reviewer` subagent with the full draft text (including `sources`) and the queries and results from step 3 as claims to re-check. It returns a verdict table (`| # | assertion (verbatim) | verdict | evidence |`) and a summary line. Do not edit its table.
+Call the `evidence-reviewer` subagent with the full draft text (including `citations`) and the queries and results from step 3 as claims to re-check. It returns a verdict table (`| # | assertion (verbatim) | verdict | evidence |`) and a summary line. Do not edit its table.
 
 ## 5. Write the verdict log
 
@@ -79,15 +79,15 @@ Write `docs/reviews/<slug>.md`: a heading, the date, the models used, the draft'
 
 - Any `UNSUPPORTED`: STOP. Do not write the finding. List the assertions. The human rewrites or removes them in the draft.
 - Any `CORRECTED`: STOP. Show each correction and its query for the human to apply to the draft. Never apply it yourself.
-- Any `EXTERNAL` with `NO SOURCE`: STOP. Say which sentence needs a cited public source in `sources`.
-- Otherwise: write `content/findings/<slug>.yaml` with the draft's ten finding keys, same values, `sources` removed (the seed format has no `sources` key; keep them in the draft and the log). Do not alter any wording.
+- Any `EXTERNAL` with `NO SOURCE`: STOP. Say which sentence needs a cited public source in `citations`.
+- Otherwise: write `content/findings/<slug>.yaml` with the draft's ten finding keys, same values, `citations` included. Do not alter any wording.
 
 Re-running after the human edits the draft starts again at step 1 and overwrites `docs/reviews/<slug>.md`.
 
 ## 7. Load it and check it (only after a finding file was written)
 
 1. `docker compose run --rm seed`: the output must report the finding loaded and no error.
-2. `curl -s localhost:8000/api/findings/<slug>` and the three evidence endpoints `/api/findings/<slug>/evidence/acled`, `/ooni`, `/google-transparency`: each must return 200. Quote the status codes.
+2. `curl -s localhost:8000/api/findings/<slug>` and the three evidence endpoints `/api/findings/<slug>/evidence/acled`, `/ooni`, `/google-transparency`: each must return 200. Quote the status codes. The finding's JSON must contain the same number of `citations` as the draft; quote both counts.
 3. `uv run --directory backend pytest tests/unit/test_content_language.py tests/unit/test_content_reviewed.py -v`: both must pass.
 
 Then report: the verdict summary, the file written, the curl status codes and the test result. Do not run any git write command; Sam commits.

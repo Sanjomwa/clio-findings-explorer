@@ -25,6 +25,7 @@ content/drafts/<slug>.yaml     human-written drafts (never loaded by the seed)
 | `title`, `teaser`, `summary_md` | string | non-blank |
 | `published_at` | timestamp | ISO 8601 **with** a timezone |
 | `caveats` | list | at least one; each exactly `{severity, caveat_md}`, severity `limitation` or `do_not_conclude`, `caveat_md` non-blank |
+| `citations` | list | required, may be empty; each exactly `{claim, citation, url}`, all non-blank, `url` starts with `https://`; stored and served in file order. A file with the old key `sources` is rejected (renamed to `citations`) |
 
 ## `methodology.yaml` format
 
@@ -41,15 +42,15 @@ family_bands:       # list of {band, definition}
 
 ## Draft format
 
-`content/drafts/<slug>.yaml` is the finding format plus a required `sources` list:
+`content/drafts/<slug>.yaml` is exactly the finding format; `citations` is the same key, with the same rules, as in a published finding:
 
 ```yaml
-sources:            # one item per real-world event statement in the draft
+citations:          # one item per real-world event statement in the draft; [] if there is none
   - claim: <the exact sentence or phrase it supports>
     citation: <publisher, title, date>
     url: <https URL>
 ```
 
-`sources` stays in the draft and in the verdict log. It is **not** written to `content/findings/`, because the seed format has no `sources` key and the API contract does not carry it (see the open item in the Phase 2a report). The reviewer checks that a source is attached; a human checks that the source supports the sentence.
+`citations` is published with the finding (`FindingDetail.citations` in the API). It is distinct from the API's `sources`, which lists the data sources (ACLED, OONI, Google Transparency) behind the evidence cards. The reviewer checks that a citation is attached to each real-world event statement; a human checks that the citation supports the sentence.
 
 Verdict logs are `docs/reviews/<slug>.md`. To resolve a `CORRECTED` row or an `EXTERNAL` row marked `NO SOURCE`, fix the draft, re-run `/new-finding`, and (only if a row legitimately stays) append `RESOLVED` to its evidence cell.

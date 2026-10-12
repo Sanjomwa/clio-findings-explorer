@@ -1,4 +1,4 @@
-"""Pydantic v2 response models mirroring the schemas in openapi.yaml (v0.4.0)."""
+"""Pydantic v2 response models mirroring the schemas in openapi.yaml (v0.5.0)."""
 
 from datetime import date, datetime
 from typing import Literal
@@ -66,6 +66,12 @@ class Caveat(BaseModel):
     caveat_md: str
 
 
+class Citation(BaseModel):
+    claim: str
+    citation: str
+    url: str
+
+
 class SourceRef(BaseModel):
     source: EvidenceSource
     name: str
@@ -91,6 +97,7 @@ class FindingDetail(BaseModel):
     summary_md: str
     caveats: list[Caveat]
     sources: list[SourceRef]
+    citations: list[Citation]
     evidence_available: list[EvidenceSource]
     published_at: datetime
 

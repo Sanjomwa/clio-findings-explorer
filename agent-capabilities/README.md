@@ -9,7 +9,7 @@ Canonical file: [`new-finding.md`](new-finding.md). Claude Code loads it as a pr
 It is the only sanctioned way to add a finding. Steps:
 
 1. Read the human-written draft `content/drafts/<slug>.yaml`.
-2. Validate its shape (the finding format plus a `sources` list; see [content/README.md](../content/README.md)).
+2. Validate its shape (the finding format plus a `citations` list; see [content/README.md](../content/README.md)).
 3. Gather the week's numbers with `query_snapshot`: the `regime_weeks` row, the `acled_signal_context` row with the median of the 12 weeks before it, the `ooni_weekly_signals` rows, and the half-year's `google_transparency_requests` totals. The exact queries are in the workflow file.
 4. Invoke the [`evidence-reviewer`](../custom-agent/evidence-reviewer/README.md) subagent.
 5. Write the verdict log to `docs/reviews/<slug>.md`.
@@ -24,8 +24,8 @@ It is the only sanctioned way to add a finding. Steps:
 | `query_snapshot` returns an error (database down) | STOP |
 | Any `UNSUPPORTED` verdict (includes every causal, response or targeting claim) | STOP; log written; no finding |
 | Any `CORRECTED` verdict | STOP; corrections shown for the human to apply to the draft; never auto-applied |
-| Any `EXTERNAL` verdict with `NO SOURCE` | STOP; the sentence needs a cited public source in `sources` |
-| All clear | `content/findings/<slug>.yaml` written without `sources`; step 7 runs |
+| Any `EXTERNAL` verdict with `NO SOURCE` | STOP; the sentence needs a cited public source in `citations` |
+| All clear | `content/findings/<slug>.yaml` written with `citations`; step 7 runs |
 
 ### Run
 

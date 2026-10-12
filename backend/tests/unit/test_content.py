@@ -90,3 +90,72 @@ def test_duplicate_position_across_files(content_copy):
     (content_copy / "findings" / "second-finding.yaml").write_text(yaml.safe_dump(data))
     with pytest.raises(SeedError, match="duplicate position"):
         load_content(content_copy)
+
+
+def test_citations_valid_list_kept_in_order(content_copy):
+    items = [
+        {"claim": "B claim", "citation": "Pub, Title B, 2000-01-02", "url": "https://example.org/b"},
+        {"claim": "A claim", "citation": "Pub, Title A, 2000-01-01", "url": "https://example.org/a"},
+    ]
+    mutate(content_copy, lambda d: d.update(citations=items))
+    docs = load_content(content_copy)
+    assert docs[0].citations == items
+
+
+def test_citations_empty_list_is_valid(content_copy):
+    assert load_content(content_copy)[0].citations == []
+
+
+def test_citations_missing_key(content_copy):
+    path = mutate(content_copy, lambda d: d.pop("citations"))
+    with pytest.raises(SeedError, match=r"missing keys \['citations'\]"):
+        parse_finding(path)
+
+
+def test_citations_must_be_a_list(content_copy):
+    path = mutate(content_copy, lambda d: d.update(citations="https://example.org/x"))
+    with pytest.raises(SeedError, match="citations must be a list"):
+        parse_finding(path)
+
+
+GOOD = {"claim": "c", "citation": "Pub, Title, 2000-01-01", "url": "https://example.org/x"}
+
+
+@pytest.mark.parametrize("url", ["http://example.org/x", "example.org/x", "ftp://example.org/x"])
+def test_citation_url_must_be_https(content_copy, url):
+    path = mutate(content_copy, lambda d: d.update(citations=[{**GOOD, "url": url}]))
+    with pytest.raises(SeedError, match="url must start with https://"):
+        parse_finding(path)
+
+
+def test_citation_extra_key(content_copy):
+    path = mutate(content_copy, lambda d: d.update(citations=[{**GOOD, "note": "x"}]))
+    with pytest.raises(SeedError, match=r"citations\[1\]: keys must be exactly"):
+        parse_finding(path)
+
+
+def test_citation_missing_key(content_copy):
+    bad = {k: v for k, v in GOOD.items() if k != "claim"}
+    path = mutate(content_copy, lambda d: d.update(citations=[bad]))
+    with pytest.raises(SeedError, match="keys must be exactly"):
+        parse_finding(path)
+
+
+@pytest.mark.parametrize("key", ["claim", "citation", "url"])
+@pytest.mark.parametrize("value", ["", "   ", None, 5])
+def test_citation_blank_value(content_copy, key, value):
+    path = mutate(content_copy, lambda d: d.update(citations=[{**GOOD, key: value}]))
+    with pytest.raises(SeedError, match=f"{key} must be a non-blank string"):
+        parse_finding(path)
+
+
+def test_citation_item_must_be_mapping(content_copy):
+    path = mutate(content_copy, lambda d: d.update(citations=["https://example.org/x"]))
+    with pytest.raises(SeedError, match="must be a mapping"):
+        parse_finding(path)
+
+
+def test_legacy_sources_key_is_rejected_with_rename_message(content_copy):
+    path = mutate(content_copy, lambda d: d.update(sources=[]))
+    with pytest.raises(SeedError, match="renamed to `citations`"):
+        parse_finding(path)

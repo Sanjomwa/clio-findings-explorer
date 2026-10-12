@@ -74,7 +74,7 @@ def test_health_ok(client):
     assert r.status_code == 200
     assert body["status"] == "ok" and body["database"] == "reachable"
     assert body["snapshot_version"] == VERSION
-    assert body["migration_head"] == "0002"
+    assert body["migration_head"] == "0003"
     assert body["row_counts"]["regime_weeks"] == 1523
     assert body["row_counts"]["acled_signal_context"] == 85
     assert body["row_counts"]["ooni_weekly_signals"] == 550
@@ -221,6 +221,39 @@ def test_finding_detail(client, week):
     assert finding["week_start_date"] == week
     assert [s["source"] for s in finding["sources"]] == ["acled", "ooni", "google_transparency"]
     assert all("url" not in s for s in finding["sources"])
+    assert isinstance(finding["citations"], list)
+
+
+EXPECTED_CITATIONS = {
+    "2024-06-22": [
+        ("Test-only claim one.", "https://example.org/test-only/one"),
+        ("Test-only claim two.", "https://example.org/test-only/two"),
+    ],
+    "2023-07-15": [("Test-only claim for this week.", "https://example.org/test-only/three")],
+    "2025-06-21": [],
+    "2022-08-06": [],
+    "2008-01-19": [],
+}
+
+
+@pytest.mark.parametrize("week", list(SLUG))
+def test_finding_detail_citations_in_stored_order(client, week):
+    finding = get(client, f"/api/findings/{SLUG[week]}").json()["finding"]
+    assert [(c["claim"], c["url"]) for c in finding["citations"]] == EXPECTED_CITATIONS[week]
+    assert all(set(c) == {"claim", "citation", "url"} for c in finding["citations"])
+    assert all("test-only" in c["citation"] for c in finding["citations"])
+
+
+def test_snapshot_reader_can_select_findings_citations(engine):
+    with engine.connect() as conn:
+        conn.execute(text("SET TRANSACTION READ WRITE"))
+        conn.execute(text("SET LOCAL ROLE snapshot_reader"))
+        rows = conn.execute(
+            text("SELECT slug, citations FROM findings ORDER BY position")
+        ).all()
+        conn.rollback()
+    assert len(rows) == 5
+    assert len(rows[0].citations) == 2
 
 
 def test_finding_detail_evidence_available(client):

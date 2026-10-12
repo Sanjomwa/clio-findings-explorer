@@ -351,3 +351,14 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** `openapi.yaml` (version 0.5.0, status note, schema `Citation`, `citations` required on `FindingDetail`, cross-referencing descriptions on `sources` and `citations`; `FindingSummary` untouched), one sentence in `product-spec.md` §4 item 2, the expected version in `mcp-server/tests/test_spec_lookup.py`.
 - **Verified:** `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml` reported OK. MCP tests: 45 passed, 9 skipped (integration tests skipped, database not running).
 - **Not done (Part B):** the `0.4.1` strings in `backend/app/main.py`, `backend/README.md` and `mcp-server/README.md`, and everything else in the implementation.
+
+## 2026-10-12: Phase 2b-1 Part B, `citations` implementation
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** After Sam committed the v0.5.0 contract (244d68a): migration 0003, seed validation, API field, rename of the draft key `sources` to `citations` in the content format, `/new-finding` and `evidence-reviewer`, tests and docs; also bump the remaining 0.4.1 pins. No real findings, frontend, `data/snapshot/` or git writes.
+- **Produced:**
+  - `backend/alembic/versions/0003_finding_citations.py` (`findings.citations` JSONB NOT NULL default `'[]'`); model column; `Citation` schema and `FindingDetail.citations`; router returns them in stored order, `sources` unchanged.
+  - `app/seed/content.py`: `citations` required, list (may be empty), items exactly `{claim, citation, url}`, non-blank, `https://`; a `sources` key is rejected with a rename message.
+  - `content/README.md`, `agent-capabilities/{new-finding.md,README.md}` (step 7 now compares citation counts), `custom-agent/evidence-reviewer/{evidence-reviewer.md,README.md}`, the `.claude/` copies, a note atop `docs/agent-extension-demos/new-finding.md`, `backend/README.md`, `mcp-server/README.md`. Version pins 0.4.1 -> 0.5.0 in `backend/app/main.py` and both READMEs.
+  - Tests: 22 new unit cases in `test_content.py`; integration tests for ordered citations on all five fixture findings (two have test-only citations), the snapshot_reader SELECT, and the 0003 column and downgrade; fixtures given `citations`; health head `0003`.
+- **Verified:** `docker compose up -d --build` seeded 0 findings and `/api/health` reports migration head `0003`. Backend unit 101 passed, integration 74 passed (every finding detail response validated with openapi-core), MCP 54 passed with no skips, hooks 69, ops 53, ruff clean.

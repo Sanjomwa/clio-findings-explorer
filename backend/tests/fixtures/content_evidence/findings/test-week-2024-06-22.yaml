@@ -12,3 +12,10 @@ caveats:
     caveat_md: Test-only limitation; makes no claim.
   - severity: do_not_conclude
     caveat_md: Test-only do-not-conclude note; makes no claim.
+citations:
+  - claim: Test-only claim one.
+    citation: Test-only publisher, test-only title, 2000-01-01 (not a real source).
+    url: https://example.org/test-only/one
+  - claim: Test-only claim two.
+    citation: Test-only publisher, another test-only title, 2000-01-02 (not a real source).
+    url: https://example.org/test-only/two

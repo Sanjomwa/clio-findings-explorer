@@ -2,7 +2,7 @@
 
 The Postgres 16 schema (SQLAlchemy 2.0 models, Alembic migrations), the seed step that loads
 `data/snapshot/` and, when it exists, `content/`, and the read-only FastAPI app that serves the eight
-`/api` operations of `openapi.yaml` (v0.4.1).
+`/api` operations of `openapi.yaml` (v0.5.0).
 
 ## Layout
 
@@ -10,6 +10,7 @@ The Postgres 16 schema (SQLAlchemy 2.0 models, Alembic migrations), the seed ste
 pyproject.toml  uv.lock  .python-version  Dockerfile  alembic.ini
 alembic/versions/0001_initial_schema.py   the schema of record, including the caveat trigger
 alembic/versions/0002_snapshot_reader_role.py   NOLOGIN read-only role for the MCP query_snapshot tool
+alembic/versions/0003_finding_citations.py   findings.citations (JSONB, NOT NULL, default '[]')
 app/db/        base.py, models.py (typed models mirroring the migration), session.py
 app/main.py    create_app(); routers carry full literal paths (no include_router prefix)
 app/routers/   health, timeline, findings, evidence, methodology (+ common helpers)
@@ -47,6 +48,12 @@ Seed behaviour: verifies every manifest file (sha256, line count, no unlisted fi
 database, then loads in one transaction. A second run prints `snapshot already loaded`. Without `content/`
 it prints `no content/ directory: 0 findings`; compose mounts `content/` read-only into `seed` and `backend`. Content files in `content/findings/<slug>.yaml` are validated
 strictly (see `app/seed/content.py`).
+
+Finding file keys (the full table is in `content/README.md`): `slug`, `week_start_date`, `iso2`, `position`,
+`title`, `teaser`, `summary_md`, `published_at`, `caveats` and `citations`. `citations` is required and may be
+empty; each item is exactly `{claim, citation, url}` with non-blank values and an `https://` url, and is
+stored and served in file order (`FindingDetail.citations`, distinct from the data-source `sources`). The
+old key `sources` is rejected with a message saying it was renamed.
 
 ## Run the API
 

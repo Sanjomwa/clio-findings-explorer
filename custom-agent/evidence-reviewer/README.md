@@ -4,7 +4,7 @@ A Claude Code subagent that reviews a proposed finding before it is published. C
 
 ## Its one job
 
-Take a proposed finding (summary, caveats, cited figures, sources), split it into individual factual assertions, and return one verdict per assertion. It changes nothing. A separate step (the [`/new-finding`](../../agent-capabilities/README.md) workflow) acts on the verdicts.
+Take a proposed finding (summary, caveats, cited figures, citations), split it into individual factual assertions, and return one verdict per assertion. It changes nothing. A separate step (the [`/new-finding`](../../agent-capabilities/README.md) workflow) acts on the verdicts.
 
 | Verdict | Meaning |
 |---|---|

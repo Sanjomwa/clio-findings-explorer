@@ -1,5 +1,7 @@
 # Demo: /new-finding stops on a flawed draft
 
+> Note (2026-10-12, Phase 2b-1): the draft key `sources` used in this record was later renamed `citations`, and is now published with the finding. The text below is left as it was.
+
 - **Date:** 2026-10-12
 - **Models:** session Claude Sonnet 5.5 (`claude-sonnet-5-5`); `evidence-reviewer` subagent `opus` (set in its frontmatter; the report does not show a runtime model name, so that is the configured value, not an observed one)
 

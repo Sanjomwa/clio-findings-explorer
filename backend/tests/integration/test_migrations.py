@@ -92,3 +92,23 @@ def test_snapshot_reader_migration_downgrade_revokes_and_upgrade_restores(migrat
     assert _grants(migrated_engine) == 0
     command.upgrade(config, "head")
     assert _grants(migrated_engine) > 0
+
+
+def test_finding_citations_column_defaults_to_empty_and_downgrade_drops_it(migrated_engine):
+    config = alembic_config(migrated_engine)
+
+    def columns():
+        with migrated_engine.connect() as conn:
+            return conn.execute(
+                text(
+                    "SELECT column_name, is_nullable, column_default FROM information_schema.columns "
+                    "WHERE table_name = 'findings' AND column_name = 'citations'"
+                )
+            ).all()
+
+    (name, nullable, default), = columns()
+    assert (nullable, "'[]'::jsonb" in default) == ("NO", True)
+    command.downgrade(config, "0002")
+    assert columns() == []
+    command.upgrade(config, "head")
+    assert len(columns()) == 1

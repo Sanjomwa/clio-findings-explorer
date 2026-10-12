@@ -190,6 +190,9 @@ class Finding(Base):
     summary_md: Mapped[str] = mapped_column(Text)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     position: Mapped[int] = mapped_column(Integer, unique=True)
+    citations: Mapped[list[dict]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
 
 
 class FindingCaveat(Base):

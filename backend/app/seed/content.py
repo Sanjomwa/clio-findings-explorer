@@ -15,9 +15,10 @@ from app.seed import SeedError
 
 FINDING_KEYS = {
     "slug", "week_start_date", "iso2", "position", "title", "teaser", "summary_md",
-    "published_at", "caveats",
+    "published_at", "caveats", "citations",
 }  # fmt: skip
 CAVEAT_KEYS = {"severity", "caveat_md"}
+CITATION_KEYS = {"claim", "citation", "url"}
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class FindingDoc:
     summary_md: str
     published_at: datetime
     caveats: list[dict[str, str]]
+    citations: list[dict[str, str]]
 
 
 def _text(where: str, mapping: dict[str, Any], key: str) -> str:
@@ -48,6 +50,11 @@ def parse_finding(path: Path) -> FindingDoc:
         raise SeedError(f"{where}: invalid YAML ({exc})") from exc
     if not isinstance(raw, dict):
         raise SeedError(f"{where}: top level must be a mapping")
+    if "sources" in raw:
+        raise SeedError(
+            f"{where}: the key `sources` was renamed to `citations` (public sources for "
+            "real-world event statements); rename it"
+        )
     unknown, missing = set(raw) - FINDING_KEYS, FINDING_KEYS - set(raw)
     if unknown:
         raise SeedError(f"{where}: unknown keys {sorted(unknown)}")
@@ -88,6 +95,23 @@ def parse_finding(path: Path) -> FindingDoc:
             {"severity": caveat["severity"], "caveat_md": _text(label, caveat, "caveat_md")}
         )
 
+    citations = raw["citations"]
+    if not isinstance(citations, list):
+        raise SeedError(f"{where}: citations must be a list (it may be empty)")
+    parsed_citations = []
+    for index, item in enumerate(citations, start=1):
+        label = f"{where}: citations[{index}]"
+        if not isinstance(item, dict):
+            raise SeedError(f"{label} must be a mapping")
+        if set(item) != CITATION_KEYS:
+            raise SeedError(
+                f"{label}: keys must be exactly {sorted(CITATION_KEYS)}, got {sorted(item)}"
+            )
+        parsed = {key: _text(label, item, key) for key in ("claim", "citation", "url")}
+        if not parsed["url"].startswith("https://"):
+            raise SeedError(f"{label}: url must start with https://")
+        parsed_citations.append(parsed)
+
     return FindingDoc(
         slug=slug,
         iso2=_text(where, raw, "iso2"),
@@ -98,6 +122,7 @@ def parse_finding(path: Path) -> FindingDoc:
         summary_md=_text(where, raw, "summary_md"),
         published_at=published,
         caveats=parsed_caveats,
+        citations=parsed_citations,
     )
 
 
@@ -136,6 +161,7 @@ def sync_findings(conn: Connection, docs: list[FindingDoc]) -> int:
             "slug": doc.slug, "iso2": doc.iso2, "week_start_date": doc.week_start_date,
             "title": doc.title, "teaser": doc.teaser, "summary_md": doc.summary_md,
             "published_at": doc.published_at, "position": doc.position,
+            "citations": doc.citations,
         }  # fmt: skip
         stmt = pg_insert(Finding).values(values)
         conn.execute(
