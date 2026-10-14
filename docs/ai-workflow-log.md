@@ -377,3 +377,26 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** After Sam committed the v0.6.0 contract (b623e5b): read `families` from `content/methodology.yaml`, add the response models, write `content/methodology.yaml` with Sam's approved text exactly as given, update `content/README.md`, add tests, run all suites and compose. No findings, frontend (`schema.d.ts` left for the frontend phase), `data/snapshot/` or git writes.
 - **Produced:** `FamilyDefinition` and `PressureFamily` in `backend/app/schemas.py`; `families` read in `backend/app/routers/methodology.py` (absent key gives `[]`); `content/methodology.yaml` verbatim; `content/README.md` format; `backend/tests/unit/test_methodology.py` (4 tests); integration test updates plus `test_methodology_real_content_is_complete`.
 - **Verified:** `test_content_language.py` passes on the real file (wording unedited). Backend unit 105 passed, integration 75 passed (responses validated with openapi-core), MCP 54 passed with no skips, hooks 69, ops 53, ruff clean. After `docker compose up -d --build`, `/api/methodology` returns 3 families, 7 regime states, 4 confidence levels, 4 family bands.
+
+## 2026-10-14: `/new-finding finance-bill-2024` (stopped at step 6)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** copy Sam's approved draft to `content/drafts/finance-bill-2024.yaml` with a plain `cp`, then run `/new-finding finance-bill-2024`.
+- **Produced:** `content/drafts/finance-bill-2024.yaml` (unedited copy), `docs/reviews/finance-bill-2024.md` (queries Q1 to Q4 with results, reviewer table verbatim). No file in `content/findings/`.
+- **Verified:** draft shape passed (ten keys, position 1 free, 4 caveats, 8 citations with https URLs). Reviewer summary: 23 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 8 EXTERNAL (2 without source). Stopped at step 6: rows 25 and 26 (OONI caveat sentences) have no matching citation.
+- **Not done:** the finding file and step 7 (seed, curl, content tests).
+
+## 2026-10-14: `/new-finding finance-bill-2024`, second run (finding written, seed failed)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** re-copy the revised draft, then re-run `/new-finding finance-bill-2024`.
+- **Produced:** `docs/reviews/finance-bill-2024.md` (overwritten), `content/findings/finance-bill-2024.yaml` (the draft minus its two comment lines; checked with `diff`, 10 keys, 8 citations).
+- **Verified:** reviewer found no UNSUPPORTED, CORRECTED or NO SOURCE rows. Step 7 failed at the seed: `week_start_date must be a YYYY-MM-DD date`. The draft quotes `week_start_date` and `published_at`, so they load as strings, and the loader requires native YAML date and datetime values.
+- **Not done:** curl checks and content tests (blocked by the seed failure). I did not edit the draft or the finding.
+
+## 2026-10-14: `/new-finding finance-bill-2024`, third run (finding loaded)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** after deleting the unseedable finding and re-copying the draft with unquoted `week_start_date` and `published_at`, re-run `/new-finding finance-bill-2024`.
+- **Produced:** `docs/reviews/finance-bill-2024.md` (overwritten), `content/findings/finance-bill-2024.yaml` (draft minus its two comment lines; `diff` clean).
+- **Verified:** reviewer 22 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 7 EXTERNAL (0 without source); the count matches its 29-row table. Seed reported `findings loaded: 1`. The finding and its three evidence endpoints returned 200. The API returned 8 citations and 4 caveats, as in the draft. `test_content_language.py` and `test_content_reviewed.py`: 29 passed.
