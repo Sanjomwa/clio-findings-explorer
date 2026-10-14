@@ -1,0 +1,66 @@
+slug: general-election-2022
+week_start_date: 2022-08-06
+iso2: KE
+position: 4
+title: "6–12 August 2022: suppression and violence SEVERE in the election week"
+teaser: "CLIO's CRISIS label for Kenya's 2022 general election week is computed only from ACLED offline events: suppression and violence were both SEVERE, and the #KeepItOn coalition reported no internet shutdown."
+summary_md: |
+  In the week of 6–12 August 2022, CLIO classified Kenya as CRISIS with HIGH confidence. Suppression (z = 3.06) and violence (z = 3.41) were both SEVERE against their own previous 12 weeks, while protest was NORMAL (z = 0.37). ACLED recorded 90 events that week, against a median of 38.5 in the 12 weeks before.
+
+  In CLIO, suppression counts ACLED events whose sub-type is "Excessive force against protesters" or "Protest with intervention", or whose sub-type mentions arrests, detentions or crackdowns. It counts recorded offline events only; it does not measure internet restrictions or online censorship.
+
+  The week before was held at STABLE as a first qualifying week toward CONFLICT, with violence SEVERE. CRISIS was held for the two weeks after this one, because leaving CRISIS takes three consecutive lower weeks; the week of 27 August 2022 was STABLE.
+
+  Kenya held its general election on 9 August 2022. The #KeepItOn coalition received no reports of internet shutdowns during the election.
+
+  The snapshot has no OONI data for this week; its OONI weekly signals begin in May 2023. Google's government-requests report lists 5 removal requests from Kenya for July to December 2022.
+published_at: 2026-10-14T17:00:00+03:00
+caveats:
+  - severity: limitation
+    caveat_md: "ACLED data are the classification's own input, so the ACLED card is not independent confirmation of the CRISIS label."
+  - severity: limitation
+    caveat_md: "With no OONI data for this week, this finding says nothing about app or website blocking. The absence of a reported shutdown comes from the #KeepItOn coalition, not from a CLIO measurement."
+  - severity: limitation
+    caveat_md: "Google's figure covers the whole half-year, not this week."
+  - severity: do_not_conclude
+    caveat_md: "Do not conclude that the election and the CRISIS label are connected beyond falling in the same week, or that the SEVERE suppression band refers to anything online. This finding records only that these coincide in time."
+citations:
+  - claim: "Kenya's 2022 general election week"
+    citation: "Al Jazeera, \"Tallying under way in closely contested Kenya election\", 10 August 2022"
+    url: "https://www.aljazeera.com/news/2022/8/10/tallying-underway-in-kenyan-election"
+  - claim: "the #KeepItOn coalition reported no internet shutdown"
+    citation: "Access Now, \"#KeepItOn elections watch 2022\""
+    url: "https://www.accessnow.org/elections-internet-shutdowns-watch-2022/"
+  - claim: "In CLIO, suppression counts ACLED events whose sub-type is \"Excessive force against protesters\" or \"Protest with intervention\", or whose sub-type mentions arrests, detentions or crackdowns."
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of the suppression family (approved 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "In CLIO, suppression counts ACLED events whose sub-type is \"Excessive force against protesters\" or \"Protest with intervention\", or whose sub-type mentions arrests, detentions or crackdowns."
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intermediate/int.acled_event_classification.sql, is_suppression_marker, production main branch, read 2026-10-12"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intermediate/int.acled_event_classification.sql"
+  - claim: "It counts recorded offline events only; it does not measure internet restrictions or online censorship."
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of the suppression family (approved 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "held at STABLE as a first qualifying week toward CONFLICT"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of STABLE and CONFLICT (approved 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "held at STABLE as a first qualifying week toward CONFLICT"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, CONFLICT persistence rule, production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "because leaving CRISIS takes three consecutive lower weeks"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, exit persistence rules (CTE-11), production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "Kenya held its general election on 9 August 2022."
+    citation: "Al Jazeera, \"Tallying under way in closely contested Kenya election\", 10 August 2022"
+    url: "https://www.aljazeera.com/news/2022/8/10/tallying-underway-in-kenyan-election"
+  - claim: "The #KeepItOn coalition received no reports of internet shutdowns during the election."
+    citation: "Access Now, \"#KeepItOn elections watch 2022\""
+    url: "https://www.accessnow.org/elections-internet-shutdowns-watch-2022/"
+  - claim: "The absence of a reported shutdown comes from the #KeepItOn coalition, not from a CLIO measurement."
+    citation: "Access Now, \"#KeepItOn elections watch 2022\""
+    url: "https://www.accessnow.org/elections-internet-shutdowns-watch-2022/"
+  - claim: "is computed only from ACLED offline events"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of the three ACLED-based families and of CRISIS (approved 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "ACLED data are the classification's own input, so the ACLED card is not independent confirmation of the CRISIS label."
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of the three ACLED-based families (approved 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"

@@ -430,3 +430,18 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** after Sam revised the draft (title "OONI signals", protests described as beginning 19 July, caveat 2 reworded, two citations for the CONTESTATION wording) and it was re-copied with a plain `cp`, re-run `/new-finding july-2023`.
 - **Produced:** `docs/reviews/july-2023.md` (overwritten), `content/findings/july-2023.yaml` (draft minus its two comment lines; `diff` clean).
 - **Verified:** reviewer 24 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 8 EXTERNAL (0 without source); the count matches its 32-row table. Seed reported `findings loaded: 3`. Curl and test results are in the task report.
+
+## 2026-10-14: `/new-finding general-election-2022` (stopped at step 6)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** copy the draft to `content/drafts/general-election-2022.yaml` (plain `cp`, mode 644), then run `/new-finding general-election-2022`.
+- **Produced:** `content/drafts/general-election-2022.yaml` (unedited copy), `docs/reviews/general-election-2022.md`. No file in `content/findings/`.
+- **Verified:** draft shape passed (ten keys, position 4 free, 4 caveats, 11 citations). Q3 returned zero rows, as the draft says; the first OONI week in the snapshot is 2023-05-27. Reviewer: 20 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 10 EXTERNAL (2 without source); the count matches its 30-row table. Stopped at step 6 on rows 5 and 26.
+- **Not done:** the finding file and step 7.
+
+## 2026-10-14: `/new-finding general-election-2022`, second run (finding loaded)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** after Sam revised the draft (teaser "computed only from ACLED offline events", sub-type wording, two added citations) and it was re-copied with a plain `cp`, re-run `/new-finding general-election-2022`.
+- **Produced:** `docs/reviews/general-election-2022.md` (overwritten), `content/findings/general-election-2022.yaml` (draft minus its three comment lines).
+- **Verified:** reviewer 23 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 12 EXTERNAL (0 without source); the count matches its 35-row table. Seed reported `findings loaded: 4`. The finding and its three evidence endpoints returned 200 (the OONI card returns `has_data: false`, as expected for a week before OONI data begins). The API returned 13 citations and 4 caveats, as in the draft. `test_content_language.py` and `test_content_reviewed.py`: 29 passed.
