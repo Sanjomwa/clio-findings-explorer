@@ -1,0 +1,54 @@
+# DRAFT for Sam's approval (Cowork, 2026-10-14). After approval: content/drafts/july-2023.yaml, then /new-finding.
+# Snapshot figures checked against data/snapshot (2026-10-10.1). Dates unquoted on purpose.
+slug: july-2023
+week_start_date: 2023-07-15
+iso2: KE
+position: 3
+title: "15–21 July 2023: CRISIS, with OONI signals flat"
+teaser: "Protest and suppression were both SEVERE in the week the opposition began three days of protests, while OONI's tests stayed close to their baselines."
+summary_md: |
+  In the week of 15–21 July 2023, CLIO classified Kenya as CRISIS with HIGH confidence. Protest (z = 3.14) and suppression (z = 2.12) were both SEVERE against their own previous 12 weeks, while violence was NORMAL (z = −1.15). ACLED recorded 103 events that week, against a median of 49.5 in the 12 weeks before.
+
+  The week before was held at STABLE as a first qualifying week toward CONTESTATION, with protest SEVERE and suppression ELEVATED. CRISIS was held for the two weeks after this one, because leaving CRISIS takes three consecutive lower weeks; the week of 5 August 2023 was STABLE.
+
+  On 19 July 2023, the opposition Azimio la Umoja alliance, led by Raila Odinga, began three days of anti-government protests it had called over tax rises in the new finance law and the cost of living. At least 300 people were arrested on 19 July 2023.
+
+  In OONI's measurements for the week, the test furthest above its own 12-week baseline was WhatsApp, at 0.02 standard deviations: 1 of 232 WhatsApp measurements was anomalous, and none of 124 Signal measurements were. Google's government-requests report lists 5 removal requests from Kenya for July to December 2023.
+published_at: 2026-10-14T16:00:00+03:00
+caveats:
+  - severity: limitation
+    caveat_md: "ACLED data are the classification's own input, so the ACLED card is not independent confirmation of the CRISIS label."
+  - severity: limitation
+    caveat_md: "OONI's Signal test checks whether Signal's servers can be reached from the tester's network. OONI's tests are not a measure of general internet disruptions; OONI's own resources point to IODA and similar tools for monitoring shutdowns. Flat OONI figures are therefore not evidence that nothing was restricted this week."
+  - severity: limitation
+    caveat_md: "Google's figure covers the whole half-year, not this week."
+  - severity: do_not_conclude
+    caveat_md: "Do not conclude that the protests and the CRISIS label are connected beyond falling in the same week, or that flat OONI figures show there was no interference. This finding records only that these coincide in time."
+citations:
+  - claim: "in the week the opposition began three days of protests"
+    citation: "Al Jazeera, \"Kenya's opposition set for second day of tax-hike protests\", 20 July 2023"
+    url: "https://www.aljazeera.com/amp/news/2023/7/20/kenyas-opposition-set-for-second-day-of-tax-hike-protests"
+  - claim: "On 19 July 2023, the opposition Azimio la Umoja alliance, led by Raila Odinga, began three days of anti-government protests it had called over tax rises in the new finance law and the cost of living."
+    citation: "Al Jazeera, \"Kenya's opposition set for second day of tax-hike protests\", 20 July 2023"
+    url: "https://www.aljazeera.com/amp/news/2023/7/20/kenyas-opposition-set-for-second-day-of-tax-hike-protests"
+  - claim: "On 19 July 2023, the opposition Azimio la Umoja alliance, led by Raila Odinga, began three days of anti-government protests it had called over tax rises in the new finance law and the cost of living."
+    citation: "AFP via The Citizen (Tanzania), \"Two killed, hundreds arrested as Kenya protests enter second day\", 19 July 2023"
+    url: "https://thecitizen.co.tz/tanzania/news/east-africa-news/two-killed-hundreds-arrested-as-kenya-protests-enter-second-day-4309786"
+  - claim: "At least 300 people were arrested on 19 July 2023."
+    citation: "Al Jazeera, \"Kenya's opposition set for second day of tax-hike protests\", 20 July 2023"
+    url: "https://www.aljazeera.com/amp/news/2023/7/20/kenyas-opposition-set-for-second-day-of-tax-hike-protests"
+  - claim: "because leaving CRISIS takes three consecutive lower weeks"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, exit persistence rules (CTE-11), production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "OONI's Signal test checks whether Signal's servers can be reached from the tester's network."
+    citation: "OONI, \"Signal test\" (OONI Probe test description)"
+    url: "https://ooni.org/nettest/signal/"
+  - claim: "OONI's tests are not a measure of general internet disruptions; OONI's own resources point to IODA and similar tools for monitoring shutdowns."
+    citation: "OONI, \"OONI Resources\" (partner training resources, 2021), section \"Monitoring internet connectivity shutdowns\""
+    url: "https://ooni.org/documents/2021-ooni-partner-training-resources/ooni-resources.pdf"
+  - claim: "held at STABLE as a first qualifying week toward CONTESTATION"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of STABLE (approved 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "held at STABLE as a first qualifying week toward CONTESTATION"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, CONTESTATION persistence rule, production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"

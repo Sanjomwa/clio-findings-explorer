@@ -415,3 +415,18 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** after Sam revised the draft ("only family raised" wording, ninth citation for the STABLE definition) and it was re-copied with a plain `cp`, re-run `/new-finding june-july-2025`.
 - **Produced:** `docs/reviews/june-july-2025.md` (overwritten), `content/findings/june-july-2025.yaml` (draft minus its two comment lines; `diff` clean).
 - **Verified:** reviewer 29 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 10 EXTERNAL (0 without source); the count matches its 39-row table. Seed reported `findings loaded: 2`. Curl and test results are in the task report.
+
+## 2026-10-14: `/new-finding july-2023` (stopped at step 6)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** copy the draft to `content/drafts/july-2023.yaml` (plain `cp`, mode 644), then run `/new-finding july-2023`.
+- **Produced:** `content/drafts/july-2023.yaml` (unedited copy), `docs/reviews/july-2023.md`. No file in `content/findings/`.
+- **Verified:** draft shape passed (ten keys, position 3 free, 4 caveats, 7 citations). Reviewer: 23 VERIFIED, 0 CORRECTED, 1 UNSUPPORTED, 7 EXTERNAL (1 without source); the count matches its 31-row table. Stopped at step 6 on the UNSUPPORTED row 2; row 14 is also unsourced.
+- **Not done:** the finding file and step 7.
+
+## 2026-10-14: `/new-finding july-2023`, second run (finding loaded)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** after Sam revised the draft (title "OONI signals", protests described as beginning 19 July, caveat 2 reworded, two citations for the CONTESTATION wording) and it was re-copied with a plain `cp`, re-run `/new-finding july-2023`.
+- **Produced:** `docs/reviews/july-2023.md` (overwritten), `content/findings/july-2023.yaml` (draft minus its two comment lines; `diff` clean).
+- **Verified:** reviewer 24 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 8 EXTERNAL (0 without source); the count matches its 32-row table. Seed reported `findings loaded: 3`. Curl and test results are in the task report.
