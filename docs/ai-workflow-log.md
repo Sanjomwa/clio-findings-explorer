@@ -400,3 +400,18 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** after deleting the unseedable finding and re-copying the draft with unquoted `week_start_date` and `published_at`, re-run `/new-finding finance-bill-2024`.
 - **Produced:** `docs/reviews/finance-bill-2024.md` (overwritten), `content/findings/finance-bill-2024.yaml` (draft minus its two comment lines; `diff` clean).
 - **Verified:** reviewer 22 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 7 EXTERNAL (0 without source); the count matches its 29-row table. Seed reported `findings loaded: 1`. The finding and its three evidence endpoints returned 200. The API returned 8 citations and 4 caveats, as in the draft. `test_content_language.py` and `test_content_reviewed.py`: 29 passed.
+
+## 2026-10-14: `/new-finding june-july-2025` (stopped at step 6)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** copy the draft to `content/drafts/june-july-2025.yaml` (plain `cp`), `chmod 644 content/drafts/*.yaml`, then run `/new-finding june-july-2025`.
+- **Produced:** `content/drafts/june-july-2025.yaml` (unedited copy), `docs/reviews/june-july-2025.md`. No file in `content/findings/`.
+- **Verified:** draft shape passed (ten keys, position 2 free, 5 caveats, 8 citations, native date and datetime). Reviewer: 26 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 10 EXTERNAL (1 without source); the count matches its 36-row table. Stopped at step 6 on row 31.
+- **Not done:** the finding file and step 7.
+
+## 2026-10-14: `/new-finding june-july-2025`, second run (finding loaded)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** after Sam revised the draft ("only family raised" wording, ninth citation for the STABLE definition) and it was re-copied with a plain `cp`, re-run `/new-finding june-july-2025`.
+- **Produced:** `docs/reviews/june-july-2025.md` (overwritten), `content/findings/june-july-2025.yaml` (draft minus its two comment lines; `diff` clean).
+- **Verified:** reviewer 29 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 10 EXTERNAL (0 without source); the count matches its 39-row table. Seed reported `findings loaded: 2`. Curl and test results are in the task report.
