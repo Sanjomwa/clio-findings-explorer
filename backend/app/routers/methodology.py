@@ -56,6 +56,7 @@ def get_methodology(session: Annotated[Session, Depends(get_session)]):
     return MethodologyResponse.model_validate(
         {
             "snapshot_version": snapshot.version,
+            "families": curated.get("families", []),
             "regime_states": curated.get("regime_states", []),
             "confidence_levels": curated.get("confidence_levels", []),
             "family_bands": curated.get("family_bands", []),

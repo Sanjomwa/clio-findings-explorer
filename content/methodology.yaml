@@ -1,0 +1,104 @@
+# Methodology definitions for the CLIO Findings Explorer, served by GET /api/methodology.
+# Rules from production CLIO (github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory,
+# Bruin/assets/features/acled_pressure_signals.sql and Bruin/assets/intelligence/acled_pressure_regimes.sql),
+# read 2026-10-14. Thresholds are marked provisional in CLIO's code. Wording approved by Sam, 2026-10-14.
+# "Raised" means a family band of ELEVATED or SEVERE.
+
+families:
+  - family: protest
+    definition: >
+      ACLED events of the type "Protests" recorded that week. The weekly index is
+      ln(1 + number of events), compared with the average and standard deviation of the
+      previous 12 weeks.
+  - family: violence
+    definition: >
+      ACLED events of the types "Battles", "Explosions/Remote violence" and "Violence against
+      civilians". The weekly index is ln(1 + events) + 0.5 x ln(1 + fatalities), compared
+      with the previous 12 weeks in the same way.
+  - family: suppression
+    definition: >
+      ACLED events whose sub-type is "Excessive force against protesters" or "Protest with
+      intervention", or whose sub-type mentions arrests, detentions or crackdowns, whatever
+      their main event type. The weekly index is ln(1 + number of events), compared with the
+      previous 12 weeks. It counts recorded offline events only; it does not measure internet
+      restrictions or online censorship, which the OONI evidence card covers.
+
+regime_states:
+  - state: STABLE
+    definition: >
+      No regime rule was met this week. Bands can still be raised; a first raised week is
+      held at STABLE until a second consecutive one follows. When there is too little data
+      to judge the week, it is shown as "STABLE (insufficient data)".
+  - state: MOBILISATION
+    definition: >
+      Protest is raised while violence and suppression are not. Coming from STABLE, this
+      needs two consecutive qualifying weeks; from any other state it applies at once.
+  - state: CONFLICT
+    definition: >
+      Violence is raised while protest and suppression are not. This needs two consecutive
+      qualifying weeks, unless the previous week was already CONFLICT, ESCALATION or CRISIS.
+  - state: REPRESSION
+    definition: >
+      Suppression is raised, with a usable suppression score, while protest and violence are
+      not. Entering this state always needs two consecutive qualifying weeks. Once entered, it
+      ends only after two consecutive weeks that qualify for a lower state.
+  - state: CONTESTATION
+    definition: >
+      Protest and suppression are both raised while violence is not. Coming from STABLE,
+      CONFLICT or REPRESSION, this needs two consecutive qualifying weeks; from MOBILISATION,
+      ESCALATION or CRISIS it applies at once.
+  - state: ESCALATION
+    definition: >
+      Any one of three patterns in a single week: all three families raised; suppression and
+      violence both raised; or protest raised together with a sharp week-on-week rise in
+      protest activity and a high level of other unrest relative to protest. It applies at
+      once, and ends only after two consecutive weeks that qualify for a lower state.
+  - state: CRISIS
+    definition: >
+      At least two of the three families are SEVERE in the same week. When the usual scores
+      cannot be computed, a family also counts as SEVERE if its weekly index exceeds three
+      times its 12-week average. CRISIS applies at once and ends only after three consecutive
+      weeks that qualify for a lower state. If the data become unusable during CRISIS or
+      ESCALATION, the state is held for up to two weeks.
+
+confidence_levels:
+  - level: HIGH
+    definition: >
+      Every family that decided this week's state had a usable score with a full 12-week
+      baseline, and none of them sat just above the ELEVATED threshold.
+  - level: MEDIUM
+    definition: >
+      One deciding family had events but no usable score; or a deciding family's baseline was
+      thin (fewer than 4 active weeks in the 12); or a deciding family's score sat within 0.15
+      of the ELEVATED threshold; or a high share of the week's events came from event types
+      that ACLED applies inconsistently across countries.
+  - level: LOW
+    definition: >
+      Two deciding families had events but no usable score, or the state was reached through
+      the index fallback because the usual scores could not be computed.
+  - level: INSUFFICIENT_DATA
+    definition: >
+      Too little data to judge the week: fewer than 3 events in total and no activity in the
+      deciding families. Such weeks are always STABLE and are shown as "STABLE (insufficient
+      data)". Any level is lowered one step for each deciding family whose baseline was nearly
+      flat, and one step when CRISIS or ESCALATION is held through a week of unusable data.
+
+family_bands:
+  - band: NORMAL
+    definition: >
+      The family's score this week is below 1.0, meaning less than one standard deviation
+      above the average of its own previous 12 weeks (or below that average).
+  - band: ELEVATED
+    definition: >
+      The family's score is at least 1.0 and below 2.0 standard deviations above its own
+      12-week average. The thresholds are marked provisional in CLIO's code.
+  - band: SEVERE
+    definition: >
+      The family's score is at least 2.0 standard deviations above its own 12-week average.
+      The thresholds are marked provisional in CLIO's code.
+  - band: UNKNOWN
+    definition: >
+      No usable score this week. This happens when the week has fewer than 3 events in total,
+      a family's baseline has fewer than 4 active weeks, a baseline is nearly flat, or a high
+      share of events come from event types that ACLED applies inconsistently across
+      countries.

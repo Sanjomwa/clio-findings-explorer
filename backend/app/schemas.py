@@ -10,6 +10,7 @@ RegimeState = Literal[
 ]
 ConfidenceLevel = Literal["HIGH", "MEDIUM", "LOW", "INSUFFICIENT_DATA"]
 FamilyBand = Literal["NORMAL", "ELEVATED", "SEVERE", "UNKNOWN"]
+PressureFamily = Literal["protest", "violence", "suppression"]
 EvidenceSource = Literal["acled", "ooni", "google_transparency"]
 CaveatSeverity = Literal["limitation", "do_not_conclude"]
 
@@ -215,6 +216,11 @@ class EvidenceCardResponse(BaseModel):
     evidence: EvidenceCard
 
 
+class FamilyDefinition(BaseModel):
+    family: PressureFamily
+    definition: str
+
+
 class RegimeStateDefinition(BaseModel):
     state: RegimeState
     definition: str
@@ -252,6 +258,7 @@ class SnapshotManifest(BaseModel):
 
 class MethodologyResponse(BaseModel):
     snapshot_version: str
+    families: list[FamilyDefinition]
     regime_states: list[RegimeStateDefinition]
     confidence_levels: list[ConfidenceLevelDefinition]
     family_bands: list[FamilyBandDefinition]

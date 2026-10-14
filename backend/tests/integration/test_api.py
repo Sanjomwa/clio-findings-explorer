@@ -405,6 +405,7 @@ def test_methodology_without_curated_file(client, monkeypatch, tmp_path):
     r = get(client, "/api/methodology")
     body = r.json()
     assert r.status_code == 200
+    assert body["families"] == []
     assert body["regime_states"] == [] and body["confidence_levels"] == []
     assert body["family_bands"] == []
     assert [s["source"] for s in body["sources"]] == ["acled", "ooni", "google_transparency"]
@@ -415,14 +416,37 @@ def test_methodology_without_curated_file(client, monkeypatch, tmp_path):
 
 def test_methodology_reads_curated_file(client, monkeypatch, tmp_path):
     (tmp_path / "methodology.yaml").write_text(
+        "families:\n  - {family: protest, definition: test-only}\n"
         "regime_states:\n  - {state: STABLE, definition: test-only}\n"
         "confidence_levels:\n  - {level: HIGH, definition: test-only}\n"
         "family_bands:\n  - {band: NORMAL, definition: test-only}\n"
     )
     monkeypatch.setenv("CONTENT_DIR", str(tmp_path))
     body = get(client, "/api/methodology").json()
+    assert body["families"] == [{"family": "protest", "definition": "test-only"}]
     assert body["regime_states"] == [{"state": "STABLE", "definition": "test-only"}]
     assert body["family_bands"] == [{"band": "NORMAL", "definition": "test-only"}]
+
+
+def test_methodology_real_content_is_complete(client, monkeypatch):
+    import typing
+
+    from app import schemas
+
+    monkeypatch.setenv("CONTENT_DIR", str(BACKEND.parent / "content"))
+    r = get(client, "/api/methodology")
+    body = r.json()
+    assert r.status_code == 200
+    assert [len(body[k]) for k in ("families", "regime_states", "confidence_levels", "family_bands")] == [3, 7, 4, 4]
+    for key, field, enum in (
+        ("families", "family", schemas.PressureFamily),
+        ("regime_states", "state", schemas.RegimeState),
+        ("confidence_levels", "level", schemas.ConfidenceLevel),
+        ("family_bands", "band", schemas.FamilyBand),
+    ):
+        names = [item[field] for item in body[key]]
+        assert sorted(names) == sorted(typing.get_args(enum)), key  # exactly one each
+        assert all(item["definition"].strip() for item in body[key])
 
 
 def test_requests_run_in_read_only_transactions(client, engine):

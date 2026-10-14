@@ -370,3 +370,10 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** `openapi.yaml` (version 0.6.0, status note, `PressureFamily`, `families` required on `MethodologyResponse`); pins in `backend/app/main.py`, `backend/app/schemas.py` docstring, `backend/README.md`, `mcp-server/README.md`, `mcp-server/tests/test_spec_lookup.py`; one sentence in `product-spec.md` section 4 item 5.
 - **Verified:** see the Part A report (validator and MCP tests).
 - **Not done (Part B):** reader, models, `content/methodology.yaml`, tests, `frontend/src/api/schema.d.ts` regeneration.
+
+## 2026-10-14: Phase 2b-2 Part B, `families` implementation and methodology text
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** After Sam committed the v0.6.0 contract (b623e5b): read `families` from `content/methodology.yaml`, add the response models, write `content/methodology.yaml` with Sam's approved text exactly as given, update `content/README.md`, add tests, run all suites and compose. No findings, frontend (`schema.d.ts` left for the frontend phase), `data/snapshot/` or git writes.
+- **Produced:** `FamilyDefinition` and `PressureFamily` in `backend/app/schemas.py`; `families` read in `backend/app/routers/methodology.py` (absent key gives `[]`); `content/methodology.yaml` verbatim; `content/README.md` format; `backend/tests/unit/test_methodology.py` (4 tests); integration test updates plus `test_methodology_real_content_is_complete`.
+- **Verified:** `test_content_language.py` passes on the real file (wording unedited). Backend unit 105 passed, integration 75 passed (responses validated with openapi-core), MCP 54 passed with no skips, hooks 69, ops 53, ruff clean. After `docker compose up -d --build`, `/api/methodology` returns 3 families, 7 regime states, 4 confidence levels, 4 family bands.

@@ -29,9 +29,11 @@ content/drafts/<slug>.yaml     human-written drafts (never loaded by the seed)
 
 ## `methodology.yaml` format
 
-As read by `backend/app/routers/methodology.py`; each key is optional and an absent key gives an empty list (definitions are never invented). Values are validated by the response model, so a state, level or band outside the enum fails the request.
+As read by `backend/app/routers/methodology.py`; each key is optional and an absent key gives an empty list (definitions are never invented). Values are validated by the response model, so a family, state, level or band outside the enum fails the request.
 
 ```yaml
+families:           # list of {family, definition}: what each pressure family counts
+  - {family: <protest|violence|suppression>, definition: <text>}
 regime_states:      # list of {state, definition}
   - {state: <regime state>, definition: <text>}
 confidence_levels:  # list of {level, definition}
