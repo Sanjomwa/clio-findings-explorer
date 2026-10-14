@@ -30,7 +30,7 @@ Every number on screen comes from a versioned snapshot of CLIO output that is co
 2. Clicking a highlighted week opens the **finding** page: title, state and confidence badges, summary, the limitations box, then three evidence cards that load independently. The finding page also shows the week's three family bands (protest, violence, suppression), shown as they are. It also lists the public sources for the finding's real-world event statements; these are separate from the data-source attribution on the evidence cards.
 3. Each **evidence card** shows one headline number, the supporting detail for that source, the period the numbers cover, and a provenance note. Sources do not all report weekly: where a source reports per half-year, the card shows that longer period and says so. If a source has no data for the window (for example, the week predates the source), the card is still shown and says so plainly. The API returns it with `has_data: false`; 404 means only that the finding does not exist.
 4. A **findings list** shows all curated findings with a one-line teaser each.
-5. A **methodology** page explains the regime states, the confidence levels, the family bands, each source's limits, and the snapshot version and export date.
+5. A **methodology** page explains the regime states, the confidence levels, the family bands, each source's limits, and the snapshot version and export date. The page also explains what each pressure family counts, including that suppression is offline events and not internet restrictions.
 6. Every page shows the snapshot version and date. The product is an archive of curated findings, and it says so. It is not a live monitor.
 
 ### 4.1 How classifications are described

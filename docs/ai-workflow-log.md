@@ -362,3 +362,11 @@ A running record of the work coding agents do in this repository, appended after
   - `content/README.md`, `agent-capabilities/{new-finding.md,README.md}` (step 7 now compares citation counts), `custom-agent/evidence-reviewer/{evidence-reviewer.md,README.md}`, the `.claude/` copies, a note atop `docs/agent-extension-demos/new-finding.md`, `backend/README.md`, `mcp-server/README.md`. Version pins 0.4.1 -> 0.5.0 in `backend/app/main.py` and both READMEs.
   - Tests: 22 new unit cases in `test_content.py`; integration tests for ordered citations on all five fixture findings (two have test-only citations), the snapshot_reader SELECT, and the 0003 column and downgrade; fixtures given `citations`; health head `0003`.
 - **Verified:** `docker compose up -d --build` seeded 0 findings and `/api/health` reports migration head `0003`. Backend unit 101 passed, integration 74 passed (every finding detail response validated with openapi-core), MCP 54 passed with no skips, hooks 69, ops 53, ruff clean.
+
+## 2026-10-14: Phase 2b-2 Part A, `families` contract (v0.6.0)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** Part A only: change the contract from v0.5.0 to v0.6.0 with a required `families` list on the methodology response and a `PressureFamily` schema, bump the version pins, add one sentence to `product-spec.md`, then STOP so Sam can commit locally. No implementation, no git writes.
+- **Produced:** `openapi.yaml` (version 0.6.0, status note, `PressureFamily`, `families` required on `MethodologyResponse`); pins in `backend/app/main.py`, `backend/app/schemas.py` docstring, `backend/README.md`, `mcp-server/README.md`, `mcp-server/tests/test_spec_lookup.py`; one sentence in `product-spec.md` section 4 item 5.
+- **Verified:** see the Part A report (validator and MCP tests).
+- **Not done (Part B):** reader, models, `content/methodology.yaml`, tests, `frontend/src/api/schema.d.ts` regeneration.

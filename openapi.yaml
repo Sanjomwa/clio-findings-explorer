@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: CLIO Findings Explorer API
-  version: 0.5.0
+  version: 0.6.0
   summary: Read-only API for curated Kenya civil-liberties findings.
   description: |
     Contract for the CLIO Findings Explorer backend. This file is hand-authored and is the
@@ -10,6 +10,9 @@ info:
 
     All endpoints are read-only and need no authentication. Data comes from a versioned,
     committed snapshot of CLIO output loaded into Postgres. The API never calls BigQuery.
+
+    v0.6.0 (2026-10-14): `/api/methodology` gains a required `families` list saying what each
+    pressure family counts.
 
     v0.5.0 (2026-10-12): `FindingDetail` gains a required `citations` array, the public sources
     for a finding's real-world event statements; `sources` is unchanged.
@@ -326,6 +329,12 @@ components:
         Band for one pressure family (protest, violence or suppression) relative to its own
         baseline. UNKNOWN means the baseline could not support a band.
       enum: [NORMAL, ELEVATED, SEVERE, UNKNOWN]
+    PressureFamily:
+      type: string
+      description: >-
+        One of CLIO's three ACLED-based pressure families; each week's band for it appears in
+        WeekClassification.
+      enum: [protest, violence, suppression]
     WeekClassification:
       type: object
       required:
@@ -963,10 +972,24 @@ components:
             $ref: "#/components/schemas/SnapshotTable"
     MethodologyResponse:
       type: object
-      required: [snapshot_version, regime_states, confidence_levels, family_bands, sources, manifest]
+      required:
+        [snapshot_version, families, regime_states, confidence_levels, family_bands, sources, manifest]
       properties:
         snapshot_version:
           $ref: "#/components/schemas/SnapshotVersion"
+        families:
+          type: array
+          description: >-
+            What each pressure family counts and how its weekly score is computed. Empty when no
+            methodology content is loaded.
+          items:
+            type: object
+            required: [family, definition]
+            properties:
+              family:
+                $ref: "#/components/schemas/PressureFamily"
+              definition:
+                type: string
         regime_states:
           type: array
           items:

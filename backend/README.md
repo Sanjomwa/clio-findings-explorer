@@ -2,7 +2,7 @@
 
 The Postgres 16 schema (SQLAlchemy 2.0 models, Alembic migrations), the seed step that loads
 `data/snapshot/` and, when it exists, `content/`, and the read-only FastAPI app that serves the eight
-`/api` operations of `openapi.yaml` (v0.5.0).
+`/api` operations of `openapi.yaml` (v0.6.0).
 
 ## Layout
 

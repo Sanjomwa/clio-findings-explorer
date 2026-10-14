@@ -14,7 +14,7 @@ def test_lists_eight_operations():
 
 
 def test_version_is_0_5_0():
-    assert server.spec_lookup()["version"] == "0.5.0"
+    assert server.spec_lookup()["version"] == "0.6.0"
 
 
 def test_path_filter():
