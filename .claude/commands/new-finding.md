@@ -21,7 +21,7 @@ The draft is the finding format (`slug`, `week_start_date`, `iso2`, `position`, 
 - `slug` equals `<slug>`; `week_start_date` is `YYYY-MM-DD`; `published_at` is an ISO 8601 timestamp with a timezone; `position` is an integer >= 1 not used by another file in `content/findings/`; `iso2` is `KE`;
 - `title`, `teaser`, `summary_md` are non-blank strings;
 - `caveats` has at least one item, each exactly `{severity, caveat_md}` with severity `limitation` or `do_not_conclude`;
-- `citations` must be present and be a list (it may be empty). Each item, if any, is exactly `{claim, citation, url}` with all three non-blank and `url` starting with `https://`. Whether every real-world event statement has a source is not a shape check; the reviewer's EXTERNAL rule enforces it and the workflow stops on EXTERNAL NO SOURCE.
+- `citations` must be present and be a list (it may be empty). Each item, if any, is exactly `{claim, citation, url}` with all three non-blank and `url` starting with `https://`. Whether every real-world event statement and every statement of CLIO's rules has a source is not a shape check; the reviewer's EXTERNAL rule enforces it and the workflow stops on EXTERNAL NO SOURCE.
 
 ## 3. Gather the week's numbers
 

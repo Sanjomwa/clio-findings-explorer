@@ -452,3 +452,18 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** replace `content/methodology.yaml` with the supplied text exactly, change one anchor-weeks row in `product-spec.md`, add this entry and run the backend unit tests. No contract, finding, draft, frontend or snapshot changes; no git writes.
 - **Produced:** `content/methodology.yaml` (MEDIUM gains one sentence, INSUFFICIENT_DATA's first two sentences are rewritten, UNKNOWN gains two sentences, the header gains two comment lines); the `post-election-violence-2008` row of `product-spec.md` now says the classifier read STABLE (insufficient data) because one family's baseline was too thin to score.
 - **Verified:** `sha256sum content/methodology.yaml` matches the prompt's expected value; `uv run --directory backend pytest tests/unit -v` gave 105 passed, including `test_methodology.py` and `test_content_language.py`.
+
+## 2026-10-14: `/new-finding post-election-violence-2008` (stopped at step 6)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5; verdicts by the `evidence-reviewer` subagent.
+- **Task as given:** copy the approved draft from the OneDrive folder to `content/drafts/post-election-violence-2008.yaml` (plain `cp`, mode 644; that one file read, nothing else touched), then run `/new-finding post-election-violence-2008`. No git writes; stop when the workflow finishes.
+- **Produced:** `content/drafts/post-election-violence-2008.yaml` (unedited copy), `docs/reviews/post-election-violence-2008.md`. No file in `content/findings/`.
+- **Verified:** draft shape passed (ten keys, position 5 free, 4 caveats, 24 citations). Q3 and Q4 returned no rows, as the draft says. Reviewer: 36 VERIFIED, 0 CORRECTED, 8 UNSUPPORTED, 6 EXTERNAL (0 without source); the count matches its 50-row table. Stopped at step 6 on rows 6, 11, 14, 23, 29, 33, 46 and 47.
+- **Not done:** the finding file and step 7 (seed, curl, tests).
+
+## 2026-10-14: Phase 2b-4, citation-backed statements of CLIO's rules count as EXTERNAL
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** add one sentence group to the reviewer's EXTERNAL definition (both copies), update the matching README row and one sentence in `new-finding.md`, then run the unit tests. No findings, drafts, methodology, contract or git writes.
+- **Produced:** the reviewer now files a statement of CLIO's own rules or code as EXTERNAL when a citation points to `content/methodology.yaml` or CLIO's production code (otherwise NO SOURCE); causal wording stays UNSUPPORTED. The `new-finding.md` edit was also made in its canonical copy `agent-capabilities/new-finding.md`, which the prompt did not name, because `test_agent_sync.py` requires the two to match.
+- **Verified:** `cmp` on the two reviewer files shows them identical; `uv run --directory backend pytest tests/unit -v` (result in the report).

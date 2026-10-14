@@ -11,7 +11,7 @@ Take a proposed finding (summary, caveats, cited figures, citations), split it i
 | `VERIFIED` | Checked against the snapshot with `query_snapshot`; the exact query and result are shown. |
 | `CORRECTED` | The snapshot disagrees; the correct value and the query that shows it are given. |
 | `UNSUPPORTED` | The snapshot cannot establish it. Every "X caused Y", "X was in response to Y" or "X targeted Y" claim is UNSUPPORTED, because the snapshot has no attribution field. |
-| `EXTERNAL` | A real-world event the snapshot cannot check. The reviewer checks only that a cited public source is attached to the draft (`source attached` / `NO SOURCE`), not that the source is true. A human checks the source. |
+| `EXTERNAL` | A real-world event the snapshot cannot check, or a statement of CLIO's own rules or code. The reviewer checks only that a cited source is attached to the draft (`source attached` / `NO SOURCE`), not that the source is true; for a rule statement the source must be `content/methodology.yaml` or CLIO's production code. A human checks the source. |
 
 ## Tool allowlist
 
