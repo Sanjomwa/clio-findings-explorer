@@ -58,7 +58,7 @@ Five anchor weeks are set. Three findings is the floor if the schedule slips; th
 |---|---|---|---|
 | `finance-bill-2024` | 2024-06-22 (22 to 28 June) | A CRISIS classification with HIGH confidence in the week Parliament was stormed. The flagship. | ACLED, OONI, Google Transparency |
 | `general-election-2022` | 2022-08-06 | A CRISIS classification with HIGH confidence in election week, driven by violence and suppression while protest stayed normal. What drove it is checked before the finding is written. | ACLED, Google Transparency |
-| `post-election-violence-2008` | 2008-01-19 | A limits case. The classifier read INSUFFICIENT_DATA until this week and never reached CRISIS, so it shows what sparse early data cannot support. | ACLED |
+| `post-election-violence-2008` | 2008-01-19 | A limits case. The classifier read STABLE (insufficient data) until this week, including the busiest ACLED week of the period, because one family's baseline was too thin to score, and in CLIO's current code that withholds all three scores. It never reached CRISIS. | ACLED |
 | `july-2023` (working slug) | 2023-07-15 | A CRISIS classification with HIGH confidence, with all three sources holding data. The event behind it is confirmed before the finding is written. | ACLED, OONI, Google Transparency |
 | `june-july-2025` (working slug) | 2025-06-21 | A second limits case. The classifier read STABLE with HIGH confidence in a week of 115 events and 43 fatalities, and again on 2025-07-05 (141 events, 62 fatalities). It shows a pattern of pressure that CLIO's current rules do not classify. | ACLED, OONI, Google Transparency |
 

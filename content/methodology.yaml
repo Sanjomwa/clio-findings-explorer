@@ -2,6 +2,8 @@
 # Rules from production CLIO (github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory,
 # Bruin/assets/features/acled_pressure_signals.sql and Bruin/assets/intelligence/acled_pressure_regimes.sql),
 # read 2026-10-14. Thresholds are marked provisional in CLIO's code. Wording approved by Sam, 2026-10-14.
+# Corrected 2026-10-14: INSUFFICIENT_DATA, MEDIUM and UNKNOWN wording, checked against the signal_valid gate
+# in acled_pressure_signals.sql and CTE-10 (Case C) and CTE-14 in acled_pressure_regimes.sql.
 # "Raised" means a family band of ELEVATED or SEVERE.
 
 families:
@@ -71,17 +73,22 @@ confidence_levels:
       One deciding family had events but no usable score; or a deciding family's baseline was
       thin (fewer than 4 active weeks in the 12); or a deciding family's score sat within 0.15
       of the ELEVATED threshold; or a high share of the week's events came from event types
-      that ACLED applies inconsistently across countries.
+      that ACLED applies inconsistently across countries. In CLIO's current code the first two
+      cases do not occur in practice, because when one family has no usable score, none does
+      (see UNKNOWN).
   - level: LOW
     definition: >
       Two deciding families had events but no usable score, or the state was reached through
       the index fallback because the usual scores could not be computed.
   - level: INSUFFICIENT_DATA
     definition: >
-      Too little data to judge the week: fewer than 3 events in total and no activity in the
-      deciding families. Such weeks are always STABLE and are shown as "STABLE (insufficient
-      data)". Any level is lowered one step for each deciding family whose baseline was nearly
-      flat, and one step when CRISIS or ESCALATION is held through a week of unusable data.
+      Too little data to judge the week. This happens in two ways: the week had fewer than 3
+      events in total and no activity in the deciding families; or a family had events this
+      week but no usable score, and no family's weekly index exceeded three times its 12-week
+      average. Such weeks are always STABLE and are shown as "STABLE (insufficient data)", even
+      when they had many events. Any level is lowered one step for each deciding family whose
+      baseline was nearly flat, and one step when CRISIS or ESCALATION is held through a week of
+      unusable data.
 
 family_bands:
   - band: NORMAL
@@ -101,4 +108,6 @@ family_bands:
       No usable score this week. This happens when the week has fewer than 3 events in total,
       a family's baseline has fewer than 4 active weeks, a baseline is nearly flat, or a high
       share of events come from event types that ACLED applies inconsistently across
-      countries.
+      countries. In CLIO's current code, a thin or nearly flat baseline in any one family
+      leaves all three families without a usable score that week, not only that family.
+      CLIO's own design notes intend each family to be judged separately.

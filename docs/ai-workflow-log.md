@@ -445,3 +445,10 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** after Sam revised the draft (teaser "computed only from ACLED offline events", sub-type wording, two added citations) and it was re-copied with a plain `cp`, re-run `/new-finding general-election-2022`.
 - **Produced:** `docs/reviews/general-election-2022.md` (overwritten), `content/findings/general-election-2022.yaml` (draft minus its three comment lines).
 - **Verified:** reviewer 23 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 12 EXTERNAL (0 without source); the count matches its 35-row table. Seed reported `findings loaded: 4`. The finding and its three evidence endpoints returned 200 (the OONI card returns `has_data: false`, as expected for a week before OONI data begins). The API returned 13 citations and 4 caveats, as in the draft. `test_content_language.py` and `test_content_reviewed.py`: 29 passed.
+
+## 2026-10-14: Phase 2b-3, corrected INSUFFICIENT_DATA, MEDIUM and UNKNOWN definitions
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** replace `content/methodology.yaml` with the supplied text exactly, change one anchor-weeks row in `product-spec.md`, add this entry and run the backend unit tests. No contract, finding, draft, frontend or snapshot changes; no git writes.
+- **Produced:** `content/methodology.yaml` (MEDIUM gains one sentence, INSUFFICIENT_DATA's first two sentences are rewritten, UNKNOWN gains two sentences, the header gains two comment lines); the `post-election-violence-2008` row of `product-spec.md` now says the classifier read STABLE (insufficient data) because one family's baseline was too thin to score.
+- **Verified:** `sha256sum content/methodology.yaml` matches the prompt's expected value; `uv run --directory backend pytest tests/unit -v` gave 105 passed, including `test_methodology.py` and `test_content_language.py`.
