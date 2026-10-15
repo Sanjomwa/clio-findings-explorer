@@ -1,5 +1,5 @@
-# DRAFT for Sam's approval (Cowork, 2026-10-14). After approval: content/drafts/june-july-2025.yaml, then /new-finding.
-# Snapshot figures checked against data/snapshot (2026-10-10.1). Dates unquoted on purpose (the seed needs native YAML dates).
+# REVISED DRAFT (Cowork, 2026-10-15), consistency pass approved by Sam: 'because' -> 'as'; OONI sentence names the z-score of the anomaly rate;
+# missing rule citations added; OONI caveat revised for findings 1 and 3. Base: committed content/drafts/june-july-2025.yaml.
 slug: june-july-2025
 week_start_date: 2025-06-21
 iso2: KE
@@ -11,11 +11,11 @@ summary_md: |
 
   With suppression the only family raised, the week was a first qualifying week toward REPRESSION. The next week was not raised, so REPRESSION was not assigned. The same happened in the week of 5 July 2025, when suppression was SEVERE (z = 2.74). Entering REPRESSION needs two consecutive qualifying weeks.
 
-  The two weeks before were ESCALATION: protest was SEVERE (z = 2.03) in the week of 7 June 2025, and the week of 14 June 2025 was held at ESCALATION, because leaving it takes two consecutive lower weeks. Both weeks are in this week's 12-week baseline.
+  The two weeks before were ESCALATION: protest was SEVERE (z = 2.03) in the week of 7 June 2025, and the week of 14 June 2025 was held at ESCALATION, as leaving it takes two consecutive lower weeks. Both weeks are in this week's 12-week baseline.
 
   On 25 June 2025, protests took place across Kenya marking one year since the 25 June 2024 protests. The same day, OONI found Telegram's web service blocked on at least three Kenyan networks, two of them Safaricom's; the block was lifted the same day. The Communications Authority ordered television and radio stations to stop live coverage of the protests, and the High Court suspended that order the same day.
 
-  In OONI's measurements for the week, the test furthest above its own 12-week baseline was Telegram, at 10.17 standard deviations: 54 of 789 Telegram measurements were anomalous. Google's government-requests report lists 16 removal requests from Kenya for January to June 2025.
+  In OONI's measurements for the week, Telegram's anomaly rate had the highest z-score against its own 12-week baseline, at 10.17: 54 of 789 Telegram measurements were anomalous. Google's government-requests report lists 16 removal requests from Kenya for January to June 2025.
 published_at: 2026-10-14T15:00:00+03:00
 caveats:
   - severity: limitation
@@ -47,7 +47,7 @@ citations:
   - claim: "Entering REPRESSION needs two consecutive qualifying weeks."
     citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, REPRESSION persistence rule, production main branch, read 2026-10-14"
     url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
-  - claim: "because leaving it takes two consecutive lower weeks"
+  - claim: "as leaving it takes two consecutive lower weeks"
     citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, exit persistence rules (CTE-11), production main branch, read 2026-10-14"
     url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
   - claim: "OONI reported the block on Telegram's web service, not the Telegram mobile app."
@@ -55,4 +55,13 @@ citations:
     url: "https://explorer.ooni.org/findings/2025-kenya-blocks-access-to-telegram-amid-anti-government-protes"
   - claim: "A STABLE label means no regime rule was met this week; it does not mean nothing happened."
     citation: "CLIO Findings Explorer, content/methodology.yaml, definition of STABLE (approved 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "the week was a first qualifying week toward REPRESSION"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of STABLE and REPRESSION (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "the week was a first qualifying week toward REPRESSION"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, REPRESSION persistence rule, production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "ACLED data are the classification's own input"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of the three ACLED-based families (corrected 2026-10-14)"
     url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
