@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 RegimeState = Literal[
     "STABLE", "MOBILISATION", "CONTESTATION", "ESCALATION", "CRISIS", "REPRESSION", "CONFLICT"
@@ -15,9 +15,8 @@ EvidenceSource = Literal["acled", "ooni", "google_transparency"]
 CaveatSeverity = Literal["limitation", "do_not_conclude"]
 
 OONI_NOTE = (
-    "These OONI tests detect blocking of specific apps and sites. A general "
-    "network shutdown produces no measurements, so it cannot show up as an "
-    "anomaly here."
+    "These OONI tests check whether specific apps and sites can be reached from "
+    "testers' networks."
 )
 
 
@@ -90,6 +89,9 @@ class WeekClassification(BaseModel):
 class FindingDetail(BaseModel):
     slug: str
     title: str
+    teaser: str
+    position: int = Field(ge=1)
+    key_phrase: str | None = None
     week_start_date: date
     country_iso: str
     regime_state: RegimeState
@@ -166,9 +168,8 @@ class OoniSupporting(BaseModel):
     top_test: str | None
     tests: list[OoniTestWeek]
     note: Literal[
-        "These OONI tests detect blocking of specific apps and sites. A general "
-        "network shutdown produces no measurements, so it cannot show up as an "
-        "anomaly here."
+        "These OONI tests check whether specific apps and sites can be reached from "
+        "testers' networks."
     ] = OONI_NOTE
 
 

@@ -117,3 +117,14 @@ def test_bad_primary_regime_rejected_by_check(seeded_engine):
                     "WHERE week_start_date = '2024-06-22'"
                 )
             )
+
+
+def test_key_phrase_must_be_a_substring_of_the_teaser(seeded_engine):
+    insert = text(
+        "INSERT INTO findings (slug, iso2, week_start_date, title, teaser, key_phrase, summary_md, "
+        "published_at, position) VALUES ('kp-check', 'KE', '2024-06-22', 't', 'the teaser text', "
+        ":kp, 's', now(), 1)"
+    )
+    for bad in ("not in teaser", "  "):
+        with pytest.raises(IntegrityError), seeded_engine.begin() as conn:
+            conn.execute(insert, {"kp": bad})

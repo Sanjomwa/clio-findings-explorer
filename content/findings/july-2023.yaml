@@ -4,6 +4,7 @@ iso2: KE
 position: 3
 title: "15–21 July 2023: CRISIS, with OONI signals flat"
 teaser: "Protest and suppression were both SEVERE in the week the opposition began three days of protests, while OONI's tests stayed close to their baselines."
+key_phrase: "while OONI's tests stayed close to their baselines"
 summary_md: |
   In the week of 15–21 July 2023, CLIO classified Kenya as CRISIS with HIGH confidence. Protest (z = 3.14) and suppression (z = 2.12) were both SEVERE against their own previous 12 weeks, while violence was NORMAL (z = −1.15). ACLED recorded 103 events that week, against a median of 49.5 in the 12 weeks before.
 

@@ -4,6 +4,7 @@ iso2: KE
 position: 1
 title: Test-only fixture for the week of 2024-06-22
 teaser: Test-only text; not curated content.
+key_phrase: Test-only text
 summary_md: |
   Test-only summary. It makes no claim about the data.
 published_at: 2026-10-20T00:00:00Z

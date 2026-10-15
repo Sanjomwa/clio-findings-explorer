@@ -17,6 +17,7 @@ FINDING_KEYS = {
     "slug", "week_start_date", "iso2", "position", "title", "teaser", "summary_md",
     "published_at", "caveats", "citations",
 }  # fmt: skip
+OPTIONAL_FINDING_KEYS = {"key_phrase"}
 CAVEAT_KEYS = {"severity", "caveat_md"}
 CITATION_KEYS = {"claim", "citation", "url"}
 
@@ -33,6 +34,7 @@ class FindingDoc:
     published_at: datetime
     caveats: list[dict[str, str]]
     citations: list[dict[str, str]]
+    key_phrase: str | None = None
 
 
 def _text(where: str, mapping: dict[str, Any], key: str) -> str:
@@ -55,7 +57,8 @@ def parse_finding(path: Path) -> FindingDoc:
             f"{where}: the key `sources` was renamed to `citations` (public sources for "
             "real-world event statements); rename it"
         )
-    unknown, missing = set(raw) - FINDING_KEYS, FINDING_KEYS - set(raw)
+    unknown = set(raw) - FINDING_KEYS - OPTIONAL_FINDING_KEYS
+    missing = FINDING_KEYS - set(raw)
     if unknown:
         raise SeedError(f"{where}: unknown keys {sorted(unknown)}")
     if missing:
@@ -112,13 +115,22 @@ def parse_finding(path: Path) -> FindingDoc:
             raise SeedError(f"{label}: url must start with https://")
         parsed_citations.append(parsed)
 
+    teaser = _text(where, raw, "teaser")
+    key_phrase = raw.get("key_phrase")
+    if key_phrase is not None:
+        if not isinstance(key_phrase, str) or not key_phrase.strip():
+            raise SeedError(f"{where}: {slug}: key_phrase must be a non-blank string when present")
+        if key_phrase not in teaser:
+            raise SeedError(f"{where}: {slug}: key_phrase is not an exact substring of teaser")
+
     return FindingDoc(
         slug=slug,
         iso2=_text(where, raw, "iso2"),
         week_start_date=week,
         position=position,
         title=_text(where, raw, "title"),
-        teaser=_text(where, raw, "teaser"),
+        teaser=teaser,
+        key_phrase=key_phrase,
         summary_md=_text(where, raw, "summary_md"),
         published_at=published,
         caveats=parsed_caveats,
@@ -161,7 +173,7 @@ def sync_findings(conn: Connection, docs: list[FindingDoc]) -> int:
             "slug": doc.slug, "iso2": doc.iso2, "week_start_date": doc.week_start_date,
             "title": doc.title, "teaser": doc.teaser, "summary_md": doc.summary_md,
             "published_at": doc.published_at, "position": doc.position,
-            "citations": doc.citations,
+            "citations": doc.citations, "key_phrase": doc.key_phrase,
         }  # fmt: skip
         stmt = pg_insert(Finding).values(values)
         conn.execute(

@@ -23,9 +23,12 @@ content/drafts/<slug>.yaml     human-written drafts (never loaded by the seed)
 | `week_start_date` | date | `YYYY-MM-DD`, a week start in the snapshot |
 | `position` | integer | >= 1, unique across findings (display order) |
 | `title`, `teaser`, `summary_md` | string | non-blank |
+| `key_phrase` | string | optional; an exact substring of `teaser`, highlighted on the finding page |
 | `published_at` | timestamp | ISO 8601 **with** a timezone |
 | `caveats` | list | at least one; each exactly `{severity, caveat_md}`, severity `limitation` or `do_not_conclude`, `caveat_md` non-blank |
 | `citations` | list | required, may be empty; each exactly `{claim, citation, url}`, all non-blank, `url` starts with `https://`; stored and served in file order. A file with the old key `sources` is rejected (renamed to `citations`) |
+
+`key_phrase` only marks words already in the reviewed teaser, so adding or changing it does not need a new `/new-finding` run. The seed and the database reject a key phrase that is not an exact substring of the teaser.
 
 ## `methodology.yaml` format
 

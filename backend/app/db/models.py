@@ -173,6 +173,10 @@ class Finding(Base):
     __tablename__ = "findings"
     __table_args__ = (
         CheckConstraint(f"slug ~ '{SLUG_PATTERN}'", name="ck_findings_slug_pattern"),
+        CheckConstraint(
+            "key_phrase IS NULL OR (btrim(key_phrase) <> '' AND strpos(teaser, key_phrase) > 0)",
+            name="ck_findings_key_phrase_in_teaser",
+        ),
         ForeignKeyConstraint(
             ["iso2", "week_start_date"],
             ["regime_weeks.iso2", "regime_weeks.week_start_date"],
@@ -187,6 +191,7 @@ class Finding(Base):
     week_start_date: Mapped[date] = mapped_column(Date)
     title: Mapped[str] = mapped_column(Text)
     teaser: Mapped[str] = mapped_column(Text)
+    key_phrase: Mapped[str | None] = mapped_column(Text, nullable=True)
     summary_md: Mapped[str] = mapped_column(Text)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     position: Mapped[int] = mapped_column(Integer, unique=True)

@@ -159,3 +159,27 @@ def test_legacy_sources_key_is_rejected_with_rename_message(content_copy):
     path = mutate(content_copy, lambda d: d.update(sources=[]))
     with pytest.raises(SeedError, match="renamed to `citations`"):
         parse_finding(path)
+
+
+def test_key_phrase_accepted_when_in_teaser(content_copy):
+    teaser = yaml.safe_load((content_copy / "findings" / FILE.split("/")[1]).read_text())["teaser"]
+    path = mutate(content_copy, lambda d: d.update(key_phrase=teaser.split()[0]))
+    assert parse_finding(path).key_phrase == teaser.split()[0]
+
+
+def test_key_phrase_absent_or_null_is_none(content_copy):
+    assert load_content(content_copy)[0].key_phrase is None
+    path = mutate(content_copy, lambda d: d.update(key_phrase=None))
+    assert parse_finding(path).key_phrase is None
+
+
+def test_key_phrase_not_in_teaser_rejected_naming_slug(content_copy):
+    path = mutate(content_copy, lambda d: d.update(key_phrase="words that are not in the teaser"))
+    with pytest.raises(SeedError, match="fixture-finding.*not an exact substring"):
+        parse_finding(path)
+
+
+def test_blank_key_phrase_rejected(content_copy):
+    path = mutate(content_copy, lambda d: d.update(key_phrase="  "))
+    with pytest.raises(SeedError, match="key_phrase"):
+        parse_finding(path)

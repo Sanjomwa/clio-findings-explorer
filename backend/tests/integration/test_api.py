@@ -74,7 +74,7 @@ def test_health_ok(client):
     assert r.status_code == 200
     assert body["status"] == "ok" and body["database"] == "reachable"
     assert body["snapshot_version"] == VERSION
-    assert body["migration_head"] == "0003"
+    assert body["migration_head"] == "0004"
     assert body["row_counts"]["regime_weeks"] == 1523
     assert body["row_counts"]["acled_signal_context"] == 85
     assert body["row_counts"]["ooni_weekly_signals"] == 550
@@ -222,6 +222,23 @@ def test_finding_detail(client, week):
     assert [s["source"] for s in finding["sources"]] == ["acled", "ooni", "google_transparency"]
     assert all("url" not in s for s in finding["sources"])
     assert isinstance(finding["citations"], list)
+
+
+def test_finding_detail_has_teaser_position_and_key_phrase(client):
+    first = get(client, f"/api/findings/{SLUG['2024-06-22']}").json()["finding"]
+    assert first["teaser"] == "Test-only text; not curated content."
+    assert first["position"] == 1
+    assert first["key_phrase"] == "Test-only text"
+    other = get(client, f"/api/findings/{SLUG['2008-01-19']}").json()["finding"]
+    assert other["position"] == 5 and other["key_phrase"] is None
+
+
+def test_ooni_card_returns_the_new_note(client):
+    note = card(client, "2024-06-22", "ooni")["supporting"]["note"]
+    assert note == (
+        "These OONI tests check whether specific apps and sites can be reached from "
+        "testers' networks."
+    )
 
 
 EXPECTED_CITATIONS = {

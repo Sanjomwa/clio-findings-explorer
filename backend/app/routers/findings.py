@@ -85,6 +85,9 @@ def get_finding(slug: SlugPath, session: Annotated[Session, Depends(get_session)
         finding=FindingDetail(
             slug=finding.slug,
             title=finding.title,
+            teaser=finding.teaser,
+            position=finding.position,
+            key_phrase=finding.key_phrase,
             week_start_date=finding.week_start_date,
             country_iso=finding.iso2,
             regime_state=week.primary_regime,

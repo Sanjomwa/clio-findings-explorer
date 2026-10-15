@@ -36,7 +36,7 @@ curl -s localhost:8000/api/health
 The API can take a few seconds to come up after the compose command returns; if `curl` prints nothing, run it again. Expected result (key fields):
 
 ```json
-{"status": "ok", "database": "reachable", "snapshot_version": "2026-10-10.1", "migration_head": "0003",
+{"status": "ok", "database": "reachable", "snapshot_version": "2026-10-10.1", "migration_head": "0004",
  "row_counts": {"regime_weeks": 1523, "acled_signal_context": 85, "ooni_weekly_signals": 550,
                 "google_transparency_requests": 85, "findings": 5, "finding_caveats": 21}}
 ```
