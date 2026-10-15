@@ -504,3 +504,8 @@ A running record of the work coding agents do in this repository, appended after
 ## 2026-10-15: README update (findings published)
 
 - **Task and result:** copied the approved README draft over `README.md` (plain `cp`, mode 644, wording unedited; only the prompt and that draft read from OneDrive). All relative links resolve; `/api/health` reports `"findings": 5` and `"finding_caveats": 21`, matching the README. No git writes.
+
+## 2026-10-15: Phase 2c Part A, spec and contract v0.7.0
+
+- **Task as given:** Part A only: copy the approved `product-spec.md` draft (plain `cp`, mode 644; only the prompt and that draft read from OneDrive), change `openapi.yaml` to v0.7.0 (`FindingDetail` gains required `teaser` and `position`, optional `key_phrase`; OONI `note` reworded), bump the version pins, then STOP for Sam to commit locally. No implementation, no git writes.
+- **Produced and verified:** `product-spec.md` (copied unedited); `openapi.yaml`; pins in `backend/app/main.py`, `backend/app/schemas.py` docstring, `backend/README.md`, `mcp-server/README.md`, `mcp-server/tests/test_spec_lookup.py`. `uvx openapi-spec-validator --schema 3.1.0 openapi.yaml`: OK. MCP tests: 54 passed. The only remaining `0.6.0` is the historical v0.6.0 status line in `openapi.yaml`. Left for Part B: the stale old OONI note text in `backend/app/schemas.py` (two places).

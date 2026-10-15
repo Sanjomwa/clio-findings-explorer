@@ -1,4 +1,4 @@
-"""Pydantic v2 response models mirroring the schemas in openapi.yaml (v0.6.0)."""
+"""Pydantic v2 response models mirroring the schemas in openapi.yaml (v0.7.0)."""
 
 from datetime import date, datetime
 from typing import Literal

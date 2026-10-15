@@ -54,4 +54,4 @@ Claude Code expands `${VAR:-default}` in `command` and `args`, but `CLAUDE_PROJE
 uv run --directory mcp-server pytest -v
 ```
 
-`spec_lookup` tests call the tool directly against the real `openapi.yaml` (eight operations, version `0.6.0`, filters, undeclared path and method) and check that exactly two tools are registered. `test_query_snapshot_unit.py` checks the parser (no database). `test_query_snapshot_integration.py` (marker `integration`) needs the compose `db` seeded and migrated to `0003`, and is skipped with a reason when the database is unreachable. Update the `spec_lookup` tests with any contract change.
+`spec_lookup` tests call the tool directly against the real `openapi.yaml` (eight operations, version `0.7.0`, filters, undeclared path and method) and check that exactly two tools are registered. `test_query_snapshot_unit.py` checks the parser (no database). `test_query_snapshot_integration.py` (marker `integration`) needs the compose `db` seeded and migrated to `0003`, and is skipped with a reason when the database is unreachable. Update the `spec_lookup` tests with any contract change.

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: CLIO Findings Explorer API
-  version: 0.6.0
+  version: 0.7.0
   summary: Read-only API for curated Kenya civil-liberties findings.
   description: |
     Contract for the CLIO Findings Explorer backend. This file is hand-authored and is the
@@ -10,6 +10,8 @@ info:
 
     All endpoints are read-only and need no authentication. Data comes from a versioned,
     committed snapshot of CLIO output loaded into Postgres. The API never calls BigQuery.
+
+    v0.7.0 (2026-10-15): `FindingDetail` gains required `teaser` and `position` and an optional `key_phrase`; the OONI card's fixed `note` is reworded.
 
     v0.6.0 (2026-10-14): `/api/methodology` gains a required `families` list saying what each
     pressure family counts.
@@ -530,6 +532,8 @@ components:
       required:
         - slug
         - title
+        - teaser
+        - position
         - week_start_date
         - country_iso
         - regime_state
@@ -546,6 +550,16 @@ components:
           type: string
         title:
           type: string
+        teaser:
+          type: string
+          description: One line of plain text. The same teaser as in the findings list; the finding page shows it as its lead.
+        position:
+          type: integer
+          minimum: 1
+          description: Curated display order. The same value orders `/api/findings`.
+        key_phrase:
+          type: [string, "null"]
+          description: An exact substring of `teaser` that the finding page highlights. Null when there is none. It adds no claim of its own.
         week_start_date:
           type: string
           format: date
@@ -853,9 +867,8 @@ components:
           type: string
           description: Fixed text on what these measurements can and cannot show.
           const: >-
-            These OONI tests detect blocking of specific apps and sites. A general
-            network shutdown produces no measurements, so it cannot show up as an
-            anomaly here.
+            These OONI tests check whether specific apps and sites can be reached from
+            testers' networks.
     GoogleTransparencyRow:
       type: object
       required:
