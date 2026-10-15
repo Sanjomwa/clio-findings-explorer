@@ -38,4 +38,7 @@ Exactly this, with no prose before or after except the one summary line:
 |---|---|---|---|
 | 1 | "..." | VERIFIED | `SELECT ...` -> `167` |
 
+The verdict cell holds exactly one word: VERIFIED, CORRECTED, UNSUPPORTED or EXTERNAL, with nothing added (no brackets, no qualifier, no second verdict). Put any qualifier, such as `CLIO rule` or `source attached`, in the evidence cell. If one sentence mixes a figure the snapshot can check with a rule it cannot, split it into two rows.
+
 Then one line: `Summary: N VERIFIED, N CORRECTED, N UNSUPPORTED, N EXTERNAL (N without source).`
+Before writing the summary line, count the rows with each verdict in your table; the numbers in the summary must equal those counts.

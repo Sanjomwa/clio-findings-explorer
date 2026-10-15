@@ -492,3 +492,11 @@ A running record of the work coding agents do in this repository, appended after
   - general-election-2022: 22 VERIFIED, 0, 0, 13 EXTERNAL (0 without source); 35 rows; 15 citations, 4 caveats in the API. Seed, finding and the three evidence endpoints were fine, but `test_every_finding_has_a_clean_review` failed: seven rows (5, 11, 15, 16, 18, 21, 28) carry the verdict text `EXTERNAL (CLIO rule)`, which the test reads as the unknown verdict `EXTERNAL(CLIORULE)`.
   - For the three loaded findings: seed `findings loaded: 5`; each finding and its `/evidence/acled`, `/ooni` and `/google-transparency` returned 200; `test_content_language.py` and `test_content_reviewed.py` gave 29 passed.
 - **Not done:** `general-election-2022` is not republished. Its new review log is on disk with the nonstandard verdict text and the old finding is back, so the clean-review test currently fails until Sam decides how to resolve it.
+
+## 2026-10-15: reviewer output format (one verdict word per row; summary matches table)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** add two sentences to the `## Output` section of the `evidence-reviewer` definition (verdict cell is exactly one word, qualifiers go in the evidence cell, mixed sentences split into two rows; count rows per verdict before writing the summary line), copy it to `custom-agent/evidence-reviewer/evidence-reviewer.md`, add this entry, run the backend unit tests. No findings, drafts, review logs, methodology, contract or git writes.
+- **Why:** in the consistency pass the reviewer wrote `EXTERNAL (CLIO rule)` in the verdict cell of seven `general-election-2022` rows (the prompt says six), which `test_every_finding_has_a_clean_review` rejects, and its `finance-bill-2024` summary line (15 VERIFIED, 11 EXTERNAL) did not match its table (17 and 9).
+- **Produced:** the two additions in `.claude/agents/evidence-reviewer.md`, copied byte-for-byte to the `custom-agent` copy.
+- **Verified:** `cmp` on the two copies; unit test result in the report.
