@@ -1,0 +1,101 @@
+# DRAFT for Sam's approval (Cowork, 2026-10-14). After approval: content/drafts/post-election-violence-2008.yaml, then /new-finding.
+# Snapshot figures checked against data/snapshot (2026-10-10.1); rules against the corrected content/methodology.yaml (7e9654e)
+# and production CLIO SQL. Dates unquoted on purpose. Framing approved by Sam 2026-10-14: lead with the unscored weeks.
+slug: post-election-violence-2008
+week_start_date: 2008-01-19
+iso2: KE
+position: 5
+title: "19–25 January 2008: the first week CLIO could score after the disputed election"
+teaser: "CLIO labelled Kenya's busiest ACLED week around the disputed 2007 election \"STABLE (insufficient data)\": one family's baseline was too thin, which in CLIO's current code withholds all three scores. The week of 19 January 2008 was the first it could score, as ESCALATION."
+summary_md: |
+  In the week of 19–25 January 2008, CLIO classified Kenya as ESCALATION with MEDIUM confidence. Violence was SEVERE (z = 2.21) and suppression ELEVATED (z = 1.11) against their own previous 12 weeks, while protest was NORMAL (z = 0.19). Of the conditions that set MEDIUM confidence, the only one met this week was suppression's score sitting within 0.15 of the ELEVATED threshold. ACLED recorded 66 events that week, against a median of 16.5 in the 12 weeks before.
+
+  This was the first week since the election that CLIO could score. The election week and the three weeks after it, starting 22 December 2007, 29 December 2007, 5 January 2008 and 12 January 2008, all read "STABLE (insufficient data)". ACLED recorded 139 events in the week of 29 December, more than in any other week from late October 2007 to mid-February 2008.
+
+  The label reflects what CLIO could score, not how much happened. In each of those four weeks, suppression had activity in at most 3 of its previous 12 weeks, below the 4 needed for a usable score. In CLIO's current code, a thin or nearly flat baseline in any one family leaves all three families without a usable score, so violence was not scored either, although from 29 December it had activity in 11 of its previous 12 weeks. The index fallback did not apply. It needs a family's weekly index to exceed three times its 12-week average; in the week of 29 December, violence's weekly index was 6.02, and three times its 12-week average was about 6.7. Under CLIO's rules such a week is STABLE with insufficient data. By the week of 19 January, suppression had 4 active weeks and all three families were scored.
+
+  ESCALATION was held for the next three weeks, as leaving it takes two consecutive lower weeks and the state is held through up to two weeks of unusable data. ACLED recorded 74, 2 and 0 events in those weeks. The week of 16 February 2008 was STABLE. No week in 2007 or 2008 was classified as CRISIS.
+
+  Kenya held a general election on 27 December 2007. On 24 January 2008, Kibaki and Odinga met for the first time since the disputed vote, in talks brokered by Kofi Annan. The same day, violence reached Nakuru town, which until then had escaped the post-election violence. Some 1,880 displaced people arrived at the town's displacement camp that day, the largest number it had received in a single day.
+
+  The snapshot has no OONI or Google data for this week; its OONI weekly signals begin in May 2023 and its Google figures in the second half of 2012.
+published_at: 2026-10-14T18:00:00+03:00
+caveats:
+  - severity: limitation
+    caveat_md: "ACLED data are the classification's own input, so the ACLED card is not independent confirmation of the ESCALATION label."
+  - severity: limitation
+    caveat_md: "The \"STABLE (insufficient data)\" label on the election week and the three weeks after it describes what CLIO could score, not how much happened. CLIO's own design notes intend each family to be judged separately. This finding does not say what label those weeks would have received under that design."
+  - severity: limitation
+    caveat_md: "With no OONI or Google data for this period, this finding says nothing about internet restrictions or content removal."
+  - severity: do_not_conclude
+    caveat_md: "Do not conclude that the talks or the violence in Nakuru are connected to the ESCALATION label beyond falling in the same week, or that a week labelled \"STABLE (insufficient data)\" was calm. This finding records only that these coincide in time."
+citations:
+  - claim: "the disputed 2007 election"
+    citation: "Al Jazeera, \"Rival Kenyan leaders hold talks\", 24 January 2008"
+    url: "https://www.aljazeera.com/news/2008/1/24/rival-kenyan-leaders-hold-talks"
+  - claim: "one family's baseline was too thin, which in CLIO's current code withholds all three scores"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of UNKNOWN and INSUFFICIENT_DATA (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "one family's baseline was too thin, which in CLIO's current code withholds all three scores"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/features/acled_pressure_signals.sql, signal_valid gate and known deviation from spec, production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/features/acled_pressure_signals.sql"
+  - claim: "Of the conditions that set MEDIUM confidence, the only one met this week was suppression's score sitting within 0.15 of the ELEVATED threshold."
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of MEDIUM confidence (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "Of the conditions that set MEDIUM confidence, the only one met this week was suppression's score sitting within 0.15 of the ELEVATED threshold."
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, z_adjacency_margin and confidence ceiling (CTE-14), production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "below the 4 needed for a usable score"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of the UNKNOWN band (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "In CLIO's current code, a thin or nearly flat baseline in any one family leaves all three families without a usable score"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of the UNKNOWN band (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "In CLIO's current code, a thin or nearly flat baseline in any one family leaves all three families without a usable score"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/features/acled_pressure_signals.sql, signal_valid gate and known deviation from spec, production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/features/acled_pressure_signals.sql"
+  - claim: "It needs a family's weekly index to exceed three times its 12-week average"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of CRISIS and INSUFFICIENT_DATA (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "It needs a family's weekly index to exceed three times its 12-week average"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, index fallback (CTE-07), production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "Under CLIO's rules such a week is STABLE with insufficient data."
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of INSUFFICIENT_DATA (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "Under CLIO's rules such a week is STABLE with insufficient data."
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, CTE-10 STABLE Case C and CTE-14, production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "as leaving it takes two consecutive lower weeks and the state is held through up to two weeks of unusable data"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of ESCALATION and CRISIS (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "as leaving it takes two consecutive lower weeks and the state is held through up to two weeks of unusable data"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/intelligence/acled_pressure_regimes.sql, exit persistence and validity-gap rules (CTE-11), production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/intelligence/acled_pressure_regimes.sql"
+  - claim: "Kenya held a general election on 27 December 2007."
+    citation: "Ted Dagne, Congressional Research Service, \"Kenya: The December 2007 Elections and the Challenges Ahead\", RL34378, updated 4 March 2008"
+    url: "https://www.everycrsreport.com/files/20080304_RL34378_92ad7c619a24875edaf80496fd58dfd573398c4a.html"
+  - claim: "On 24 January 2008, Kibaki and Odinga met for the first time since the disputed vote, in talks brokered by Kofi Annan."
+    citation: "Al Jazeera, \"Rival Kenyan leaders hold talks\", 24 January 2008"
+    url: "https://www.aljazeera.com/news/2008/1/24/rival-kenyan-leaders-hold-talks"
+  - claim: "The same day, violence reached Nakuru town, which until then had escaped the post-election violence."
+    citation: "IRIN (The New Humanitarian), \"Nakuru residents join displaced camp in their own town as violence erupts\", 26 January 2008"
+    url: "https://www.thenewhumanitarian.org/report/76431/kenya-nakuru-residents-join-displaced-camp-their-own-town-violence-erupts"
+  - claim: "Some 1,880 displaced people arrived at the town's displacement camp that day, the largest number it had received in a single day."
+    citation: "IRIN (The New Humanitarian), \"Nakuru residents join displaced camp in their own town as violence erupts\", 26 January 2008"
+    url: "https://www.thenewhumanitarian.org/report/76431/kenya-nakuru-residents-join-displaced-camp-their-own-town-violence-erupts"
+  - claim: "CLIO's own design notes intend each family to be judged separately"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definition of the UNKNOWN band (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "CLIO's own design notes intend each family to be judged separately"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/features/acled_pressure_signals.sql, header: per-family validity architecture, production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/features/acled_pressure_signals.sql"
+  - claim: "ACLED data are the classification's own input, so the ACLED card is not independent confirmation of the ESCALATION label."
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of the three ACLED-based families (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "against their own previous 12 weeks"
+    citation: "CLIO Findings Explorer, content/methodology.yaml, definitions of the three ACLED-based families (corrected 2026-10-14)"
+    url: "https://github.com/Sanjomwa/clio-findings-explorer/blob/main/content/methodology.yaml"
+  - claim: "against their own previous 12 weeks"
+    citation: "CLIO (Civil Liberties Intelligence Observatory), Bruin/assets/features/acled_pressure_signals.sql, rolling baselines (12 preceding weeks), production main branch, read 2026-10-14"
+    url: "https://github.com/Sanjomwa/Civil-Liberties-Intelligence-Observatory/blob/main/Bruin/assets/features/acled_pressure_signals.sql"
