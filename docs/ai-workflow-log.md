@@ -500,3 +500,7 @@ A running record of the work coding agents do in this repository, appended after
 - **Why:** in the consistency pass the reviewer wrote `EXTERNAL (CLIO rule)` in the verdict cell of seven `general-election-2022` rows (the prompt says six), which `test_every_finding_has_a_clean_review` rejects, and its `finance-bill-2024` summary line (15 VERIFIED, 11 EXTERNAL) did not match its table (17 and 9).
 - **Produced:** the two additions in `.claude/agents/evidence-reviewer.md`, copied byte-for-byte to the `custom-agent` copy.
 - **Verified:** `cmp` on the two copies; unit test result in the report.
+
+## 2026-10-15: README update (findings published)
+
+- **Task and result:** copied the approved README draft over `README.md` (plain `cp`, mode 644, wording unedited; only the prompt and that draft read from OneDrive). All relative links resolve; `/api/health` reports `"findings": 5` and `"finding_caveats": 21`, matching the README. No git writes.
