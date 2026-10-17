@@ -263,7 +263,7 @@ def fallback_violation(command):
         words = re.findall(r"[\w.-]+", match.group("rest"))
         if "api" in words:
             return "gh api"
-        for first, second in zip(words, words[1:]):
+        for first, second in zip(words, words[1:], strict=False):
             found = gh_violation([first, second])
             if found:
                 return f"gh {found}"
