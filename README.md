@@ -4,7 +4,7 @@ A public, read-only web app that presents curated Kenya civil-liberties findings
 
 This is a course final project for AI Dev Tools Zoomcamp 2026.
 
-**Status: work in progress.** The backend API (eight read-only `/api` endpoints, FastAPI and Postgres, seeded from `data/snapshot/`) runs locally with Docker Compose and serves five published findings and the methodology text. There is no frontend yet, and the app is not deployed yet.
+**Status: work in progress.** The backend API (eight read-only `/api` endpoints, FastAPI and Postgres, seeded from `data/snapshot/`) runs locally with Docker Compose and serves five published findings and the methodology text. The React frontend (ledger, finding pages, register, methodology and about) runs with it, served by nginx. The app is not deployed yet.
 
 ## Findings
 
@@ -29,11 +29,11 @@ Docker (with Docker Compose) is required.
 
 ```bash
 cp .env.example .env              # skip if you already have a .env; local placeholder values only
-docker compose up -d --build      # starts Postgres, loads the snapshot, starts the API on 127.0.0.1:8000
+docker compose up -d --build      # starts Postgres, loads the snapshot, starts the API and the app
 curl -s localhost:8000/api/health
 ```
 
-The API can take a few seconds to come up after the compose command returns; if `curl` prints nothing, run it again. Expected result (key fields):
+The app is at <http://localhost:8080>; the API stays on `127.0.0.1:8000`. The API can take a few seconds to come up after the compose command returns; if `curl` prints nothing, run it again. Expected result (key fields):
 
 ```json
 {"status": "ok", "database": "reachable", "snapshot_version": "2026-10-10.1", "migration_head": "0004",
@@ -41,7 +41,7 @@ The API can take a few seconds to come up after the compose command returns; if 
                 "google_transparency_requests": 85, "findings": 5, "finding_caveats": 21}}
 ```
 
-For tests and the backend layout see [backend/README.md](backend/README.md); the full command list is in [AGENTS.md](AGENTS.md).
+For tests and the backend layout see [backend/README.md](backend/README.md), for the frontend see [frontend/README.md](frontend/README.md); the full command list is in [AGENTS.md](AGENTS.md).
 
 ## License
 

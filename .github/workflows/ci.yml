@@ -153,10 +153,17 @@ jobs:
           for i in $(seq 1 36); do
             status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q backend)" 2>/dev/null || true)
             echo "backend health: ${status:-unknown} (attempt $i)"
+            [ "$status" = "healthy" ] && break
+            [ "$i" = 36 ] && { echo "::error::backend did not become healthy within 3 minutes"; exit 1; }
+            sleep 5
+          done
+          for i in $(seq 1 24); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q frontend)" 2>/dev/null || true)
+            echo "frontend health: ${status:-unknown} (attempt $i)"
             [ "$status" = "healthy" ] && exit 0
             sleep 5
           done
-          echo "::error::backend did not become healthy within 3 minutes"
+          echo "::error::frontend did not become healthy within 2 minutes"
           exit 1
       - name: Check the API
         run: |
@@ -171,6 +178,20 @@ jobs:
           assert len(timeline["weeks"]) == 1523, len(timeline["weeks"])
           print("ok:", health["snapshot_version"], len(timeline["weeks"]), "weeks")
           PY
+      - name: Check the frontend
+        run: |
+          curl -fsS localhost:8080/ -o index.html
+          grep -q '<div id="root">' index.html
+          curl -fsS localhost:8080/api/health | tee proxied.json
+          python3 - <<'PY'
+          import json
+          manifest = json.load(open("data/snapshot/MANIFEST.json"))
+          health = json.load(open("proxied.json"))
+          assert health["snapshot_version"] == manifest["version"], (health["snapshot_version"], manifest["version"])
+          print("ok through the proxy:", health["snapshot_version"])
+          PY
+          curl -fsS localhost:8080/findings/finance-bill-2024 -o fallback.html
+          cmp index.html fallback.html
       - name: Compose logs (on failure)
         if: failure()
         run: docker compose logs

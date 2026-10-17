@@ -15,6 +15,7 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/ledger.css";
 import "./styles/finding.css";
+import "./styles/pages.css";
 import { routes } from "./routes";
 
 createRoot(document.getElementById("root")!).render(

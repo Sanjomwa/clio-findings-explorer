@@ -26,9 +26,10 @@ describe("Shell", () => {
 
   it("shows 'Snapshot unavailable' on failure and keeps the page working", async () => {
     vi.spyOn(client, "getHealth").mockRejectedValue(new client.ApiError(503, "/api/health"));
+    vi.spyOn(client, "getMethodology").mockRejectedValue(new client.ApiError(503, "/api/methodology"));
     renderAt("/methodology");
     expect(await screen.findByText("Snapshot unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1, name: "Methodology" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "How CLIO classifies a week" })).toBeInTheDocument();
   });
 
   it("has a skip link, the archive strip and the footer", () => {

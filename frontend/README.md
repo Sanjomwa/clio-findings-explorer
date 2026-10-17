@@ -1,6 +1,6 @@
 # Frontend
 
-React 18, TypeScript and Vite. Node 22 (`.nvmrc`). Built so far: the Vite scaffold, typed API client, design tokens and both themes, the page shell, the ledger (`/`) and the finding page (`/findings/:slug`). The register, methodology and about pages are still placeholders.
+React 18, TypeScript and Vite. Node 22 (`.nvmrc`). Pages: the ledger (`/`), the register (`/findings`), the finding page (`/findings/:slug`), methodology (`/methodology`) and about (`/about`, including a table of the snapshot's files with the SQL that produced each). Also built: the Vite scaffold, typed API client, design tokens and both themes, and the page shell.
 
 ## Commands
 
@@ -54,3 +54,11 @@ The landing page draws every classified week as one SVG cell: one row per calend
 - **No data:** a card with `has_data: false` is still shown, with `No data` and the API's `provenance_note` verbatim. The frontend writes no coverage dates.
 - **OONI number:** the card leads with the top test's anomaly rate (`metric_value`, as a percentage to one decimal), as spec §4.2 says. The description gives the test's count, its 12-week baseline rate (both from the top test's row in `supporting.tests`) and the z-score (`comparison.value`); with no z-score, the sentence ends after the baseline.
 - **Wording:** the STABLE and pre-transition sentences are the spec's §4.1 strings (`src/lib/finding.ts`). Summary and caveats are split on blank lines into plain paragraphs; nothing is rendered as HTML, and a test fails if `dangerouslySetInnerHTML` appears in the page or its components.
+
+## Docker image
+
+`frontend/Dockerfile` is multi-stage: Node 22 runs `npm ci` and `npm run build`, then `nginx:1.29-alpine` serves `dist/` on port 8080. `nginx/default.conf.template` is rendered by the image's envsubst step: `server_tokens off`, SPA fallback to `index.html` (served `no-cache`), long cache for hashed files in `/assets/`, and `/api/` proxied to `BACKEND_URL` (default `http://backend:8000`). It is the `frontend` service in `docker-compose.yml`, on `127.0.0.1:8080`, and the compose-smoke CI job checks `/`, the proxied `/api/health` and the SPA fallback.
+
+| Purpose | Command |
+|---|---|
+| Build and run the whole app at `http://localhost:8080` (from the repo root) | `docker compose up -d --build` |
