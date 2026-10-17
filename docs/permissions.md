@@ -8,7 +8,7 @@ The agent works only inside this repository's directory, plus its own session sc
 
 ## Git
 
-The agent never runs `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `branch -d`/`-D`, `update-ref` or `commit-tree`, and never `gh pr create`, `gh pr merge` or `gh release create`. Read commands (`status`, `diff`, `log`, `show`, `fetch`) and `git add` / `git restore --staged` are allowed. The `block-autonomous-git` hook ([agent-hooks/README.md](../agent-hooks/README.md)) enforces the common forms; the rule holds whether or not the hook catches a given command. Sam commits, pushes, tags and deploys.
+The agent never runs `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `branch -d`/`-D`, `update-ref` or `commit-tree`, and never any GitHub write except `gh issue create` and `gh label create` (when a prompt explicitly asks for them) and `gh issue comment` (on the issue a prompt names). The hook denies the other `gh` writes: issue `close`, `reopen`, `edit`, `delete`, `transfer`, `lock`, `unlock`, `pin`, `unpin` and `develop`; label `edit`, `delete` and `clone`; `repo`, `workflow`, `run`, `secret` and `variable` write actions; all `gh release` actions; `gh pr` actions other than `list`, `view`, `diff`, `checks` and `status`; and `gh api` entirely. Issues are closed by Sam through commit messages (`Closes #N`). See "Task tracker" in `AGENTS.md`. Read commands (`status`, `diff`, `log`, `show`, `fetch`) and `git add` / `git restore --staged` are allowed. The `block-autonomous-git` hook ([agent-hooks/README.md](../agent-hooks/README.md)) enforces the common forms; the rule holds whether or not the hook catches a given command. Sam commits, pushes, tags and deploys.
 
 ## API contract
 
@@ -24,7 +24,7 @@ The reviewer ([custom-agent/evidence-reviewer/README.md](../custom-agent/evidenc
 
 ## Network
 
-Package installs from PyPI and npm are allowed, as is reading public documentation. The agent makes no calls to BigQuery, other GCP APIs or any CLIO endpoint, and has no deploy credentials.
+Package installs from PyPI and npm are allowed, as is reading public documentation. The agent may use `gh` for issues as described under Git. It makes no calls to BigQuery, other GCP APIs or any CLIO endpoint, and has no deploy credentials.
 
 ## Data
 

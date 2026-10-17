@@ -105,6 +105,80 @@ class TestBlockedGhCommands(HookTestCase):
             "gh --repo=owner/repo pr create",
             "gh release create v1.0",
             "gh release new v1.0",
+            "gh release list",
+            "gh release view v1",
+            "gh release delete v1",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_issue_writes_other_than_create_and_comment(self):
+        for action in [
+            "close", "reopen", "edit", "delete", "transfer", "lock", "unlock",
+            "pin", "unpin", "develop",
+        ]:
+            with self.subTest(action=action):
+                self.assertBlocked(f"gh issue {action} 7")
+
+    def test_label_repo_workflow_run_secret_variable_writes(self):
+        for command in [
+            "gh label edit bug --color fff",
+            "gh label delete bug",
+            "gh label clone owner/repo",
+            "gh repo create x",
+            "gh repo edit --visibility private",
+            "gh repo delete x --yes",
+            "gh repo archive x",
+            "gh repo unarchive x",
+            "gh repo rename y",
+            "gh repo fork",
+            "gh repo sync",
+            "gh repo set-default owner/repo",
+            "gh workflow run ci.yml",
+            "gh workflow enable ci.yml",
+            "gh workflow disable ci.yml",
+            "gh run cancel 1",
+            "gh run rerun 1",
+            "gh run delete 1",
+            "gh secret set X",
+            "gh secret delete X",
+            "gh variable set X",
+            "gh variable delete X",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_pr_actions_other_than_read_only(self):
+        for command in [
+            "gh pr close 3",
+            "gh pr comment 3 --body x",
+            "gh pr edit 3",
+            "gh pr ready 3",
+            "gh pr review 3 --approve",
+            "gh pr checkout 3",
+            "gh pr reopen 3",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_gh_api_is_always_blocked(self):
+        for command in [
+            "gh api repos/o/r/issues",
+            "gh api -X DELETE repos/o/r",
+            "gh -R o/r api graphql -f query=x",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_gh_denials_inside_chains_substitution_and_env(self):
+        for command in [
+            "gh issue list && gh issue close 7",
+            "echo $(gh issue close 7)",
+            "env GH_TOKEN=x gh issue close 7",
+            "env gh api repos/o/r",
+            "ls; gh repo delete x",
+            "echo 'unterminated && gh issue close 7",
+            "echo 'unterminated && gh api repos/o/r",
         ]:
             with self.subTest(command=command):
                 self.assertBlocked(command)
@@ -239,9 +313,21 @@ class TestAllowedCommands(HookTestCase):
             "gh pr view 3",
             "gh pr list",
             "gh pr status",
-            "gh release list",
-            "gh release view v1",
+            "gh pr diff 3",
+            "gh pr checks 3",
             "gh issue create --title x",
+            "gh issue new --title x",
+            "gh issue comment 7 --body-file notes.md",
+            "gh issue view 7 --comments",
+            "gh issue list --state all",
+            "gh issue status",
+            "gh label create agent-task --description x",
+            "gh label list",
+            "gh auth status",
+            "gh repo view o/r --json visibility",
+            "gh run list",
+            "gh -R o/r issue view 7",
+            "env GH_PAGER= gh issue comment 7 --body-file f",
         ]:
             with self.subTest(command=command):
                 self.assertAllowed(command)

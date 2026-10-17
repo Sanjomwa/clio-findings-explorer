@@ -22,7 +22,7 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 
 ## Hard rules
 
-1. **No git writes.** Never run `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `branch -d`/`-D`, `update-ref` or `commit-tree`, and never `gh pr create`, `gh pr merge` or `gh release create`. Read commands (`status`, `diff`, `log`, `show`, `fetch`) and `git add` / `git restore --staged` are fine. Leave the tree modified, stage only if asked, and describe the change. The `block-autonomous-git` hook enforces the common forms once it is installed; the rule holds whether or not the hook catches a given command. A hook block is a signal to stop and report, not something to route around.
+1. **No git writes.** Never run `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `branch -d`/`-D`, `update-ref` or `commit-tree`, and never any GitHub write except the three below (the hook denies `gh pr` actions other than `list`, `view`, `diff`, `checks` and `status`, all `gh release` and `gh api`, and the other `gh` write actions). Read commands (`status`, `diff`, `log`, `show`, `fetch`) and `git add` / `git restore --staged` are fine. The only GitHub writes allowed: `gh issue create` and `gh label create`, when a prompt explicitly asks for them; and `gh issue comment`, on the issue a prompt names. Never close, edit, reopen or delete issues: Sam closes them through commit messages (`Closes #N`). Leave the tree modified, stage only if asked, and describe the change. The `block-autonomous-git` hook enforces the common forms once it is installed; the rule holds whether or not the hook catches a given command. A hook block is a signal to stop and report, not something to route around.
 2. **Spec first.** A route's method and path must exist in `openapi.yaml` before the router is written or changed. To change the API, edit `openapi.yaml` first and stop so Sam can commit that edit separately, then regenerate `frontend/src/api/schema.d.ts`, then change the backend models and tests. Routers use literal paths (and a literal `APIRouter` prefix, if any) so `spec-first-guard` can check them.
 3. **One place for HTTP in the frontend.** Every backend call goes through `frontend/src/api/client.ts`. No `fetch` anywhere else.
 4. **Diagnose before fixing.** When something fails, find and state the cause, with the evidence, before changing code. Do not stack speculative fixes.
@@ -40,6 +40,16 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 - **Curated content is separate from the snapshot.** Text written by a person (finding titles, summaries, caveats, teasers, regime-state and band definitions, source notes) lives in `content/`, is committed, and is loaded by the same seed step. The agent may draft it; every factual claim in it follows rule 5.
 - Findings enter `content/findings/` only through `/new-finding`, and each needs a verdict log in `docs/reviews/`.
 - A finding with zero caveats is invalid. Keep the database constraint and the model validator that enforce this.
+
+## Task tracker
+
+Tasks are tracked as public GitHub Issues: <https://github.com/Sanjomwa/clio-findings-explorer/issues>. Each issue has acceptance criteria.
+
+- Every task prompt names its issue.
+- At the start, read it: `gh issue view <N> --comments`.
+- At STOP, post one comment: `gh issue comment <N> --body-file <file>`. It says what was done, the checks run and their results, which acceptance criteria are met, and what is left for Sam. Write the file in the scratchpad directory.
+- The comment must not contain secrets, tokens, database URLs or personal data.
+- Do not close, edit, reopen or delete the issue. Sam closes it through a commit message.
 
 ## Secrets and network
 

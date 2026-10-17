@@ -20,6 +20,7 @@ Every finding was checked before publication, one factual assertion at a time, b
 
 - Product definition: [product-spec.md](product-spec.md)
 - API contract: [openapi.yaml](openapi.yaml)
+- Task tracker: [GitHub Issues](https://github.com/Sanjomwa/clio-findings-explorer/issues). Each task has acceptance criteria; agents read their issue first and comment when they finish.
 - Instructions for coding agents: [AGENTS.md](AGENTS.md)
 - Agent permissions: [docs/permissions.md](docs/permissions.md)
 

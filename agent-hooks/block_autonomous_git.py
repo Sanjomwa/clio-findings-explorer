@@ -23,11 +23,30 @@ DENIED_GIT_SUBCOMMANDS = frozenset({
 # `git branch` is allowed except for deletion.
 BRANCH_DELETE_LONG = frozenset({"--delete"})
 
-# (group, action) pairs for gh. `new` is gh's alias for `create`.
-DENIED_GH_COMMANDS = frozenset({
-    ("pr", "create"), ("pr", "new"), ("pr", "merge"),
-    ("release", "create"), ("release", "new"),
-})
+# gh actions the agent may never run, by command group. `new` is gh's alias
+# for `create`. The only gh writes left open are `issue create`, `issue
+# comment` and `label create`. A value of ALL denies every action in the group.
+ALL = "*"
+DENIED_GH_ACTIONS = {
+    "issue": frozenset({
+        "close", "reopen", "edit", "delete", "transfer", "lock", "unlock",
+        "pin", "unpin", "develop",
+    }),
+    "label": frozenset({"edit", "delete", "clone"}),
+    "repo": frozenset({
+        "create", "new", "edit", "delete", "archive", "unarchive", "rename",
+        "fork", "sync", "set-default",
+    }),
+    "workflow": frozenset({"run", "enable", "disable"}),
+    "run": frozenset({"cancel", "rerun", "delete"}),
+    "secret": frozenset({"set", "delete"}),
+    "variable": frozenset({"set", "delete"}),
+    "release": ALL,
+}
+# pr: every action is denied except these read-only ones.
+ALLOWED_GH_PR_ACTIONS = frozenset({"list", "view", "diff", "checks", "status"})
+# Denied whatever follows: `gh api` can write anything.
+DENIED_GH_GROUPS = frozenset({"api"})
 
 # git global options that take their value as the next word.
 GIT_GLOBAL_OPTS_WITH_VALUE = frozenset({
@@ -70,10 +89,7 @@ LINE_CONTINUATION = re.compile(r"(?<!\\)((?:\\\\)*)\\\n")
 
 # Fallback scan for commands that cannot be tokenized.
 FALLBACK_GIT = re.compile(r"(?:^|[^\w.-])git(?:\.exe)?(?![\w.-])(?P<rest>[^\n;&|]*)", re.IGNORECASE)
-FALLBACK_GH = re.compile(
-    r"(?:^|[^\w.-])gh(?:\.exe)?(?![\w.-])[^\n;&|]*?\b(pr|release)\s+(create|new|merge)\b",
-    re.IGNORECASE,
-)
+FALLBACK_GH = re.compile(r"(?:^|[^\w.-])gh(?:\.exe)?(?![\w.-])(?P<rest>[^\n;&|]*)", re.IGNORECASE)
 
 RULE = "AGENTS.md hard rule 1: the agent never runs git writes"
 LEAVE_TREE = (
@@ -215,8 +231,21 @@ def gh_violation(args):
         else:
             positionals.append(arg)
             i += 1
-    if tuple(positionals) in DENIED_GH_COMMANDS:
+    if not positionals:
+        return None
+    group = positionals[0]
+    if group in DENIED_GH_GROUPS:
+        return group
+    action = positionals[1] if len(positionals) > 1 else None
+    if group == "pr":
+        if action is not None and action not in ALLOWED_GH_PR_ACTIONS:
+            return f"pr {action}"
+        return None
+    denied = DENIED_GH_ACTIONS.get(group)
+    if denied == ALL:
         return " ".join(positionals)
+    if denied and action in denied:
+        return f"{group} {action}"
     return None
 
 
@@ -230,9 +259,16 @@ def fallback_violation(command):
                 return f"git {word}"
         if "branch" in words and re.search(r"(?:^|\s)(-[A-Za-z]*[dD][A-Za-z]*|--delete)\b", match.group("rest")):
             return "git branch delete"
-    match = FALLBACK_GH.search(command)
-    if match:
-        return f"gh {match.group(1)} {match.group(2)}"
+    for match in FALLBACK_GH.finditer(command):
+        words = re.findall(r"[\w.-]+", match.group("rest"))
+        if "api" in words:
+            return "gh api"
+        for first, second in zip(words, words[1:]):
+            found = gh_violation([first, second])
+            if found:
+                return f"gh {found}"
+        if "release" in words:
+            return "gh release"
     return None
 
 
