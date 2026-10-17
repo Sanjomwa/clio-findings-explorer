@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 import Shell from "./components/Shell";
-import { About, Finding, Findings, Ledger, Methodology, NotFound } from "./pages/Placeholders";
+import Ledger from "./pages/Ledger";
+import { About, Finding, Findings, Methodology, NotFound } from "./pages/Placeholders";
 
 export const routes: RouteObject[] = [
   {

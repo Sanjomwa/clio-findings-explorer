@@ -523,3 +523,10 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** `frontend/` (config, `src/api/client.ts` and generated `schema.d.ts`, `src/styles/`, `ThemeSwitch`, `Shell`, routes, placeholder pages, tests); a `frontend` job in `.github/workflows/ci.yml`; `frontend/README.md`; frontend commands in the AGENTS.md table.
 - **Verified:** `npm run typecheck`, `lint`, `test` (14 passed) and `build` all clean; actionlint clean; `curl localhost:5173/api/health` through the dev proxy returned the API's health body (snapshot 2026-10-10.1). The CI diff check on `schema.d.ts` has not run yet (the file is untracked until Sam commits).
 - **Deviations:** react 18.3.1 and TypeScript 5.9.3 chosen over the newest majors; local Node is 24, not 22.
+
+## 2026-10-17: Phase 3b, the ledger (landing page)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** replace the `/` placeholder with the ledger: SVG week grid with finding outlines, margin labels, tooltip, keyboard access and legend; a reusable `FindingRegister`; UTC week helpers; tests; docs. No `openapi.yaml`, backend, `content/`, compose or git writes. Only the prompt and the prototype read from OneDrive.
+- **Produced:** `src/lib/weeks.ts`, `src/lib/ledgerLayout.ts`, `src/components/LedgerGrid.tsx`, `src/components/FindingRegister.tsx`, `src/pages/Ledger.tsx`, `src/styles/ledger.css`, tests for each, the ledger section of `frontend/README.md`.
+- **Verified:** typecheck, lint, tests and build; against the live API the 1,523 weeks map to 1,523 distinct (year, column) cells; dev proxy checked. Counts and dates in the report come from `/api/timeline` and `/api/findings`.

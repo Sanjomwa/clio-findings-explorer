@@ -1,6 +1,5 @@
 import { Link, useParams } from "react-router-dom";
 
-export const Ledger = () => <h1>Ledger</h1>;
 export const Findings = () => <h1>Findings</h1>;
 export const Methodology = () => <h1>Methodology</h1>;
 export const About = () => <h1>About</h1>;

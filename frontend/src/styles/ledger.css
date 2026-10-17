@@ -1,0 +1,190 @@
+/* ledger */
+.rec {
+  font: 500 11px/1.4 var(--f-rec);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.rec-second {
+  margin-top: 4px;
+}
+.ledger-h1 {
+  margin-top: 10px;
+}
+.dek {
+  font-size: 19px;
+  line-height: 1.55;
+  max-width: 62ch;
+  margin: 0;
+}
+.dek mark {
+  background: var(--hl);
+  color: var(--hl-ink);
+  padding: 0 0.12em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.ledger-wrap {
+  position: relative;
+  margin-top: 28px;
+}
+.ledger-head {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 10px;
+}
+.ledger-svg-wrap {
+  position: relative;
+}
+.ledger-svg {
+  display: block;
+  max-width: 100%;
+  cursor: crosshair;
+}
+.ledger-years text {
+  font: 500 10px "Spline Sans Mono", monospace;
+  fill: var(--soft);
+}
+.ledger-finding {
+  cursor: pointer;
+  outline: none;
+}
+.ledger-outline {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.ledger-finding:focus-visible .ledger-outline {
+  stroke: var(--stamp);
+  stroke-width: 3;
+}
+.ledger-leader {
+  stroke: var(--ink);
+  stroke-width: 0.75;
+}
+.ledger-label {
+  font: 600 11.5px "Schibsted Grotesk", sans-serif;
+  fill: var(--ink);
+}
+.ledger-finding:focus-visible .ledger-label {
+  text-decoration: underline;
+}
+.ledger-placeholder {
+  height: 520px;
+  background: var(--wash);
+}
+.register-placeholder {
+  height: 240px;
+  background: var(--wash);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 14px;
+  font: 500 12px/1.3 var(--f-rec);
+  color: var(--soft);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.legend i {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  border: 1px solid var(--rule);
+}
+.legend i.legend-finding {
+  background: transparent;
+  border: 2px solid var(--ink);
+}
+.tip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--paper);
+  font: 500 12px/1.45 var(--f-rec);
+  padding: 9px 11px;
+  max-width: 260px;
+  z-index: 5;
+}
+.tip b {
+  font-weight: 600;
+}
+.block {
+  margin-top: 48px;
+}
+.block h2 {
+  font: 700 24px/1.2 var(--f-head);
+  margin: 0 0 14px;
+}
+.lbl {
+  font: 600 13px/1 var(--f-rec);
+  letter-spacing: 0.14em;
+  color: var(--stamp);
+  border: 2px solid currentColor;
+  padding: 7px 9px 6px;
+  white-space: nowrap;
+}
+.lbl.sm {
+  font-size: 11px;
+  padding: 5px 6px 4px;
+  border-width: 1.5px;
+  letter-spacing: 0.12em;
+}
+.btn {
+  font: 600 14px/1 var(--f-head);
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+ol.register {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 2px solid var(--ink);
+}
+ol.register li {
+  border-bottom: 1px solid var(--rule);
+}
+ol.register a {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 6px 24px;
+  padding: 18px 0;
+  text-decoration: none;
+  align-items: start;
+}
+ol.register a:hover .t {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+ol.register .reg-main {
+  min-width: 0;
+}
+ol.register .t {
+  font: 700 20px/1.2 var(--f-head);
+  text-wrap: balance;
+}
+ol.register .s {
+  font-size: 15.5px;
+  color: var(--soft);
+  margin-top: 6px;
+  max-width: 70ch;
+}
+ol.register .side {
+  justify-self: end;
+}
+@media (max-width: 720px) {
+  ol.register a {
+    grid-template-columns: 1fr;
+  }
+  ol.register .side {
+    justify-self: start;
+  }
+}

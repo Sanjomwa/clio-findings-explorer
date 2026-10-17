@@ -1,9 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import * as client from "../api/client";
 import { routes } from "../routes";
 
+beforeEach(() => {
+  vi.spyOn(client, "getTimeline").mockResolvedValue({ weeks: [] } as unknown as client.TimelineResponse);
+  vi.spyOn(client, "listFindings").mockResolvedValue({ findings: [] } as unknown as client.FindingList);
+});
 afterEach(() => vi.restoreAllMocks());
 
 function renderAt(path: string) {
