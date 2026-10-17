@@ -1,0 +1,180 @@
+name: Deploy
+
+# Dev: runs by itself when CI passes on main. Production: "Run workflow" by hand with the SHA
+# that dev already ran; it deploys that SHA's images and never rebuilds.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Full commit SHA to promote to production (shown in the dev deploy's summary)
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  RUNTIME_SA: ${{ vars.RUNTIME_SA }}
+  REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.AR_REPO }}
+
+jobs:
+  deploy-dev:
+    if: >-
+      github.event_name == 'workflow_run'
+      && github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: dev
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: Build and push both images, tagged with the commit SHA
+        run: |
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build -f backend/Dockerfile -t "${REGISTRY}/backend:${SHA}" .
+          docker build -t "${REGISTRY}/frontend:${SHA}" frontend
+          docker push "${REGISTRY}/backend:${SHA}"
+          docker push "${REGISTRY}/frontend:${SHA}"
+      - name: Migrate and seed the dev database (Cloud Run job)
+        run: |
+          gcloud run jobs deploy cfe-seed-dev \
+            --region "$REGION" \
+            --image "${REGISTRY}/backend:${SHA}" \
+            --service-account "$RUNTIME_SA" \
+            --set-secrets DATABASE_URL=cfe-database-url-dev:latest \
+            --command /bin/sh \
+            --args "-c,alembic upgrade head && python -m app.seed" \
+            --cpu 1 --memory 512Mi --max-retries 0 --task-timeout 10m
+          gcloud run jobs execute cfe-seed-dev --region "$REGION" --wait
+      - name: Deploy the dev backend, then the dev frontend
+        run: |
+          gcloud run deploy cfe-backend-dev \
+            --region "$REGION" \
+            --image "${REGISTRY}/backend:${SHA}" \
+            --service-account "$RUNTIME_SA" \
+            --port 8000 \
+            --set-secrets DATABASE_URL=cfe-database-url-dev:latest \
+            --set-env-vars CONTENT_DIR=/content \
+            --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
+            --allow-unauthenticated
+          BACKEND_URL="$(gcloud run services describe cfe-backend-dev --region "$REGION" --format 'value(status.url)')"
+          gcloud run deploy cfe-frontend-dev \
+            --region "$REGION" \
+            --image "${REGISTRY}/frontend:${SHA}" \
+            --service-account "$RUNTIME_SA" \
+            --port 8080 \
+            --set-env-vars "BACKEND_URL=${BACKEND_URL}" \
+            --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
+            --allow-unauthenticated
+          {
+            echo "BACKEND_URL=${BACKEND_URL}"
+            echo "FRONTEND_URL=$(gcloud run services describe cfe-frontend-dev --region "$REGION" --format 'value(status.url)')"
+          } >> "$GITHUB_ENV"
+      - name: Smoke test /api/health through the frontend
+        run: bash ops/deploy/smoke-test.sh "$FRONTEND_URL"
+      - name: Summary
+        run: |
+          {
+            echo "## Dev deployed"
+            echo "- SHA: \`${SHA}\` (promote this one)"
+            echo "- Frontend: ${FRONTEND_URL}"
+            echo "- Backend: ${BACKEND_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  promote-production:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      SHA: ${{ inputs.sha }}
+    steps:
+      - name: Input is a full commit SHA
+        run: |
+          if ! printf '%s' "$SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::sha must be a full 40-character lowercase commit SHA"
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: The images for this SHA exist (production never rebuilds)
+        run: |
+          for image in backend frontend; do
+            if ! gcloud artifacts docker images describe "${REGISTRY}/${image}:${SHA}" >/dev/null 2>&1; then
+              echo "::error::${REGISTRY}/${image}:${SHA} not found. Dev has not built this SHA (or the image was cleaned up). Nothing was deployed."
+              exit 1
+            fi
+          done
+      - name: Migrate and seed the production database (Cloud Run job)
+        run: |
+          gcloud run jobs deploy cfe-seed-prod \
+            --region "$REGION" \
+            --image "${REGISTRY}/backend:${SHA}" \
+            --service-account "$RUNTIME_SA" \
+            --set-secrets DATABASE_URL=cfe-database-url-prod:latest \
+            --command /bin/sh \
+            --args "-c,alembic upgrade head && python -m app.seed" \
+            --cpu 1 --memory 512Mi --max-retries 0 --task-timeout 10m
+          gcloud run jobs execute cfe-seed-prod --region "$REGION" --wait
+      - name: Deploy the production backend, then the production frontend
+        run: |
+          gcloud run deploy cfe-backend-prod \
+            --region "$REGION" \
+            --image "${REGISTRY}/backend:${SHA}" \
+            --service-account "$RUNTIME_SA" \
+            --port 8000 \
+            --set-secrets DATABASE_URL=cfe-database-url-prod:latest \
+            --set-env-vars CONTENT_DIR=/content \
+            --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
+            --allow-unauthenticated
+          BACKEND_URL="$(gcloud run services describe cfe-backend-prod --region "$REGION" --format 'value(status.url)')"
+          gcloud run deploy cfe-frontend-prod \
+            --region "$REGION" \
+            --image "${REGISTRY}/frontend:${SHA}" \
+            --service-account "$RUNTIME_SA" \
+            --port 8080 \
+            --set-env-vars "BACKEND_URL=${BACKEND_URL}" \
+            --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
+            --allow-unauthenticated
+          {
+            echo "BACKEND_URL=${BACKEND_URL}"
+            echo "FRONTEND_URL=$(gcloud run services describe cfe-frontend-prod --region "$REGION" --format 'value(status.url)')"
+          } >> "$GITHUB_ENV"
+      - name: Smoke test /api/health through the frontend
+        run: bash ops/deploy/smoke-test.sh "$FRONTEND_URL"
+      - name: Summary
+        run: |
+          {
+            echo "## Production deployed"
+            echo "- SHA: \`${SHA}\`"
+            echo "- Frontend: ${FRONTEND_URL}"
+            echo "- Backend: ${BACKEND_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"

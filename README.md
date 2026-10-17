@@ -6,6 +6,8 @@ This is a course final project for AI Dev Tools Zoomcamp 2026.
 
 **Status: work in progress.** The backend API (eight read-only `/api` endpoints, FastAPI and Postgres, seeded from `data/snapshot/`) runs locally with Docker Compose and serves five published findings and the methodology text. The React frontend (ledger, finding pages, register, methodology and about) runs with it, served by nginx. The app is not deployed yet.
 
+**Live site:** production <production URL> · dev <dev URL>
+
 ## Findings
 
 | Week | Finding |

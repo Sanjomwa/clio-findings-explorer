@@ -1,5 +1,9 @@
+# No client IPs: the format has no $remote_addr, and $uri leaves out the query string.
+log_format no_ip '$time_iso8601 $request_method $uri $status $body_bytes_sent $request_time';
+
 server {
     listen 8080;
+    access_log /dev/stdout no_ip;
     server_name _;
     server_tokens off;
 
@@ -7,8 +11,9 @@ server {
 
     location /api/ {
         proxy_pass ${BACKEND_URL};
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $remote_addr;
+        # Works for http://backend:8000 (compose) and an https://...run.app backend.
+        proxy_set_header Host $proxy_host;
+        proxy_ssl_server_name on;
     }
 
     # Hashed build files never change under the same name.

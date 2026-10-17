@@ -1,6 +1,6 @@
 # Continuous integration
 
-One workflow, `.github/workflows/ci.yml`, runs every test suite and check in the repository. It runs on push to `main`, on every pull request and on manual dispatch. It needs **no secrets**: the Postgres service and the compose stack use the local-only placeholder values from `.env.example` (`clio` / `clio-local-only` / `clio_findings`) on a throwaway runner. There is no deploy job; deployment is Phase 3 (`deploy.yml`).
+One workflow, `.github/workflows/ci.yml`, runs every test suite and check in the repository. It runs on push to `main`, on every pull request and on manual dispatch. It needs **no secrets**: the Postgres service and the compose stack use the local-only placeholder values from `.env.example` (`clio` / `clio-local-only` / `clio_findings`) on a throwaway runner. There is no deploy job in this workflow; deployment is the separate `deploy.yml`, which runs after this one passes on `main` (see [deploy.md](deploy.md)).
 
 Settings: `permissions: contents: read`; one concurrency group per ref with `cancel-in-progress`; a `timeout-minutes` on every job. Actions are pinned to a full commit SHA with the version in a comment. Jobs run in parallel and each sets up its own environment (`astral-sh/setup-uv`, Python 3.12, uv cache on).
 

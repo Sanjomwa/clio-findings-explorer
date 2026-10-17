@@ -575,3 +575,12 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** `product-spec.md` v0.5 with §7.1 to §7.5 (the tracker is §7.5), an updated §7 table, §9.1 and §9.5. The decisions were written as given.
 - **Verified:** the live rubric was fetched read-only and compared with the prompt's summary (12 criteria, 24 points; the point values sum to 24). The §9.2 fact-check was done by reading the backend schemas, seed loader, tests, CI workflow and frontend; the findings are in the issue comment. Nothing was run.
 - **Prompt differences:** HEAD was 9a4a546 (a lint fix after 07285d3), not 07285d3. The tree was clean.
+
+## 2026-10-17: Issues #3 and #4, deploy to Cloud Run + Neon, with CD
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** write the backend image for Cloud Run, nginx changes for an https upstream, a one-time Cloud Shell setup script, `deploy.yml` (dev automatic, production manual, no rebuild), `docs/deploy.md` and a README line; no Google credentials, no git writes; two tracker steps first (new traceability issue, comment on #11). Only the prompt file read from OneDrive.
+- **Produced:** `backend/Dockerfile` (root context, bakes in `content/` and `data/snapshot/`), root `.dockerignore`, compose build context, nginx template (`Host $proxy_host`, SNI, no `X-Forwarded-For`, access log without client IP or query string), `ops/deploy/gcp-setup.sh`, `ops/deploy/smoke-test.sh`, `.github/workflows/deploy.yml`, `docs/deploy.md`, the README "Live site" line, and a one-line fix in `docs/ci.md`.
+- **Verified:** compose rebuilt and the four smoke curls pass; backend unit (109) and integration (78) tests, frontend tests (103), ruff, actionlint and shellcheck all clean. `smoke-test.sh` run against the local frontend passes. The Google side (setup script, WIF, deploy) was not run; no credentials.
+- **Seed idempotency:** read `backend/app/seed`; already idempotent (snapshot skipped when version and hashes match, findings upserted, caveats replaced), covered by `test_second_run_is_idempotent` and `test_content_sync_and_removal`. No seed change.
+- **Notes:** the first image build hung in `uv sync` (package download stalled; build context was 3 kB); a retry succeeded. The auto-mode classifier denied `gh issue create`, `gh issue comment 11`, and the comments on #3 and #4, so those GitHub writes were not done.
