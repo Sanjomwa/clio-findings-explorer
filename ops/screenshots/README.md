@@ -1,0 +1,1 @@
+Run from the repository root (needs Docker and network access): `docker run --rm -v "$PWD/ops/screenshots/shoot.mjs:/scripts/shoot.mjs:ro" -v "$PWD/docs/images:/out" mcr.microsoft.com/playwright:v1.49.1-noble bash -c "cd /tmp && npm init -y >/dev/null && npm i --silent playwright@1.49.1 && cp /scripts/shoot.mjs . && node shoot.mjs"` writes the four PNGs in `docs/images/`.
