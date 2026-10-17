@@ -76,6 +76,10 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Run the backend integration tests (db running; `DATABASE_URL` set as in `backend/README.md`) | `uv run --directory backend pytest tests/integration -v` |
 | Lint all Python (the CI lint job) | `uvx ruff@0.17.0 check backend mcp-server agent-hooks ops` |
 | Lint the CI workflow | `docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.7 -color` |
+| Install frontend dependencies (from `frontend/`) | `npm ci` |
+| Regenerate frontend API types from `openapi.yaml` (from `frontend/`) | `npm run gen:api` |
+| Frontend type-check, lint, tests, build (from `frontend/`) | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
+| Frontend dev server on `localhost:5173`, proxying `/api` to the API (from `frontend/`) | `npm run dev` |
 
 ## Repository layout (target)
 

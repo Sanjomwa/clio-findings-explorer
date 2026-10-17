@@ -1,0 +1,54 @@
+/* Design tokens. Bare :root is light; :root[data-theme="dark"] overrides. The theme
+   attribute is set before first paint by the inline script in index.html. */
+:root {
+  --paper: #ffffff;
+  --sheet: #ffffff;
+  --ink: #121417;
+  --soft: #5d636a;
+  --rule: #dcdfe2;
+  --wash: #f2f3f4;
+  --stamp: #2f3e95;
+  --hl: #fff0a8;
+  --hl-ink: #121417;
+  --st-S: #c5d0ca;
+  --st-I: #eaecee;
+  --st-M: #c69a1c;
+  --st-T: #2f7f7a;
+  --st-R: #3d5a80;
+  --st-F: #4b3f86;
+  --st-E: #d1663b;
+  --st-C: #9e1b32;
+  --b-n: #9aa5a0;
+  --b-e: #d1663b;
+  --b-s: #9e1b32;
+  --b-u: #c3c8cc;
+  --f-head: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-read: Literata, Georgia, "Times New Roman", serif;
+  --f-rec: "Spline Sans Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --paper: #0f1214;
+  --sheet: #0f1214;
+  --ink: #e7e9eb;
+  --soft: #9aa1a8;
+  --rule: #2a2f34;
+  --wash: #181c1f;
+  --stamp: #a9b6ff;
+  --hl: #5a4b10;
+  --hl-ink: #fff6cf;
+  --st-S: #56645e;
+  --st-I: #1e2327;
+  --st-M: #d9ad2e;
+  --st-T: #3fa39c;
+  --st-R: #6f8fbf;
+  --st-F: #8b7cd6;
+  --st-E: #e2774b;
+  --st-C: #e0475f;
+  --b-n: #6f7a75;
+  --b-e: #e2774b;
+  --b-s: #e0475f;
+  --b-u: #3a4045;
+  color-scheme: dark;
+}
