@@ -1,6 +1,6 @@
 # CLIO Findings Explorer: product spec
 
-**Version:** 0.4 (2026-10-10, after snapshot 2026-10-10.1: five anchor weeks set, display rules for classifications added). Written before any code. The full plan, schedule and rubric mapping are in the Cowork-side project plan; this file is the product definition the code is built against.
+**Version:** 0.5 (2026-10-17: environments, observability, alerting and the on-call agent added, and §9 rewritten, after the course rubric was revised on 16 October). Earlier: 0.4 (2026-10-10, after snapshot 2026-10-10.1: five anchor weeks set, display rules for classifications added). Written before any code. The full plan, schedule and rubric mapping are in the Cowork-side project plan; this file is the product definition the code is built against.
 
 ## 1. Problem
 
@@ -98,10 +98,57 @@ Dropped from the plan: the 2010 constitutional referendum as a "true negative". 
 | Database | PostgreSQL 16 |
 | Frontend | React 18, TypeScript, Vite; all HTTP through `frontend/src/api/client.ts`; types generated from `openapi.yaml` |
 | Run | Docker Compose: `db`, `seed`, `backend`, `frontend`. One command, no credentials |
-| CI/CD | GitHub Actions: tests, then deploy only when tests pass |
-| Deployment | Google Cloud Run (backend, frontend) and Neon Postgres |
+| CI | GitHub Actions: lint, contract validation, unit and integration tests, frontend checks, compose smoke test |
+| CD | GitHub Actions deploy workflow: automatic to dev after CI passes, manual "Promote to production" (§7.1) |
+| Deployment | Google Cloud Run `europe-west1` (frontend and backend services per environment) and Neon Postgres on AWS `eu-central-1` (one branch per environment) |
+| Telemetry | OpenTelemetry traces and metrics, structured JSON logs; Grafana LGTM container in `docker compose` (§7.2) |
+| Alerting | Grafana alert rule provisioned from the repository, webhook contact point (§7.3) |
+| On-call | Responder agent run against the local compose stack (§7.4) |
+| Task tracker | GitHub Issues (§7.5) |
 
 The API has eight read-only endpoints under `/api`: health, timeline, findings list, finding detail, three evidence endpoints, and methodology. `openapi.yaml` is the authority on their shape.
+
+### 7.1 Environments and delivery
+
+- **Two environments, dev and production.** Each has a frontend service and a backend service on Google Cloud Run in `europe-west1`, and its own Neon Postgres branch (AWS `eu-central-1`) seeded from the committed snapshot by a migration-and-seed job.
+- **Dev.** Every push to `main` that passes CI is deployed to dev automatically, with no manual step. A push whose CI fails deploys nothing.
+- **Production.** Production changes only through a manual "Promote to production" workflow. It deploys the same commit's images that dev already ran; it does not rebuild. A GitHub environment requiring Sam's approval protects it.
+- **Smoke test.** Each deploy ends with a request to `/api/health` through that environment's frontend URL. It must return the snapshot version in the repository.
+- **Scale.** Services scale to zero, with at most one instance each.
+- **Rollback.** Route traffic back to the previous Cloud Run revision.
+- **Secrets and authentication.** Database URLs live in Secret Manager. GitHub authenticates to Google with Workload Identity Federation; no key files exist in the repository, the images or the workflow logs.
+
+### 7.2 Observability
+
+- **The key user journey** is opening a finding page: the finding request, the findings list, the timeline range and the three evidence requests.
+- **Traces.** The backend emits OpenTelemetry traces: one per request, with database spans.
+- **Metrics.** Request count, error count and latency, per route template (`/api/findings/{slug}`, never the concrete URL).
+- **Logs.** Structured JSON logs, each line carrying `trace_id` and `span_id`, so a log line can be found from its trace and the reverse.
+- **Locally,** a Grafana LGTM container in `docker compose` collects all three signals, viewable at `http://localhost:3000`, with a dashboard for the journey provisioned from the repository.
+- **On Cloud Run,** the same structured logs go to Cloud Logging, with the trace ID in Cloud Logging's trace field. The full trace and metrics UI is the local one; the deployed environments do not have it.
+- **Never in telemetry:** client IP addresses, user agents, query strings or request bodies, cookies, database URLs, secrets, or anything identifying a reader. A test checks this.
+
+### 7.3 Alerting
+
+- **The rule.** A Grafana alert rule, provisioned from the repository, fires when, over a 5-minute window with at least 10 requests, more than 5% of `/api/findings/*` requests return 5xx, **or** their p95 latency exceeds 2 seconds.
+- **The numbers are starting thresholds,** chosen for a low-traffic archive. The minimum of 10 requests keeps one failed request on a quiet window from alerting.
+- **Notification.** It notifies a webhook contact point that the on-call agent listens on.
+- **Triggering it on purpose.** The documented way is to stop the database container (or inject a fault in dev mode) while requesting a finding page repeatedly; the alert must fire within the window. It must not fire during a normal `docker compose up` session.
+
+### 7.4 On-call agent
+
+- **Trigger.** It wakes on the alert's webhook.
+- **Evidence.** It collects health, recent logs and the failing requests' traces.
+- **Fix.** It states a diagnosis, then applies at most one fix from an allow-list: restart a compose service, or apply a code or config fix in the working tree.
+- **Verification.** A fix counts only if the tests pass **and** a replay of the failing request succeeds **and** the alert clears. Otherwise it reverts its own change and escalates.
+- **Record.** It always writes an incident report (what fired, evidence, diagnosis, action, verification) to `docs/incidents/`. When it escalates, it opens a GitHub issue labelled `incident`.
+- **Never:** git writes, `docker compose down -v`, touching volumes or secrets, or acting on production.
+- **Scope.** It runs against the local compose stack, so reviewers can run the demo.
+- **Pattern.** It reuses the responder pattern from Sam's Module 4 homework (Order Tracker).
+
+### 7.5 Task tracker
+
+Tasks are GitHub Issues at <https://github.com/Sanjomwa/clio-findings-explorer/issues>, each with acceptance criteria. Coding agents read their issue first and post a progress comment when they finish ([AGENTS.md](AGENTS.md), "Task tracker"). Sam closes issues through commit messages.
 
 ## 8. Non-goals
 
@@ -123,7 +170,9 @@ The project succeeds if it does three things CLIO's own README says CLIO cannot 
 - The timeline renders from `/api/timeline`; a highlighted week opens its finding; every evidence card loads, including cards that report no data.
 - The backend's responses conform to `openapi.yaml`, checked in CI.
 - Unit and integration tests are separate, documented, and run in CI; integration tests use a real Postgres loaded with the real snapshot.
-- A push to `main` deploys only after CI passes, and the public URL serves the same snapshot version as the repository.
+- Dev: a push to `main` deploys to dev automatically only after CI passes; a failed CI deploys nothing.
+- Production: it changes only through the manual "Promote to production" workflow, which deploys the images dev already ran, behind a GitHub environment that needs Sam's approval.
+- Each environment's public frontend URL serves the same snapshot version as the repository, checked by the deploy's smoke test of `/api/health`.
 
 ### 9.2 Evidence integrity
 
@@ -149,7 +198,24 @@ The project succeeds if it does three things CLIO's own README says CLIO cannot 
 ### 9.5 Course outcome
 
 - Submitted by the evening of 26 October 2026 with a commit ID, and the required peer reviews completed.
-- A self-score against the 14 rubric criteria at the end of each build phase, with 26 of 30 as the floor.
+- A self-score against the course's 12 criteria (24 points), aiming for the maximum. The course's pass mark is 10 points, and three peer reviews of other projects are required.
+
+| Criterion (points) | Where the project meets it |
+|---|---|
+| Problem description (2) | README: the problem, the system and its expected behaviour; §1 and §4 here |
+| Product specification (2) | This file, with acceptance criteria in §9, and the public GitHub Issues tracker (§7.5), where each task has acceptance criteria and agents comment on their issue |
+| Agent team specification (2) | `docs/agent-team.md` (issue #8): roles, process and limits; `docs/permissions.md` and the hooks |
+| Context management (2) | `AGENTS.md` linking the modular docs (issue #9) |
+| Application (2) | Frontend, backend and Postgres, running locally with one command (§9.1) |
+| Testing (2) | Unit and integration tests, separate and documented, run in CI (§9.1) |
+| Containerization (2) | `docker compose up --build` runs db, seed, backend and frontend (§9.1) |
+| Deployment (2) | Cloud Run and Neon, dev and production, public URLs (§7.1) |
+| CI/CD (3) | CI tests, automatic deploy to dev, manual deploy to production, rollback (§7.1) |
+| Observability (2) | Traces, metrics and structured logs sharing a trace ID for the finding-page journey, no reader data, viewable in Grafana (§7.2) |
+| Alerting on user impact (1) | The finding-page alert rule (§7.3) |
+| On-call agent (2) | The responder agent that wakes on the alert and fixes the fault (§7.4) |
+
+The deployment, delivery, observability, alerting and on-call rows are specified here and not yet built; each has an open issue.
 
 ### 9.6 What does not count as success
 
