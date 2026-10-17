@@ -60,7 +60,8 @@ function mockApi(opts: { weeks?: Week[] | Error; findings?: Finding[] | Error } 
 }
 
 function renderLedger() {
-  return render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ["/"] })} />);
+  const router = createMemoryRouter(routes, { initialEntries: ["/"] });
+  return { router, ...render(<RouterProvider router={router} />) };
 }
 
 afterEach(() => {
@@ -201,7 +202,7 @@ describe("Ledger tooltip", () => {
 describe("Ledger keyboard and navigation", () => {
   it("Tab reaches each finding in date order, ordinary cells are not focusable, Enter opens it", async () => {
     mockApi();
-    const { container } = renderLedger();
+    const { container, router } = renderLedger();
     await screen.findByRole("img");
     expect(container.querySelectorAll("rect[tabindex]").length).toBe(0);
     const seen: string[] = [];
@@ -213,7 +214,7 @@ describe("Ledger keyboard and navigation", () => {
     expect(seen).toEqual(["july-2023", "finance-bill-2024", "june-july-2025"]);
     expect(screen.getByRole("tooltip")).toHaveTextContent("21–27 Jun 2025");
     await userEvent.keyboard("{Enter}");
-    expect(await screen.findByRole("heading", { name: "Finding: june-july-2025" })).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe("/findings/june-july-2025"));
   });
 
   it("names each finding with title, week and state", async () => {
@@ -229,10 +230,10 @@ describe("Ledger keyboard and navigation", () => {
 
   it("opens a finding when its outline is clicked", async () => {
     mockApi();
-    renderLedger();
+    const { router } = renderLedger();
     await screen.findByRole("img");
     await userEvent.click(screen.getByRole("link", { name: /week of 15 July 2023/ }));
-    expect(await screen.findByRole("heading", { name: "Finding: july-2023" })).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe("/findings/july-2023"));
   });
 
   it("hides margin labels and leader lines below 600px but keeps the outlines", async () => {

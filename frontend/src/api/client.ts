@@ -7,6 +7,8 @@ export type RegimeState = components["schemas"]["RegimeState"];
 export type TimelineQuery = NonNullable<operations["getTimeline"]["parameters"]["query"]>;
 export type FindingList = operations["listFindings"]["responses"]["200"]["content"]["application/json"];
 export type FindingDetail = operations["getFinding"]["responses"]["200"]["content"]["application/json"];
+/** The finding itself, without the response envelope. */
+export type FindingRecord = FindingDetail["finding"];
 export type AcledEvidence = operations["getAcledEvidence"]["responses"]["200"]["content"]["application/json"];
 export type OoniEvidence = operations["getOoniEvidence"]["responses"]["200"]["content"]["application/json"];
 export type GoogleTransparencyEvidence =

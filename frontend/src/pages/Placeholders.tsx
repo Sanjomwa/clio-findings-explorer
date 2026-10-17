@@ -1,13 +1,8 @@
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export const Findings = () => <h1>Findings</h1>;
 export const Methodology = () => <h1>Methodology</h1>;
 export const About = () => <h1>About</h1>;
-
-export function Finding() {
-  const { slug } = useParams();
-  return <h1>Finding: {slug}</h1>;
-}
 
 export function NotFound() {
   return (

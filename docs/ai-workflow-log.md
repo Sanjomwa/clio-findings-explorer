@@ -530,3 +530,11 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** replace the `/` placeholder with the ledger: SVG week grid with finding outlines, margin labels, tooltip, keyboard access and legend; a reusable `FindingRegister`; UTC week helpers; tests; docs. No `openapi.yaml`, backend, `content/`, compose or git writes. Only the prompt and the prototype read from OneDrive.
 - **Produced:** `src/lib/weeks.ts`, `src/lib/ledgerLayout.ts`, `src/components/LedgerGrid.tsx`, `src/components/FindingRegister.tsx`, `src/pages/Ledger.tsx`, `src/styles/ledger.css`, tests for each, the ledger section of `frontend/README.md`.
 - **Verified:** typecheck, lint, tests and build; against the live API the 1,523 weeks map to 1,523 distinct (year, column) cells; dev proxy checked. Counts and dates in the report come from `/api/timeline` and `/api/findings`.
+
+## 2026-10-17: Phase 3c, the finding page
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** replace the `/findings/:slug` placeholder with the finding page (record header, state line, bands, 13-week strip, three exhibits, limits, citations, data attribution, pager), helpers, tests, docs, and one sentence in `product-spec.md` §4 item 1; STOP and report. No `openapi.yaml`, backend, `content/`, compose or git writes. Only the prompt and the prototype read from OneDrive.
+- **Produced:** `src/pages/Finding.tsx`, `src/components/finding/*`, `src/lib/finding.ts`, `src/styles/finding.css`, tests for the helpers and the page, a finding-page section in `frontend/README.md`, the spec sentence. `client.ts` gained one type alias (`FindingRecord`). The two ledger tests that looked for the old placeholder heading now assert the router location.
+- **Verified:** typecheck, lint, tests and build clean; `gen:api` leaves `schema.d.ts` unchanged; dev server served the page and the OONI proxy, then was stopped (port 5173 closed). Data facts for all five slugs were read from the live API (see the report).
+- **Follow-up (same day):** Exhibit B now leads with the top test's anomaly rate (`metric_value`, as a percentage) with the z-score in the description, per spec §4.2, replacing the z-score headline from the first pass; tests updated, typecheck, lint and tests (96) pass.

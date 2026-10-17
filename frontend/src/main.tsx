@@ -14,6 +14,7 @@ import "@fontsource/spline-sans-mono/600.css";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/ledger.css";
+import "./styles/finding.css";
 import { routes } from "./routes";
 
 createRoot(document.getElementById("root")!).render(
