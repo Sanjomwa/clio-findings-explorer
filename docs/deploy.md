@@ -61,7 +61,21 @@ gcloud run services update-traffic cfe-frontend-prod --region europe-west1 \
 
 Do the same for `cfe-backend-<env>` if the backend was the change. The previous revision is the second one in the list. To go forward again: `--to-latest`. Rolling back a service does not undo a database seed: the seed only reloads the snapshot and content, and a backend from the previous commit reads the same tables. If a migration changed the schema, roll back with a new commit instead.
 
-**Rollback tried on dev:** _to be filled in after the first deploy (issue #4 asks for one rehearsal on dev)._
+### Rollback tried on dev
+
+Rehearsed by Sam in Cloud Shell on 17 October 2026, region `europe-west1`. Before it, dev had two revisions per service after Deploy #3 (commit `fa43623`).
+
+| Service | Previous revision (rolled back to) | Latest revision (rolled forward to) |
+|---|---|---|
+| `cfe-backend-dev` | `cfe-backend-dev-00001-b9b` (created 2026-10-17T18:54:26Z) | `cfe-backend-dev-00002-z4b` (2026-10-17T19:41:07Z) |
+| `cfe-frontend-dev` | `cfe-frontend-dev-00001-jmz` (2026-10-17T18:54:39Z) | `cfe-frontend-dev-00002-n86` (2026-10-17T19:41:21Z) |
+
+1. `gcloud run services update-traffic <service> --region europe-west1 --to-revisions <previous>=100` for both services. Result: "Traffic: 100% <previous revision>".
+2. `curl https://cfe-frontend-dev-qf6bvfuxjq-ew.a.run.app/api/health`. Result: status ok, database reachable, snapshot 2026-10-10.1, migration 0004, findings 5, finding_caveats 21.
+3. `gcloud run services update-traffic <service> --region europe-west1 --to-latest` for both. Result: "100% LATEST (currently ...-00002-...)".
+4. Health check again. Result: the same healthy response.
+
+While traffic is pinned to a named revision, a new deploy creates a revision that receives no traffic. That is why step 3 (`--to-latest`) is part of the procedure: run it when the rollback is over, or the next deploy will not go live.
 
 ## Costs
 

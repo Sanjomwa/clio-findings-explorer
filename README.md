@@ -11,6 +11,10 @@ This is the final project for AI Dev Tools Zoomcamp 2026.
 | Production | <https://cfe-frontend-prod-qf6bvfuxjq-ew.a.run.app> |
 | Dev | <https://cfe-frontend-dev-qf6bvfuxjq-ew.a.run.app> |
 
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/ledger-dark.png"><img alt="The ledger: one row per year, one cell per week, coloured by regime state" src="docs/images/ledger-light.png" width="800"></picture>
+
+*The landing page: 1,523 classified weeks drawn as a ledger, with the five findings outlined.*
+
 ## The problem
 
 When a government restricts civil liberties, the evidence arrives in pieces with different grains. Conflict-event records (ACLED) describe what happened on the street, network measurements (OONI) describe what happened to internet access, and platform transparency reports (Google) describe what content governments asked to have removed. Each has its own collection method and reliability.
@@ -24,6 +28,10 @@ The app is read-only and never queries CLIO or BigQuery at runtime. Every number
 - **Ledger (`/`)**: every classified week as one cell, one row per year, coloured by regime state. Weeks with insufficient data are pale. Weeks with a finding are outlined and reachable by keyboard.
 - **Finding page (`/findings/:slug`)**: state and confidence, the week's three family bands, a context strip of the 13 weeks either side, three exhibits (A: ACLED, B: OONI, C: Google), a limits box, and the public sources for real-world statements. An exhibit with no data for the week is still shown and says so.
 - **Register (`/findings`)**, **methodology (`/methodology`)** and **about (`/about`)**: the list of findings, how CLIO classifies a week, and what the sources and the project are. Light and dark themes.
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/finding-dark.png"><img alt="A finding page: Finance Bill 2024" src="docs/images/finding-light.png" width="400"></picture>
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/finding-phone-dark.png"><img alt="The same finding page on a phone" src="docs/images/finding-phone-light.png" width="300"></picture>
 
 | Week | Finding |
 |---|---|
@@ -107,9 +115,9 @@ For backend and frontend details see [backend/README.md](backend/README.md) and 
 ## Deployment and CI/CD
 
 - **Hosting:** Google Cloud Run in `europe-west1` and Neon Postgres on AWS `eu-central-1`, with one Neon branch per environment. Services scale to zero.
-- **Dev:** every push to `main` runs CI; when it passes, [`deploy.yml`](.github/workflows/deploy.yml) builds both images, runs the seed job, deploys and smoke-tests `/api/health`. A red CI deploys nothing. The first deploy was commit `c5ce7f8`: Deploy #1 to dev ran automatically, and Deploy #2 promoted it to production.
+- **Dev:** every push to `main` runs CI; when it passes, [`deploy.yml`](.github/workflows/deploy.yml) builds both images, runs the seed job, deploys and smoke-tests `/api/health`. A red CI deploys nothing. The first deploy was commit `c5ce7f8`: Deploy #1 to dev ran automatically, and Deploy #2 promoted it to production. Deploy #3 (commit `fa43623`, run 39063387329) also ran automatically to dev, and passed its smoke test.
 - **Production:** a manual "Promote to production" run behind a GitHub environment that needs Sam's approval. It reuses the images dev already ran and never rebuilds.
-- **Rollback:** route traffic back to the previous Cloud Run revision (commands in [docs/deploy.md](docs/deploy.md)). A rehearsal on dev is not recorded yet.
+- **Rollback:** route traffic back to the previous Cloud Run revision (commands in [docs/deploy.md](docs/deploy.md)). A rollback was rehearsed on dev on 17 October 2026: traffic was moved to the previous revision of both services, the health check passed, then traffic was moved back to the latest ([record](docs/deploy.md#rollback-tried-on-dev)).
 - **One-time setup** (Neon, Cloud Shell script, GitHub variables and environments) is in [docs/deploy.md](docs/deploy.md). Authentication is Workload Identity Federation; there are no key files.
 
 CI ([`ci.yml`](.github/workflows/ci.yml), [docs/ci.md](docs/ci.md)) runs seven jobs: ruff lint; OpenAPI 3.1 validation of `openapi.yaml`; hook and export tests; backend unit tests; integration tests plus the MCP tests against Postgres; frontend checks (generated API types match the contract, typecheck, lint, tests, build); and a compose smoke test of the whole stack.

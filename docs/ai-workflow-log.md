@@ -592,3 +592,12 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** `README.md` (new structure, 17 of 24 rubric points claimed), `scripts/test-all.sh` and its row in the `AGENTS.md` command table, `ops/screenshots/shoot.mjs` and `README.md`.
 - **Verified:** `scripts/test-all.sh` run once: hooks 74, export 53, backend unit 109, backend integration 78, MCP 54 (no SKIPPED), frontend 103; with the port set to a closed one it prints the database message and exits 1. Snapshot figures from `query_snapshot` and `/api/health`. Review-log counts parsed from each table. Every README link and the live URLs checked; the deny-list regex from `test_content_language.py` run over the README (3 hits fixed, 0 left).
 - **Not done / open:** the screenshots. The `mcr.microsoft.com/playwright:v1.49.1-noble` pull stalled at the first layer (the registry itself answers), so `docs/images/*.png` do not exist and the README's three image links are broken until they are made. `shoot.mjs` has not been run.
+
+## 2026-10-18: Issues #3 and #4, close-out (screenshots, rollback record)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** place six screenshots in the README as light/dark `<picture>` pairs, replace the "rehearsal not recorded" sentence with the 17 October rollback rehearsal, fill the rehearsal section in `docs/deploy.md`, run link, deny-list and ruff checks, post a report comment on #3 and #4. No git writes. From OneDrive, only the prompt file and the rehearsal record read.
+- **Produced:** three `<picture>` blocks and a caption in `README.md`, the rollback deployment line, and a "Rollback tried on dev" section in `docs/deploy.md`.
+- **Verified:** six PNGs present, valid, 372 to 1918 px wide. `git status` showed only `docs/images/` before edits; HEAD fa43623. Image and relative link paths exist; the `deploy.md` anchor exists. Deny-list regex from `test_content_language.py` found 0 hits in both files. ruff clean. Rehearsal figures copied from Sam's record, not re-run (no Google access). Deploy runs checked with `gh run list`: three runs, all success.
+- **Prompt difference:** the README said Deploy #1 and #2 only; the runs list shows a third (Deploy #3 on fa43623, automatic to dev), which the rehearsal record also names.
+- **Follow-up:** at Sam's request, the README Dev bullet now also names Deploy #3 (run 39063387329).
