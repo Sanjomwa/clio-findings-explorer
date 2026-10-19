@@ -87,7 +87,7 @@ The nginx access log has no client IP and no query string (see `frontend/nginx/d
 
 ## Known limit
 
-nginx resolves the backend's hostname when it starts. A frontend instance that stays up for days could keep an old address if Google changes the backend's; a new instance (or a new revision) picks up the current one.
+nginx re-resolves the backend's hostname at most every 10 seconds (`resolver ... valid=10s` and a variable in `proxy_pass`, in `frontend/nginx/default.conf.template`). Without that, nginx looks the name up once at start-up and keeps the address: after `docker compose restart backend` (new container address) the frontend answered 502 until it was restarted too, and a long-lived Cloud Run frontend instance could keep an old backend address in the same way. The resolver address comes from `/etc/resolv.conf` (`NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1` in `frontend/Dockerfile`), so it works in compose and on Cloud Run. The remaining limit: a backend that is down answers 502 until it is back, then recovers within about 10 seconds.
 
 ## Tear everything down
 

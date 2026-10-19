@@ -601,3 +601,28 @@ A running record of the work coding agents do in this repository, appended after
 - **Verified:** six PNGs present, valid, 372 to 1918 px wide. `git status` showed only `docs/images/` before edits; HEAD fa43623. Image and relative link paths exist; the `deploy.md` anchor exists. Deny-list regex from `test_content_language.py` found 0 hits in both files. ruff clean. Rehearsal figures copied from Sam's record, not re-run (no Google access). Deploy runs checked with `gh run list`: three runs, all success.
 - **Prompt difference:** the README said Deploy #1 and #2 only; the runs list shows a third (Deploy #3 on fa43623, automatic to dev), which the rehearsal record also names.
 - **Follow-up:** at Sam's request, the README Dev bullet now also names Deploy #3 (run 39063387329).
+
+## 2026-10-18: Issue #5, observability (traces, metrics, structured logs)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** instrument the backend with OpenTelemetry (one trace per request with database spans, metrics per route template), JSON logs carrying `trace_id` and `span_id`, privacy enforced in code, a pinned `grafana/otel-lgtm` service in compose with a provisioned "Finding-page journey" dashboard, `docs/observability.md`, small README/AGENTS.md updates, a comment on #5. No git writes, no new routes, no `openapi.yaml` change, nothing in `agent-hooks/`. Only the prompt file read from OneDrive; `~/Projects/order-tracker` read for LGTM and logging patterns.
+- **Produced:** `backend/app/telemetry.py` (setup, scrubbing span exporter, metric allow-list view, JSON formatter, access-log middleware), the `create_app` call, exact OpenTelemetry pins in `backend/pyproject.toml` and `uv.lock`, `--no-access-log` in the Dockerfile, `GOOGLE_CLOUD_PROJECT` in both `deploy.yml` backend deploys, the `lgtm` service, `.env.example` (`GF_ADMIN_PASSWORD`), `ops/grafana/` (provisioning and dashboard), `backend/tests/unit/test_telemetry.py`, `backend/tests/integration/test_telemetry_db.py`, `docs/observability.md`, README and AGENTS.md updates.
+- **Verified:** backend unit 120 (was 109), integration 80 (was 78), hooks 74, export 53, MCP 54, ruff clean. Compose run: about 30 requests through `127.0.0.1:8080`; Tempo, Prometheus and Loki queried through Grafana's API (results in the issue comment). The app was restarted with `lgtm` stopped and answered in about 15 ms.
+- **Decision:** psycopg instrumentation instead of SQLAlchemy's. The locked SQLAlchemy is 2.1.4 and `opentelemetry-instrumentation-sqlalchemy` 0.66b1 refuses versions at or above 2.1.0 (it logged that error and created no spans). Pinning SQLAlchemy down was the alternative.
+- **Spec over issue:** the issue's first criterion says one trace covers a finding page's API requests; spec 7.2 says one trace per request. The spec was followed; the browser sends no telemetry.
+- **Not done / for Sam:** the dev deploy's Cloud Logging trace field after the push; the CI `compose-smoke` job now also pulls and starts `lgtm` (about 0.9 GB), not changed.
+
+## 2026-10-18: Issue #5, follow-up (Explore access, CI without lgtm, nginx re-resolve)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** let anonymous Grafana visitors use Explore; show 0 on the "5xx rate" panel with no errors; exact click steps in `docs/observability.md`; CI `compose-smoke` must not start `lgtm`, with an overridable and empty-means-unset OTLP endpoint; make nginx re-resolve the backend; re-run everything. No git writes, nothing in `agent-hooks/`.
+- **Produced:** `GF_USERS_VIEWERS_CAN_EDIT` on `lgtm`; `or on() vector(0)` on the 5xx panel; rewritten log-to-trace section; `ci.yml` starts `db seed backend frontend` with the endpoint set empty; `${OTEL_EXPORTER_OTLP_ENDPOINT-http://lgtm:4318}` in compose; nginx `resolver ... valid=10s` with a variable `proxy_pass` and `NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1`; a rewritten "Known limit" in `docs/deploy.md`.
+- **Verified:** `/api/frontend/settings` shows `viewersCanEdit` true (Grafana 13.2.3), anonymous `/explore` returns 200 and an anonymous Loki query works, dashboard save still returns 403. After `docker compose restart backend` the frontend returned 200 for ten requests (health and a finding, five rounds) without being restarted. All suites, ruff and actionlint run again.
+- **Not verified:** the click steps were written from the data source settings and Grafana's UI labels, not clicked through in a browser.
+
+## 2026-10-18: Issue #5, trace-to-logs time window
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** "Logs for this span" found nothing because the access line lands just after the span ends; copy the image's Grafana datasource provisioning into `ops/grafana/` with one change (`spanStartTimeShift` -1m, `spanEndTimeShift` 1m on Tempo's `tracesToLogsV2`), mount it over the image's file, verify through the API, fix the click steps, comment on #5. No git writes, nothing in `agent-hooks/`.
+- **Produced:** `ops/grafana/provisioning/datasources/grafana-datasources.yaml` (the image's `grafana-datasources.yaml`, diff against the image's file is the two shift lines and comments), its mount in `docker-compose.yml`, a rewritten section in `docs/observability.md`.
+- **Verified:** `GET /api/datasources/uid/tempo` shows both shifts and the unchanged query, tags and uids. For a fresh trace, the Loki query `{service_name="cfe-backend"} | trace_id = "<id>"` over the exact span window returns nothing and over the shifted window returns the access line (4 ms after the span ended). The UI button itself was not clicked.

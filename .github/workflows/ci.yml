@@ -148,8 +148,11 @@ jobs:
       - name: Create .env from the placeholder template
         run: cp .env.example .env
       - name: Build and start the stack
+        env:
+          # Empty: the backend exports no telemetry. Only the app services start, not lgtm.
+          OTEL_EXPORTER_OTLP_ENDPOINT: ""
         run: |
-          docker compose up -d --build
+          docker compose up -d --build db seed backend frontend
           for i in $(seq 1 36); do
             status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q backend)" 2>/dev/null || true)
             echo "backend health: ${status:-unknown} (attempt $i)"

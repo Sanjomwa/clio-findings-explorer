@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: clio-findings-explorer
+    orgId: 1
+    folder: CLIO Findings Explorer
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /cfe-dashboards

@@ -7,7 +7,8 @@ RUN npm run build
 
 FROM nginx:1.29-alpine
 # The official image renders /etc/nginx/templates/*.template with envsubst at start-up.
-ENV BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=http://backend:8000 \
+    NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080

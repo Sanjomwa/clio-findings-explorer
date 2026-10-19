@@ -9,8 +9,14 @@ server {
 
     root /usr/share/nginx/html;
 
+    # Re-resolve the backend name (at most every 10 s) instead of once at start-up, so a
+    # restarted backend with a new address does not leave this nginx on the old one.
+    # The nginx image exports the resolver address from /etc/resolv.conf (see frontend/Dockerfile).
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
+
     location /api/ {
-        proxy_pass ${BACKEND_URL};
+        set $backend_upstream "${BACKEND_URL}";
+        proxy_pass $backend_upstream;
         # Works for http://backend:8000 (compose) and an https://...run.app backend.
         proxy_set_header Host $proxy_host;
         proxy_ssl_server_name on;

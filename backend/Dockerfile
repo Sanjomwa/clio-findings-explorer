@@ -24,4 +24,5 @@ COPY data/snapshot /data/snapshot
 
 USER app
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# --no-access-log: uvicorn's access line prints the client IP; the app writes its own (app/telemetry.py).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

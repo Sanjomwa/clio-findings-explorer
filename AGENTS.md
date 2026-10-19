@@ -46,7 +46,7 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 Tasks are tracked as public GitHub Issues: <https://github.com/Sanjomwa/clio-findings-explorer/issues>. Each issue has acceptance criteria.
 
 - Every task prompt names its issue.
-- At the start, read it: `gh issue view <N> --comments`.
+- At the start, read it: `gh issue view <N> --json title,body,state,comments`. The plain `--comments` form fails with a Projects (classic) GraphQL error.
 - At STOP, post one comment: `gh issue comment <N> --body-file <file>`. It says what was done, the checks run and their results, which acceptance criteria are met, and what is left for Sam. Write the file in the scratchpad directory.
 - The comment must not contain secrets, tokens, database URLs or personal data.
 - Do not close, edit, reopen or delete the issue. Sam closes it through a commit message.
@@ -90,6 +90,7 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Install frontend dependencies (from `frontend/`) | `npm ci` |
 | Regenerate frontend API types from `openapi.yaml` (from `frontend/`) | `npm run gen:api` |
 | Frontend type-check, lint, tests, build (from `frontend/`) | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
+| View telemetry (Grafana, anonymous viewer; dashboard "Finding-page journey"; `docker compose up -d` starts it) | open `http://127.0.0.1:3000`; see `docs/observability.md` |
 | Frontend dev server on `localhost:5173`, proxying `/api` to the API (from `frontend/`) | `npm run dev` |
 
 ## Repository layout (target)

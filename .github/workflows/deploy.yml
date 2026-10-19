@@ -73,7 +73,7 @@ jobs:
             --service-account "$RUNTIME_SA" \
             --port 8000 \
             --set-secrets DATABASE_URL=cfe-database-url-dev:latest \
-            --set-env-vars CONTENT_DIR=/content \
+            --set-env-vars "CONTENT_DIR=/content,GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}" \
             --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
             --allow-unauthenticated
           BACKEND_URL="$(gcloud run services describe cfe-backend-dev --region "$REGION" --format 'value(status.url)')"
@@ -152,7 +152,7 @@ jobs:
             --service-account "$RUNTIME_SA" \
             --port 8000 \
             --set-secrets DATABASE_URL=cfe-database-url-prod:latest \
-            --set-env-vars CONTENT_DIR=/content \
+            --set-env-vars "CONTENT_DIR=/content,GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}" \
             --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
             --allow-unauthenticated
           BACKEND_URL="$(gcloud run services describe cfe-backend-prod --region "$REGION" --format 'value(status.url)')"

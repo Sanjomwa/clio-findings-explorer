@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app import telemetry
 from app.routers import evidence, findings, health, methodology, timeline
 
 
@@ -10,6 +11,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
     app.state.engine = None
     for module in (health, timeline, findings, evidence, methodology):
         app.include_router(module.router)
+    telemetry.setup_from_env(app)
     return app
 
 
