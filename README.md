@@ -134,6 +134,8 @@ flowchart LR
   Seed["Seed job"] --> DB
   Snap["data/snapshot/ + content/"] --> Seed
   GH["GitHub Actions"] --> AR["Artifact Registry"] --> Run["Cloud Run"]
+  API -->|OTLP| LGTM["Grafana LGTM (local compose)"]
+  API -->|JSON logs| CL["Cloud Logging (Cloud Run)"]
 ```
 
 - **Frontend:** React and TypeScript, built to static files and served by nginx, which also proxies `/api` to the backend. All HTTP goes through one client.
@@ -141,6 +143,7 @@ flowchart LR
 - **Database:** Postgres 16. The schema is Alembic migrations; a database constraint rejects a finding with no caveat.
 - **Seed:** verifies the snapshot's checksums, then loads `data/snapshot/` and `content/` (the human-written content). It is safe to run on every deploy.
 - **CI/CD:** GitHub Actions builds images into Artifact Registry and deploys them to Cloud Run.
+- **Observability:** the backend sends traces and metrics over OTLP to a local Grafana LGTM container, and writes JSON logs with the trace ID that Cloud Run sends to Cloud Logging. See [docs/observability.md](docs/observability.md).
 
 ## How it was built: the agent team and process
 
@@ -208,6 +211,7 @@ Open issues, in priority order:
 3. The traceability test ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)).
 4. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), and small fixes ([#11](https://github.com/Sanjomwa/clio-findings-explorer/issues/11)).
 5. The final README pass and a clean-clone check ([#12](https://github.com/Sanjomwa/clio-findings-explorer/issues/12)).
+6. Shift-left security checks: ruff `S` rules, CodeQL, dependency audit and injection tests ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)).
 
 ## Self-evaluation
 
@@ -224,10 +228,10 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
 | CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |
-| Observability | 2 | 0 | In progress ([#5](https://github.com/Sanjomwa/clio-findings-explorer/issues/5)) |
+| Observability | 2 | 2 | [docs/observability.md](docs/observability.md); provisioned dashboard [finding-journey.json](ops/grafana/dashboards/finding-journey.json); privacy and trace-ID tests in [test_telemetry.py](backend/tests/unit/test_telemetry.py) and [test_telemetry_db.py](backend/tests/integration/test_telemetry_db.py); Cloud Logging trace fields on Cloud Run |
 | Alerting on user impact | 1 | 0 | In progress ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6)) |
 | On-call agent | 2 | 0 | In progress ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)) |
-| **Total** | **24** | **17** | |
+| **Total** | **24** | **19** | |
 
 ## Data and licence
 

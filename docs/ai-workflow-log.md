@@ -626,3 +626,10 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** "Logs for this span" found nothing because the access line lands just after the span ends; copy the image's Grafana datasource provisioning into `ops/grafana/` with one change (`spanStartTimeShift` -1m, `spanEndTimeShift` 1m on Tempo's `tracesToLogsV2`), mount it over the image's file, verify through the API, fix the click steps, comment on #5. No git writes, nothing in `agent-hooks/`.
 - **Produced:** `ops/grafana/provisioning/datasources/grafana-datasources.yaml` (the image's `grafana-datasources.yaml`, diff against the image's file is the two shift lines and comments), its mount in `docker-compose.yml`, a rewritten section in `docs/observability.md`.
 - **Verified:** `GET /api/datasources/uid/tempo` shows both shifts and the unchanged query, tags and uids. For a fresh trace, the Loki query `{service_name="cfe-backend"} | trace_id = "<id>"` over the exact span window returns nothing and over the shifted window returns the access line (4 ms after the span ended). The UI button itself was not clicked.
+
+## 2026-10-19: README observability evidence (Part A of the issue #6 prompt)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Task as given:** create the security-checks issue, then update the README (Observability self-evaluation 2 and total 19, telemetry path in the mermaid diagram, an "Observability:" bullet, the new issue under Future work), add this entry, run the checks, stop at STOP A. No git writes, nothing in `agent-hooks/`. Only the prompt file read from OneDrive.
+- **Produced:** README self-evaluation row and total, two mermaid edges, one Architecture bullet, one Future work line (#14).
+- **Blocked, then resolved:** `gh issue create` was denied by the auto-mode classifier (External System Writes). I did not retry another way. Sam created the issue himself (#14, found with `gh issue list`, a read), and I then added the Future work line.
