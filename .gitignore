@@ -38,6 +38,10 @@ service-account*
 # Claude Code: settings.json is shared and committed; settings.local.json is personal.
 .claude/settings.local.json
 
+# On-call receiver inbox: alerts written at run time; the folder is kept by .gitkeep.
+ops/oncall/inbox/*
+!ops/oncall/inbox/.gitkeep
+
 # Editors
 .vscode/
 .idea/

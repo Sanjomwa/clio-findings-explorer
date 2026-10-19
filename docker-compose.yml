@@ -1,5 +1,6 @@
-# db, seed, backend, frontend (built static files served by nginx) and lgtm (Grafana, Tempo, Loki,
-# Prometheus and an OTLP collector in one image; telemetry only, see docs/observability.md).
+# db, seed, backend, frontend (built static files served by nginx), lgtm (Grafana, Tempo, Loki,
+# Prometheus and an OTLP collector in one image; see docs/observability.md) and oncall (the alert
+# webhook receiver, see docs/on-call.md).
 name: clio-findings-explorer
 
 services:
@@ -80,6 +81,30 @@ services:
       retries: 10
       start_period: 5s
 
+  # The on-call webhook receiver (docs/on-call.md). It only receives: each alert Grafana posts is
+  # written to ops/oncall/inbox/. The actor that reads the inbox runs on the host, never here.
+  # No published port: only lgtm calls it, over the compose network.
+  oncall:
+    build: ./ops/oncall
+    # The host user's uid:gid (1000:1000 on a default WSL install), so the inbox files are yours.
+    user: "${ONCALL_UID:-1000}:${ONCALL_GID:-1000}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./ops/oncall/inbox:/inbox
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=3)"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 3s
+
   lgtm:
     image: grafana/otel-lgtm:0.37.0
     environment:
@@ -89,7 +114,7 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       # Viewers may use Explore (logs and traces link there) but still cannot save dashboards.
       GF_USERS_VIEWERS_CAN_EDIT: "true"
-      # Where the alert's webhook contact point posts. The receiver is built in issue #7; until then deliveries fail.
+      # Where the alert's webhook contact point posts: the oncall service above.
       ONCALL_WEBHOOK_URL: ${ONCALL_WEBHOOK_URL:-http://oncall:8090/alert}
     volumes:
       - ./ops/grafana/provisioning/dashboards/cfe.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/cfe.yaml:ro

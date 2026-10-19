@@ -70,13 +70,13 @@ scripts/test-all.sh
 | Suite | Tests | Covers |
 |---|---|---|
 | Hook tests | 74 | The git guard and the spec-first guard |
-| Snapshot export tests | 53 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only) |
+| Snapshot export and on-call receiver tests | 78 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only) |
 | Backend unit | 132 | Evidence functions, content language check, schemas; no database |
 | Backend integration | 80 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml` |
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 103 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 496 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 521 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 
@@ -84,7 +84,7 @@ The backend emits OpenTelemetry traces (one per request, with database spans), m
 
 A provisioned Grafana alert rule pages a webhook when, over 5 minutes with at least 10 requests, more than 5% of `/api/findings/*` requests return 5xx or their p95 latency exceeds 2 s. `ops/alerting/trigger-db-down.sh` fires it on purpose by stopping the database. The numbers, the recorded run and the webhook payload are in [docs/alerting.md](docs/alerting.md) ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6)).
 
-Still in progress: the agent that wakes on that alert ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)); the plan is in [product-spec.md](product-spec.md) §7.4. Until it exists, the webhook delivery fails.
+The webhook is received by a small `oncall` service, which writes each alert to a git-ignored inbox folder; the page now lands somewhere, and the delivery shows as successful in Grafana. Still in progress: the on-call agent that reads the inbox, fixes the fault and writes the incident report ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7), Part B). Nothing fixes anything yet. The design, the wake-up demo and the plan are in [docs/on-call.md](docs/on-call.md) and [product-spec.md](product-spec.md) §7.4.
 
 ## Run it locally
 
@@ -227,7 +227,7 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Agent team specification | 2 | 1 | Roles in [How it was built](#how-it-was-built-the-agent-team-and-process), [AGENTS.md](AGENTS.md), [docs/permissions.md](docs/permissions.md). `docs/agent-team.md` is in progress ([#8](https://github.com/Sanjomwa/clio-findings-explorer/issues/8)) |
 | Context management | 2 | 1 | [AGENTS.md](AGENTS.md) describes the project. Modular docs are in progress ([#9](https://github.com/Sanjomwa/clio-findings-explorer/issues/9)) |
 | Application | 2 | 2 | [Run it locally](#run-it-locally); frontend, backend and Postgres work end to end with one command |
-| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 496 passing |
+| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 521 passing |
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
 | CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |

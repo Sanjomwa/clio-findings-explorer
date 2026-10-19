@@ -1,6 +1,6 @@
 # Alerting
 
-One Grafana alert rule watches the finding-page journey and pages a webhook when readers are being failed or kept waiting ([product-spec.md](../product-spec.md) §7.3). Issue [#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6). It uses the metrics from [observability.md](observability.md). The agent that receives the page is issue [#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7) and does not exist yet.
+One Grafana alert rule watches the finding-page journey and pages a webhook when readers are being failed or kept waiting ([product-spec.md](../product-spec.md) §7.3). Issue [#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6). It uses the metrics from [observability.md](observability.md). The page is received by the `oncall` service and written to an inbox ([on-call.md](on-call.md)); the agent that acts on it is issue [#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7), Part B, and does not exist yet.
 
 ## The rule in plain words
 
@@ -34,7 +34,7 @@ With `docker compose up -d`, open <http://127.0.0.1:3000/alerting/list>. Anonymo
 
 The contact point `on-call-agent` is a webhook (`POST`, JSON). Its URL is `ONCALL_WEBHOOK_URL`, default `http://oncall:8090/alert`, set on the `lgtm` service in [docker-compose.yml](../docker-compose.yml). The notification policy sends every alert labelled `severity=page` to it, with a 10 s group wait, 1 minute group interval and 1 hour repeat interval.
 
-**Nothing listens on that URL yet.** The receiver is built in #7, so until then each delivery fails with a message like `lookup oncall ... no such host`. That is expected. The failure is visible at `http://127.0.0.1:3000/api/alertmanager/grafana/config/api/v1/receivers` (`lastNotifyAttemptError`).
+**The `oncall` service listens on that URL.** It is a small receiver that writes each alert to `ops/oncall/inbox/` ([on-call.md](on-call.md)); nothing reads the inbox yet. A successful delivery shows as a `lastNotifyAttempt` with no `lastNotifyAttemptError` at `http://127.0.0.1:3000/api/alertmanager/grafana/config/api/v1/receivers`. If the `oncall` service is not running, a delivery fails with a message like `lookup oncall ... no such host`.
 
 Alerts without `severity=page` go to the root contact point `grafana-default-email`, which is provisioned only because Grafana needs a root receiver; it has no mail server and delivers nothing.
 
@@ -44,7 +44,7 @@ Alerts without `severity=page` go to the root contact point `grafana-default-ema
 ops/alerting/trigger-db-down.sh
 ```
 
-It stops only the `db` service, then sends 24 `GET /api/findings` requests through `http://127.0.0.1:8080`, five seconds apart (about two minutes), and prints each status (500 while the db is down). It never restarts the db; that is the on-call agent's job. Watch the rule at the alert list URL above. To restore by hand:
+It stops only the `db` service, then sends 24 `GET /api/findings` requests through `http://127.0.0.1:8080`, five seconds apart (about two minutes), and prints each status (500 while the db is down). It never restarts the db; that is for the on-call agent (Part B of #7, not built) or you. Watch the rule at the alert list URL above. To restore by hand:
 
 ```bash
 docker compose start db
@@ -72,7 +72,7 @@ A second, complete cycle the same day, including the restore:
 
 ## What the on-call agent receives
 
-Grafana's standard webhook body. This is a real payload from a run, captured by a throwaway listener in place of the agent (nothing sensitive: the stack is local and the labels are the rule's own). The long `valueString` and `message` fields are shortened here.
+Grafana's standard webhook body. This is a real payload from a run, captured by a throwaway listener before the receiver existed (nothing sensitive: the stack is local and the labels are the rule's own). The long `valueString` and `message` fields are shortened here.
 
 ```json
 {
@@ -122,3 +122,5 @@ The agent should read `status` (`firing` or `resolved`), `alerts[].labels` and `
 ## Known gap: backend down
 
 If the backend container itself is down, it emits no metrics, so this rule sees no data and stays Normal (`noDataState: OK`). Readers get a 502 from nginx and nothing pages. A second rule on the frontend's health or on the absence of backend metrics is a candidate for later; it is not part of this issue. A stopped database, which the backend survives and reports as 500s, is covered.
+
+The receiver writes each element of `alerts` to the inbox on its own; a later run is in [on-call.md](on-call.md#a-recorded-run-19-october-2026-utc).
