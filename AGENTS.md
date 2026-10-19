@@ -91,6 +91,7 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Regenerate frontend API types from `openapi.yaml` (from `frontend/`) | `npm run gen:api` |
 | Frontend type-check, lint, tests, build (from `frontend/`) | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` |
 | View telemetry (Grafana, anonymous viewer; dashboard "Finding-page journey"; `docker compose up -d` starts it) | open `http://127.0.0.1:3000`; see `docs/observability.md` |
+| Fire the finding-page alert on purpose (stops `db`, sends failing requests; restore with `docker compose start db`; see `docs/alerting.md`) | `ops/alerting/trigger-db-down.sh` |
 | Frontend dev server on `localhost:5173`, proxying `/api` to the API (from `frontend/`) | `npm run dev` |
 
 ## Repository layout (target)

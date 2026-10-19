@@ -1,0 +1,22 @@
+# The on-call agent's webhook (built in issue #7; until then deliveries fail, see docs/alerting.md).
+# ONCALL_WEBHOOK_URL is passed to the lgtm container by docker-compose.yml.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: on-call-agent
+    receivers:
+      - uid: cfe-on-call-agent
+        type: webhook
+        settings:
+          url: ${ONCALL_WEBHOOK_URL}
+          httpMethod: POST
+  # The root policy's receiver, which the image does not create. Only alerts without severity=page
+  # reach it; there is no SMTP server, so it delivers nothing.
+  - orgId: 1
+    name: grafana-default-email
+    receivers:
+      - uid: cfe-default-email
+        type: email
+        settings:
+          addresses: nobody@example.invalid

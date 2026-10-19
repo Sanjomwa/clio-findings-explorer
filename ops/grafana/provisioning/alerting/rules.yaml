@@ -1,0 +1,95 @@
+# The finding-page alert (product spec 7.3, docs/alerting.md). The numbers below are asserted by
+# backend/tests/unit/test_alert_rules.py; change them there and in the spec together.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: finding-page-journey
+    folder: CLIO Findings Explorer
+    interval: 30s
+    rules:
+      - uid: cfe-finding-page-impact
+        title: Finding pages failing or slow
+        condition: FIRE
+        for: 0s
+        noDataState: OK
+        execErrState: Error
+        isPaused: false
+        labels:
+          severity: page
+          journey: finding-page
+        annotations:
+          summary: "Finding pages: {{ $values.ERRRATIO.Value | humanizePercentage }} 5xx, p95 {{ $values.P95.Value | humanizeDuration }}, over 5 minutes"
+          description: "Over the last 5 minutes, with at least 10 requests to /api/findings and /api/findings/*, more than 5% returned 5xx or their p95 latency exceeded 2 s. Runbook: docs/alerting.md."
+        data:
+          # A: requests to the journey's routes in the window. The route matcher covers
+          # /api/findings and /api/findings/{slug} with its /evidence/* routes.
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 'sum(increase(http_server_request_duration_seconds_count{http_route=~"/api/findings(/.*)?"}[5m]))'
+          # B: the 5xx ones. Zero when there are none.
+          - refId: B
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: B
+              instant: true
+              expr: 'sum(increase(http_server_request_duration_seconds_count{http_route=~"/api/findings(/.*)?",http_response_status_code=~"5.."}[5m])) or on() vector(0)'
+          # C: p95 latency in seconds over the window.
+          - refId: C
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: C
+              instant: true
+              expr: 'histogram_quantile(0.95, sum by (le) (increase(http_server_request_duration_seconds_bucket{http_route=~"/api/findings(/.*)?"}[5m])))'
+          - refId: TOTAL
+            datasourceUid: __expr__
+            model:
+              refId: TOTAL
+              type: reduce
+              expression: A
+              reducer: last
+              settings: { mode: replaceNN, replaceWithValue: 0 }
+          - refId: ERRORS
+            datasourceUid: __expr__
+            model:
+              refId: ERRORS
+              type: reduce
+              expression: B
+              reducer: last
+              settings: { mode: replaceNN, replaceWithValue: 0 }
+          - refId: P95
+            datasourceUid: __expr__
+            model:
+              refId: P95
+              type: reduce
+              expression: C
+              reducer: last
+              settings: { mode: replaceNN, replaceWithValue: 0 }
+          # Error share, shown in the summary. 0 when there are no requests.
+          - refId: ERRRATIO
+            datasourceUid: __expr__
+            model:
+              refId: ERRRATIO
+              type: math
+              expression: '$ERRORS / ($TOTAL + ($TOTAL == 0))'
+          # At least 10 requests AND (more than 5% 5xx OR p95 above 2 s). 1 fires, 0 does not.
+          - refId: IMPACT
+            datasourceUid: __expr__
+            model:
+              refId: IMPACT
+              type: math
+              expression: '($TOTAL >= 10) && (($ERRORS / $TOTAL > 0.05) || ($P95 > 2))'
+          - refId: FIRE
+            datasourceUid: __expr__
+            model:
+              refId: FIRE
+              type: threshold
+              expression: IMPACT
+              conditions:
+                - evaluator: { type: gt, params: [0] }

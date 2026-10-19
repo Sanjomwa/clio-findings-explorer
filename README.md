@@ -71,18 +71,20 @@ scripts/test-all.sh
 |---|---|---|
 | Hook tests | 74 | The git guard and the spec-first guard |
 | Snapshot export tests | 53 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only) |
-| Backend unit | 122 | Evidence functions, content language check, schemas; no database |
+| Backend unit | 132 | Evidence functions, content language check, schemas; no database |
 | Backend integration | 80 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml` |
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 103 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 486 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 496 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 
 The backend emits OpenTelemetry traces (one per request, with database spans), metrics per route template and structured JSON logs that carry the trace ID. `docker compose up -d` starts a local Grafana at <http://127.0.0.1:3000> with a provisioned "Finding-page journey" dashboard; on Cloud Run the same logs go to Cloud Logging with the trace ID. What is collected, what never is, and how to move between a log line and its trace are in [docs/observability.md](docs/observability.md) ([#5](https://github.com/Sanjomwa/clio-findings-explorer/issues/5)).
 
-Still in progress: an alert on failing or slow finding pages ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6)) and an agent that wakes on that alert ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)); the plan is in [product-spec.md](product-spec.md) §7.3–7.4.
+A provisioned Grafana alert rule pages a webhook when, over 5 minutes with at least 10 requests, more than 5% of `/api/findings/*` requests return 5xx or their p95 latency exceeds 2 s. `ops/alerting/trigger-db-down.sh` fires it on purpose by stopping the database. The numbers, the recorded run and the webhook payload are in [docs/alerting.md](docs/alerting.md) ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6)).
+
+Still in progress: the agent that wakes on that alert ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)); the plan is in [product-spec.md](product-spec.md) §7.4. Until it exists, the webhook delivery fails.
 
 ## Run it locally
 
@@ -200,13 +202,14 @@ docs/               Deploy, CI, permissions, review logs, workflow log, images
 - **The reviewer is an LLM and was inconsistent across runs.** It gave a summary line that did not match its own table, and wrote a nonstandard verdict text in seven rows, which the clean-review test rejected ([docs/ai-workflow-log.md](docs/ai-workflow-log.md), 15 October 2026). A format rule was added afterwards.
 - **No automated traceability test yet.** That every number on a finding page equals a snapshot value is checked by the reviewer and by tests of the evidence functions, not by a test that recomputes each card ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)).
 - **Cloud Run's platform logs record caller IP addresses.** The nginx access log does not, but the platform's cannot be switched off ([docs/deploy.md](docs/deploy.md)).
-- **No alerting or on-call agent yet** ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6), [#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)).
+- **No on-call agent yet** ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)); the alert's webhook delivery fails until it exists.
+- **The alert does not see a stopped backend.** A backend that is down emits no metrics, so the rule sees no data and stays Normal ([docs/alerting.md](docs/alerting.md)).
 
 ## Future work
 
 Open issues, in priority order:
 
-1. Alerting and the on-call agent ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6), [#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)).
+1. The on-call agent ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)).
 2. The agent team specification and modular docs for `AGENTS.md` ([#8](https://github.com/Sanjomwa/clio-findings-explorer/issues/8), [#9](https://github.com/Sanjomwa/clio-findings-explorer/issues/9)).
 3. The traceability test ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)).
 4. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), and small fixes ([#11](https://github.com/Sanjomwa/clio-findings-explorer/issues/11)).
@@ -224,14 +227,14 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Agent team specification | 2 | 1 | Roles in [How it was built](#how-it-was-built-the-agent-team-and-process), [AGENTS.md](AGENTS.md), [docs/permissions.md](docs/permissions.md). `docs/agent-team.md` is in progress ([#8](https://github.com/Sanjomwa/clio-findings-explorer/issues/8)) |
 | Context management | 2 | 1 | [AGENTS.md](AGENTS.md) describes the project. Modular docs are in progress ([#9](https://github.com/Sanjomwa/clio-findings-explorer/issues/9)) |
 | Application | 2 | 2 | [Run it locally](#run-it-locally); frontend, backend and Postgres work end to end with one command |
-| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 486 passing |
+| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 496 passing |
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
 | CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |
 | Observability | 2 | 2 | [docs/observability.md](docs/observability.md); provisioned dashboard [finding-journey.json](ops/grafana/dashboards/finding-journey.json); privacy and trace-ID tests in [test_telemetry.py](backend/tests/unit/test_telemetry.py) and [test_telemetry_db.py](backend/tests/integration/test_telemetry_db.py); Cloud Logging trace fields on Cloud Run |
-| Alerting on user impact | 1 | 0 | In progress ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6)) |
+| Alerting on user impact | 1 | 1 | Provisioned rule on 5xx share and p95 latency: [docs/alerting.md](docs/alerting.md), [rules.yaml](ops/grafana/provisioning/alerting/rules.yaml), [test_alert_rules.py](backend/tests/unit/test_alert_rules.py); fired on purpose with [trigger-db-down.sh](ops/alerting/trigger-db-down.sh) |
 | On-call agent | 2 | 0 | In progress ([#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)) |
-| **Total** | **24** | **19** | |
+| **Total** | **24** | **20** | |
 
 ## Data and licence
 

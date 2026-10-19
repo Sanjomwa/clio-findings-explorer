@@ -89,10 +89,15 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       # Viewers may use Explore (logs and traces link there) but still cannot save dashboards.
       GF_USERS_VIEWERS_CAN_EDIT: "true"
+      # Where the alert's webhook contact point posts. The receiver is built in issue #7; until then deliveries fail.
+      ONCALL_WEBHOOK_URL: ${ONCALL_WEBHOOK_URL:-http://oncall:8090/alert}
     volumes:
       - ./ops/grafana/provisioning/dashboards/cfe.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/cfe.yaml:ro
       - ./ops/grafana/dashboards:/cfe-dashboards:ro
       - ./ops/grafana/provisioning/datasources/grafana-datasources.yaml:/otel-lgtm/grafana/conf/provisioning/datasources/grafana-datasources.yaml:ro
+      - ./ops/grafana/provisioning/alerting/rules.yaml:/otel-lgtm/grafana/conf/provisioning/alerting/cfe-rules.yaml:ro
+      - ./ops/grafana/provisioning/alerting/contact-points.yaml:/otel-lgtm/grafana/conf/provisioning/alerting/cfe-contact-points.yaml:ro
+      - ./ops/grafana/provisioning/alerting/policies.yaml:/otel-lgtm/grafana/conf/provisioning/alerting/cfe-policies.yaml:ro
     # Grafana only. The OTLP ports (4317, 4318) are reachable from other services, not published.
     ports:
       - "127.0.0.1:3000:3000"

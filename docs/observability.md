@@ -1,6 +1,6 @@
 # Observability
 
-Traces, metrics and structured logs for the finding-page journey ([product-spec.md](../product-spec.md) §7.2). Issue [#5](https://github.com/Sanjomwa/clio-findings-explorer/issues/5). Alerting (#6) and the on-call agent (#7) build on this and are not part of it.
+Traces, metrics and structured logs for the finding-page journey ([product-spec.md](../product-spec.md) §7.2). Issue [#5](https://github.com/Sanjomwa/clio-findings-explorer/issues/5). The alert built on it (#6) is in [alerting.md](alerting.md); the on-call agent (#7) is not part of either.
 
 The journey is opening a finding page: the finding request, the findings list, the timeline range and the three evidence requests. The reader's browser sends no telemetry, so there is no single trace for the whole page. Each request is its own trace, and the dashboard shows the journey across its routes.
 
