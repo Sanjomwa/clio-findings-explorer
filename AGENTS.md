@@ -2,7 +2,7 @@
 
 Project instructions for any coding agent working in this repository. Read this file fully before acting. `CLAUDE.md` is a one-line pointer to it.
 
-**Version:** 2 (2026-10-05, revised after the first agent review). This file grows as the project does. When a rule here turns out to be wrong or missing, say so in your report; do not work around it.
+**Version:** 3 (2026-10-21: the tracker detail moved to `docs/process.md`, and a documentation map was added; first revised 2026-10-05). This file grows as the project does. When a rule here turns out to be wrong or missing, say so in your report; do not work around it.
 
 ## What this project is
 
@@ -43,13 +43,11 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 
 ## Task tracker
 
-Tasks are tracked as public GitHub Issues: <https://github.com/Sanjomwa/clio-findings-explorer/issues>. Each issue has acceptance criteria.
+Tasks are public GitHub Issues: <https://github.com/Sanjomwa/clio-findings-explorer/issues>, each with acceptance criteria. The full rules are in [docs/process.md](docs/process.md); the short form:
 
-- Every task prompt names its issue.
-- At the start, read it: `gh issue view <N> --json title,body,state,comments`. The plain `--comments` form fails with a Projects (classic) GraphQL error.
-- At STOP, post one comment: `gh issue comment <N> --body-file <file>`. It says what was done, the checks run and their results, which acceptance criteria are met, and what is left for Sam. Write the file in the scratchpad directory.
-- The comment must not contain secrets, tokens, database URLs or personal data.
-- Do not close, edit, reopen or delete the issue. Sam closes it through a commit message.
+- Every task prompt names its issue. Read it first: `gh issue view <N> --json title,body,state,comments` (the plain `--comments` form fails with a Projects (classic) GraphQL error).
+- At STOP, post one comment with `gh issue comment <N> --body-file <file>` (file in the scratchpad directory): what was done, checks run and results, which acceptance criteria are met, what is left for Sam. No secrets, tokens, database URLs or personal data. If a prompt says not to comment yet, don't.
+- Never close, edit, reopen or delete an issue. Sam closes it through a commit message.
 
 ## Secrets and network
 
@@ -64,7 +62,7 @@ Tasks are tracked as public GitHub Issues: <https://github.com/Sanjomwa/clio-fin
 - **Check the prompt against the repo first.** Start each task with a short read-only look at the files involved, and report anything that contradicts the prompt before building on it.
 - **Small steps.** One concern per change. Run the relevant tests before reporting.
 - **Tests.** Backend unit tests live in `backend/tests/unit/`, integration tests in `backend/tests/integration/`, with separate pytest markers. Integration tests run against a real Postgres loaded with the real snapshot. Do not delete or weaken a test to make it pass; report it.
-- **Report format.** End every task with: what changed (files), what you ran and the result, what you did not do, anything in the prompt that was wrong, and any command Sam needs to run himself.
+- **Report format.** (The STOP-and-report pattern is in [docs/process.md](docs/process.md).) End every task with: what changed (files), what you ran and the result, what you did not do, anything in the prompt that was wrong, and any command Sam needs to run himself.
 - **Workflow log.** After each task, append an entry to `docs/ai-workflow-log.md`: the task as given, what you produced, what was verified and how. This is written as the work happens, never reconstructed later.
 
 ## Commands
@@ -95,6 +93,33 @@ Commands are added here when they exist and have been run successfully. Do not a
 | Wake-up demo: fire the alert, then watch it land in the inbox (`ops/oncall/inbox/`; restore with `docker compose start db`; see `docs/on-call.md`) | `ops/alerting/trigger-db-down.sh` |
 | On-call agent: handle the inbox (`ONCALL_ENABLED=1` is required; `touch ops/oncall/PAUSE` pauses it; `--once <file>` handles one file, `--usage` shows model-call counts; see `docs/on-call.md`) | `ONCALL_ENABLED=1 python3 ops/oncall/actor.py --watch` |
 | Frontend dev server on `localhost:5173`, proxying `/api` to the API (from `frontend/`) | `npm run dev` |
+
+## Where things are documented
+
+| Document | What it holds |
+|---|---|
+| [README.md](README.md) | The product, the evidence, how to run and test it, deploy, architecture, limitations, self-evaluation |
+| [product-spec.md](product-spec.md) | The product definition and acceptance criteria |
+| [openapi.yaml](openapi.yaml) | The API contract, the source of truth for the API |
+| [docs/process.md](docs/process.md) | The tracker, commit conventions, the sync rule, STOP and report, definition of done |
+| [docs/agent-team.md](docs/agent-team.md) | The roles (Sam, the planning session, Claude Code, `evidence-reviewer`, the on-call agent), what each may not do and how it is enforced, and a worked example |
+| [docs/permissions.md](docs/permissions.md) | A one-page summary of what a coding agent may and may not do |
+| [docs/ai-workflow-log.md](docs/ai-workflow-log.md) | A running record of every AI-assisted task: the task, what was produced, what was verified |
+| [docs/ci.md](docs/ci.md) | The CI workflow, job by job, and how to reproduce each locally |
+| [docs/deploy.md](docs/deploy.md) | Cloud Run and Neon setup, dev and production, promotion and rollback |
+| [docs/observability.md](docs/observability.md) | Traces, metrics and logs, what is never collected, the Grafana dashboard |
+| [docs/alerting.md](docs/alerting.md) | The finding-page alert rule, the webhook payload, how to fire it on purpose |
+| [docs/on-call.md](docs/on-call.md) | The on-call agent: receiver, actor, allow-list, gates, usage guards, recorded runs |
+| [data/README.md](data/README.md) | Where the snapshot data comes from and the terms it carries |
+| [docs/reviews/](docs/reviews) | The evidence-review verdict log for each published finding |
+| [docs/incidents/](docs/incidents) | One report folder per on-call incident |
+| [docs/agent-extension-demos/](docs/agent-extension-demos) | Recorded demonstrations of the `/new-finding` workflow |
+| [agent-hooks/README.md](agent-hooks/README.md) | The git guard and spec-first guard hooks |
+| [mcp-server/README.md](mcp-server/README.md) | The `spec_lookup` and `query_snapshot` tools |
+| [agent-capabilities/README.md](agent-capabilities/README.md) | The `/new-finding` workflow |
+| [custom-agent/evidence-reviewer/README.md](custom-agent/evidence-reviewer/README.md) | The `evidence-reviewer` subagent |
+| [ops/README.md](ops/README.md) | The snapshot export and its guards |
+| [backend/README.md](backend/README.md) | Running and testing the backend |
 
 ## Repository layout (target)
 
