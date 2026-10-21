@@ -1,0 +1,38 @@
+[
+ {
+  "Service": "backend",
+  "State": "running",
+  "Health": "unhealthy",
+  "ExitCode": 0
+ },
+ {
+  "Service": "db",
+  "State": "exited",
+  "Health": "",
+  "ExitCode": 0
+ },
+ {
+  "Service": "frontend",
+  "State": "running",
+  "Health": "healthy",
+  "ExitCode": 0
+ },
+ {
+  "Service": "lgtm",
+  "State": "running",
+  "Health": "healthy",
+  "ExitCode": 0
+ },
+ {
+  "Service": "oncall",
+  "State": "running",
+  "Health": "healthy",
+  "ExitCode": 0
+ },
+ {
+  "Service": "seed",
+  "State": "exited",
+  "Health": "",
+  "ExitCode": 0
+ }
+]

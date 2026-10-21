@@ -1,0 +1,6 @@
+{
+ "request": "GET /api/findings via the frontend",
+ "http_status": 500,
+ "seconds": 3.67,
+ "failing": true
+}

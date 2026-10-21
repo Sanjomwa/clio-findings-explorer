@@ -1,0 +1,6 @@
+{"time": "2026-10-21T07:42:49Z", "event": "picked_up", "file": "20261021T074101.416869Z-1ee17afeb9fa5762-firing.json"}
+{"time": "2026-10-21T07:42:53Z", "event": "gate", "gate": "preconditions", "ok": true}
+{"time": "2026-10-21T07:42:58Z", "event": "evidence_collected", "files": 7}
+{"time": "2026-10-21T07:42:58Z", "event": "gate", "gate": "diagnose", "ok": false}
+{"time": "2026-10-21T07:42:58Z", "event": "escalate", "reason": "the model-call budget is spent (1 in the last hour of 0, 1 in the last 24 h of 10); no model call was made"}
+{"time": "2026-10-21T07:43:00Z", "event": "issue", "note": "GitHub issue opened: https://github.com/Sanjomwa/clio-findings-explorer/issues/15"}

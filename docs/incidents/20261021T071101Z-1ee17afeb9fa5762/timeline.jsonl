@@ -1,0 +1,14 @@
+{"time": "2026-10-21T07:11:01Z", "event": "picked_up", "file": "20261021T071100.116164Z-1ee17afeb9fa5762-firing.json"}
+{"time": "2026-10-21T07:11:04Z", "event": "gate", "gate": "preconditions", "ok": true}
+{"time": "2026-10-21T07:11:09Z", "event": "evidence_collected", "files": 7}
+{"time": "2026-10-21T07:11:09Z", "event": "model_call", "attempt": 1, "model": "claude-sonnet-5-5"}
+{"time": "2026-10-21T07:11:29Z", "event": "gate", "gate": "diagnose", "ok": true}
+{"time": "2026-10-21T07:11:29Z", "event": "act", "command": "docker compose start db"}
+{"time": "2026-10-21T07:11:30Z", "event": "gate", "gate": "act", "ok": true}
+{"time": "2026-10-21T07:11:34Z", "event": "gate", "gate": "verify_service_healthy", "ok": true}
+{"time": "2026-10-21T07:11:34Z", "event": "gate", "gate": "verify_replay_passes", "ok": true}
+{"time": "2026-10-21T07:11:43Z", "event": "gate", "gate": "verify_tests_pass", "ok": true}
+{"time": "2026-10-21T07:11:43Z", "event": "waiting_for_rule_normal", "timeout_s": 480}
+{"time": "2026-10-21T07:16:57Z", "event": "gate", "gate": "verify_rule_normal", "ok": true}
+{"time": "2026-10-21T07:16:57Z", "event": "fixed"}
+{"time": "2026-10-21T07:17:17Z", "event": "alert_resolved", "endsAt": "2026-10-21T07:16:50Z"}

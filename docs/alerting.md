@@ -1,6 +1,6 @@
 # Alerting
 
-One Grafana alert rule watches the finding-page journey and pages a webhook when readers are being failed or kept waiting ([product-spec.md](../product-spec.md) §7.3). Issue [#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6). It uses the metrics from [observability.md](observability.md). The page is received by the `oncall` service and written to an inbox ([on-call.md](on-call.md)); the agent that acts on it is issue [#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7), Part B, and does not exist yet.
+One Grafana alert rule watches the finding-page journey and pages a webhook when readers are being failed or kept waiting ([product-spec.md](../product-spec.md) §7.3). Issue [#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6). It uses the metrics from [observability.md](observability.md). The page is received by the `oncall` service and written to an inbox ([on-call.md](on-call.md)); the agent that acts on it is issue [#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7), Part B ([on-call.md](on-call.md)).
 
 ## The rule in plain words
 
@@ -34,7 +34,7 @@ With `docker compose up -d`, open <http://127.0.0.1:3000/alerting/list>. Anonymo
 
 The contact point `on-call-agent` is a webhook (`POST`, JSON). Its URL is `ONCALL_WEBHOOK_URL`, default `http://oncall:8090/alert`, set on the `lgtm` service in [docker-compose.yml](../docker-compose.yml). The notification policy sends every alert labelled `severity=page` to it, with a 10 s group wait, 1 minute group interval and 1 hour repeat interval.
 
-**The `oncall` service listens on that URL.** It is a small receiver that writes each alert to `ops/oncall/inbox/` ([on-call.md](on-call.md)); nothing reads the inbox yet. A successful delivery shows as a `lastNotifyAttempt` with no `lastNotifyAttemptError` at `http://127.0.0.1:3000/api/alertmanager/grafana/config/api/v1/receivers`. If the `oncall` service is not running, a delivery fails with a message like `lookup oncall ... no such host`.
+**The `oncall` service listens on that URL.** It is a small receiver that writes each alert to `ops/oncall/inbox/` ([on-call.md](on-call.md)); the on-call agent reads it when started by hand. A successful delivery shows as a `lastNotifyAttempt` with no `lastNotifyAttemptError` at `http://127.0.0.1:3000/api/alertmanager/grafana/config/api/v1/receivers`. If the `oncall` service is not running, a delivery fails with a message like `lookup oncall ... no such host`.
 
 Alerts without `severity=page` go to the root contact point `grafana-default-email`, which is provisioned only because Grafana needs a root receiver; it has no mail server and delivers nothing.
 
@@ -44,7 +44,7 @@ Alerts without `severity=page` go to the root contact point `grafana-default-ema
 ops/alerting/trigger-db-down.sh
 ```
 
-It stops only the `db` service, then sends 24 `GET /api/findings` requests through `http://127.0.0.1:8080`, five seconds apart (about two minutes), and prints each status (500 while the db is down). It never restarts the db; that is for the on-call agent (Part B of #7, not built) or you. Watch the rule at the alert list URL above. To restore by hand:
+It stops only the `db` service, then sends 24 `GET /api/findings` requests through `http://127.0.0.1:8080`, five seconds apart (about two minutes), and prints each status (500 while the db is down). It never restarts the db; that is for the on-call agent ([on-call.md](on-call.md)) or you; the script's closing message is generic and does not know whether the agent has already restored it. Watch the rule at the alert list URL above. To restore by hand:
 
 ```bash
 docker compose start db

@@ -1,0 +1,25 @@
+{
+ "status": "firing",
+ "labels": {
+  "alertname": "Finding pages failing or slow",
+  "grafana_folder": "CLIO Findings Explorer",
+  "journey": "finding-page",
+  "severity": "page"
+ },
+ "annotations": {
+  "description": "Over the last 5 minutes, with at least 10 requests to /api/findings and /api/findings/*, more than 5% returned 5xx or their p95 latency exceeded 2 s. Runbook: docs/alerting.md.",
+  "summary": "Finding pages: 100% 5xx, p95 4.875s, over 5 minutes"
+ },
+ "startsAt": "2026-10-21T07:10:50Z",
+ "values": {
+  "A": 11.274457886483292,
+  "B": 11.274457886483292,
+  "C": 4.875,
+  "ERRORS": 11.274457886483292,
+  "ERRRATIO": 1,
+  "FIRE": 1,
+  "IMPACT": 1,
+  "P95": 4.875,
+  "TOTAL": 11.274457886483292
+ }
+}

@@ -140,6 +140,7 @@ The API has eight read-only endpoints under `/api`: health, timeline, findings l
 - **Trigger.** It wakes on the alert's webhook.
 - **Evidence.** It collects health, recent logs and the failing requests' traces.
 - **Fix.** It states a diagnosis, then applies at most one fix from an allow-list: restart a compose service, or apply a code or config fix in the working tree.
+- **Allow-list narrowing (21 Oct 2026).** The first version enables service actions only (`docker compose start` or `restart` of `db`, `backend` or `frontend`), because the demo fault needs a service action; code and config fixes are a later extension.
 - **Verification.** A fix counts only if the tests pass **and** a replay of the failing request succeeds **and** the alert clears. Otherwise it reverts its own change and escalates.
 - **Record.** It always writes an incident report (what fired, evidence, diagnosis, action, verification) to `docs/incidents/`. When it escalates, it opens a GitHub issue labelled `incident`.
 - **Never:** git writes, `docker compose down -v`, touching volumes or secrets, or acting on production.

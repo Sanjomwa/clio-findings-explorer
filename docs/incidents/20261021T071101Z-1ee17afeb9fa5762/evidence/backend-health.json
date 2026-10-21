@@ -1,0 +1,4 @@
+{
+ "http_status": 503,
+ "body": "{\"status\":\"degraded\",\"database\":\"unreachable\",\"snapshot_version\":null,\"migration_head\":null,\"row_counts\":{}}"
+}

@@ -1,0 +1,58 @@
+{
+ "traces_searched": 22,
+ "status_codes": {
+  "500": 22
+ },
+ "failing_examples": [
+  {
+   "trace_id": "3ef343e378e4ec9647dcdadfa14453d6",
+   "status": "500",
+   "duration_ms": 3686.6
+  },
+  {
+   "trace_id": "7db07be078977e8c279f60a42769e429",
+   "status": "500",
+   "duration_ms": 3748.8
+  },
+  {
+   "trace_id": "d2d43b75dd684c91286133ab3613d035",
+   "status": "500",
+   "duration_ms": 4416.2
+  },
+  {
+   "trace_id": "f6e492a04f5bd7a75df022021a86382d",
+   "status": "500",
+   "duration_ms": 3622.8
+  },
+  {
+   "trace_id": "28985efbbb6d58e25265ccdff42b1fb9",
+   "status": "500",
+   "duration_ms": 3655.5
+  },
+  {
+   "trace_id": "34bb66ff1f09b338a3296c91aa53267",
+   "status": "500",
+   "duration_ms": 3771.3
+  },
+  {
+   "trace_id": "fa9cfe8a3739489622c926e052e745cf",
+   "status": "500",
+   "duration_ms": 3600.4
+  },
+  {
+   "trace_id": "3dc90d62930dab03a93a0cc7903699ea",
+   "status": "500",
+   "duration_ms": 3592.3
+  },
+  {
+   "trace_id": "ff899fed60661c965f9b0386372bd5d4",
+   "status": "500",
+   "duration_ms": 3623.3
+  },
+  {
+   "trace_id": "ae07eaf619ea53c04288b5dca4d6d0c1",
+   "status": "500",
+   "duration_ms": 5016.0
+  }
+ ]
+}

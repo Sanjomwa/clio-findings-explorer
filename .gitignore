@@ -42,6 +42,10 @@ service-account*
 ops/oncall/inbox/*
 !ops/oncall/inbox/.gitkeep
 
+# On-call actor runtime state (locks, usage log, processed markers) and its kill switch file.
+ops/oncall/state/
+ops/oncall/PAUSE
+
 # Editors
 .vscode/
 .idea/

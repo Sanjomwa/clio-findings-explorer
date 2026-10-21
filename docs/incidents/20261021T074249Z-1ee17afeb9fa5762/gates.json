@@ -1,0 +1,16 @@
+{
+ "preconditions": {
+  "ok": true,
+  "checks": {
+   "alert_is_firing": true,
+   "rule_alerting": true,
+   "replay_fails_now": true,
+   "lock_held": true
+  },
+  "note": "alert firing, rule alerting, replay fails now, lock held"
+ },
+ "diagnose": {
+  "ok": false,
+  "note": "the model-call budget is spent (1 in the last hour of 0, 1 in the last 24 h of 10); no model call was made"
+ }
+}

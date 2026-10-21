@@ -93,6 +93,7 @@ Commands are added here when they exist and have been run successfully. Do not a
 | View telemetry (Grafana, anonymous viewer; dashboard "Finding-page journey"; `docker compose up -d` starts it) | open `http://127.0.0.1:3000`; see `docs/observability.md` |
 | Fire the finding-page alert on purpose (stops `db`, sends failing requests; restore with `docker compose start db`; see `docs/alerting.md`) | `ops/alerting/trigger-db-down.sh` |
 | Wake-up demo: fire the alert, then watch it land in the inbox (`ops/oncall/inbox/`; restore with `docker compose start db`; see `docs/on-call.md`) | `ops/alerting/trigger-db-down.sh` |
+| On-call agent: handle the inbox (`ONCALL_ENABLED=1` is required; `touch ops/oncall/PAUSE` pauses it; `--once <file>` handles one file, `--usage` shows model-call counts; see `docs/on-call.md`) | `ONCALL_ENABLED=1 python3 ops/oncall/actor.py --watch` |
 | Frontend dev server on `localhost:5173`, proxying `/api` to the API (from `frontend/`) | `npm run dev` |
 
 ## Repository layout (target)

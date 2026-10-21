@@ -1,0 +1,280 @@
+{
+ "count": 25,
+ "lines": [
+  {
+   "time": "2026-10-21T07:39:13+00:00",
+   "message": "GET /api/findings 500 3631.1ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3631.1",
+   "trace_id": "1386e85fcab7660bcd11a4277606cf5a",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:39:22+00:00",
+   "message": "GET /api/findings 500 3588.8ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3588.8",
+   "trace_id": "4d436c5ac638eb5b5fe7b770946e5be1",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:39:32+00:00",
+   "message": "GET /api/findings 500 3782.2ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3782.2",
+   "trace_id": "f7d8528448376f976131b54654d0ea98",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:39:41+00:00",
+   "message": "GET /api/findings 500 3563.1ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3563.1",
+   "trace_id": "3067ff25b7389232651d5111ece0f449",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:39:50+00:00",
+   "message": "GET /api/findings 500 3561.0ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3561",
+   "trace_id": "769aaf4e78b60046d6fa60d78587ec79",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:40:00+00:00",
+   "message": "GET /api/findings 500 3566.5ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3566.5",
+   "trace_id": "c79aec1c7bf95b030581ad2780695b28",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:40:08+00:00",
+   "message": "GET /api/findings 500 3570.4ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3570.4",
+   "trace_id": "e1e8df713a4294326f99be3f21fd463d",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:40:17+00:00",
+   "message": "GET /api/findings 500 3718.7ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3718.7",
+   "trace_id": "7d2bdc3cbcc80d7d4af61621f510fe68",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:40:26+00:00",
+   "message": "GET /api/findings 500 3572.8ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3572.8",
+   "trace_id": "f438e2196571f9dcbadbd2b70d6d74aa",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:40:36+00:00",
+   "message": "GET /api/findings 500 3604.1ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3604.1",
+   "trace_id": "90f43f5c407be9032646af02425d37ab",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:40:44+00:00",
+   "message": "GET /api/findings 500 3570.8ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3570.8",
+   "trace_id": "f11eacf55e6fd849dc7145ee3f201cbc",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:40:53+00:00",
+   "message": "GET /api/findings 500 3593.0ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3593",
+   "trace_id": "6ce8329201fa7092932893e6ae8948c0",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:41:03+00:00",
+   "message": "GET /api/findings 500 3610.7ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3610.7",
+   "trace_id": "ae07eaf619ea53c04288b5dca4d6d0c1",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:41:12+00:00",
+   "message": "GET /api/findings 500 3611.8ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3611.8",
+   "trace_id": "ff899fed60661c965f9b0386372bd5d4",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:41:21+00:00",
+   "message": "GET /api/findings 500 3577.6ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3577.6",
+   "trace_id": "3dc90d62930dab03a93a0cc7903699ea",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:41:29+00:00",
+   "message": "GET /api/findings 500 3588.9ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3588.9",
+   "trace_id": "fa9cfe8a3739489622c926e052e745cf",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:41:40+00:00",
+   "message": "GET /api/findings 500 3740.9ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3740.9",
+   "trace_id": "034bb66ff1f09b338a3296c91aa53267",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:41:48+00:00",
+   "message": "GET /api/findings 500 3646.2ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3646.2",
+   "trace_id": "28985efbbb6d58e25265ccdff42b1fb9",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:41:57+00:00",
+   "message": "GET /api/findings 500 3602.2ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3602.2",
+   "trace_id": "f6e492a04f5bd7a75df022021a86382d",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:42:07+00:00",
+   "message": "GET /api/findings 500 3588.8ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3588.8",
+   "trace_id": "d2d43b75dd684c91286133ab3613d035",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:42:16+00:00",
+   "message": "GET /api/findings 500 3699.5ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3699.5",
+   "trace_id": "7db07be078977e8c279f60a42769e429",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:42:25+00:00",
+   "message": "GET /api/findings 500 3628.7ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3628.7",
+   "trace_id": "3ef343e378e4ec9647dcdadfa14453d6",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:42:33+00:00",
+   "message": "GET /api/findings 500 3602.5ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3602.5",
+   "trace_id": "51bca31803acf69e79ea049975b21ca6",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:42:43+00:00",
+   "message": "GET /api/findings 500 3634.6ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3634.6",
+   "trace_id": "c19de55470ac6748579aa710acc78989",
+   "code_function_name": "__call__"
+  },
+  {
+   "time": "2026-10-21T07:42:53+00:00",
+   "message": "GET /api/findings 500 3605.5ms",
+   "detected_level": "info",
+   "route": "/api/findings",
+   "status": "500",
+   "method": "GET",
+   "duration_ms": "3605.5",
+   "trace_id": "d1c1e39a842366b345e845bc0909b62b",
+   "code_function_name": "__call__"
+  }
+ ]
+}

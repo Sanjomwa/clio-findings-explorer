@@ -1,0 +1,36 @@
+{
+ "preconditions": {
+  "ok": true,
+  "checks": {
+   "alert_is_firing": true,
+   "rule_alerting": true,
+   "replay_fails_now": true,
+   "lock_held": true
+  },
+  "note": "alert firing, rule alerting, replay fails now, lock held"
+ },
+ "diagnose": {
+  "ok": true,
+  "note": "valid answer, confidence high, action start_service"
+ },
+ "act": {
+  "ok": true,
+  "note": "`docker compose start db` (exit 0)"
+ },
+ "verify_service_healthy": {
+  "ok": true,
+  "note": "db running and healthy, backend /api/health answers 200"
+ },
+ "verify_replay_passes": {
+  "ok": true,
+  "note": "replay of /api/findings: HTTP 200 in 0.01 s"
+ },
+ "verify_tests_pass": {
+  "ok": true,
+  "note": "56 passed, 1 warning in 6.29s"
+ },
+ "verify_rule_normal": {
+  "ok": true,
+  "note": "Grafana rule cfe-finding-page-impact state: normal"
+ }
+}

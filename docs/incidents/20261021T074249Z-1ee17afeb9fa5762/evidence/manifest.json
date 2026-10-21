@@ -1,0 +1,54 @@
+{
+ "files": [
+  {
+   "file": "alert.json",
+   "source": "the alert as received (selected fields)",
+   "bytes": 715,
+   "truncated": false,
+   "sha256": "6fbb51fb05cb3db3bd3ff70a4573b800fda6829c9c4c5650c389b6f66f707a9b"
+  },
+  {
+   "file": "compose-ps.json",
+   "source": "docker compose ps -a (Service, State, Health, ExitCode)",
+   "bytes": 529,
+   "truncated": false,
+   "sha256": "4e6abe567731c2e54d3e5536aa96b0b74b235e8e00dc2b54248b738b17ca7645"
+  },
+  {
+   "file": "backend-health.json",
+   "source": "GET backend /api/health",
+   "bytes": 158,
+   "truncated": false,
+   "sha256": "4a3b8731665455e75587709e43fef69c32a13f999dbba1eb37b314c0cbab29db"
+  },
+  {
+   "file": "journey-replay.json",
+   "source": "one GET of /api/findings through the frontend",
+   "bytes": 109,
+   "truncated": false,
+   "sha256": "140195b9644a1b27372d5f571c573eac8494bc0ea502e453e8a2f87d9b53d9cf"
+  },
+  {
+   "file": "logs-errors.json",
+   "source": "Loki query_range {service_name=\"cfe-backend\"} | detected_level=~\"error|warn|warning|critical|fatal\" (limit 60, from alert start minus 10 min to now)",
+   "bytes": 8156,
+   "truncated": false,
+   "sha256": "270de865ec236eccb151b89cb6ef45fc1a0ec7de1c25b4aa8333a490c198b470"
+  },
+  {
+   "file": "logs-journey.json",
+   "source": "Loki query_range {service_name=\"cfe-backend\"} |= \"/api/findings\" (limit 60, from alert start minus 10 min to now)",
+   "bytes": 7777,
+   "truncated": false,
+   "sha256": "2e5a4ed27069167f87ad9e322df8e69491af2ca82d786019ccb6815d5cc08be3"
+  },
+  {
+   "file": "traces-journey.json",
+   "source": "Tempo search { resource.service.name = \"cfe-backend\" && kind = server && span.http.route =~ \"/api/findings.*\" } | select(span.http.response.status_code) (limit 100)",
+   "bytes": 1136,
+   "truncated": false,
+   "sha256": "8a03093481c42ec7fc8a9735cfab59fd647f015de4cf58c704bfe26d28b659f2"
+  }
+ ],
+ "redacted": true
+}
