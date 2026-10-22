@@ -1,6 +1,6 @@
 # CLIO Findings Explorer
 
-CLIO Findings Explorer is a public archive that helps journalists, researchers and civil-society readers check what CLIO's data shows about civil-liberties pressure in Kenya in specific weeks, and what it does not. It presents five curated findings from a committed snapshot of CLIO output, each with its regime state, a plain-language summary, evidence from ACLED, OONI and the Google Transparency Report, and a limits box.
+CLIO Findings Explorer is a public archive that helps journalists, researchers and civil-society readers check what data from CLIO (Civil Liberties Intelligence Observatory) shows about civil-liberties pressure in Kenya in specific weeks, and what it does not. CLIO scores pressure families from ACLED conflict events each week and assigns one of seven regime states; the app adds OONI network measurements and Google takedown requests as evidence. It presents five curated findings from a committed snapshot of CLIO output, each with its regime state, a plain-language summary, evidence from ACLED, OONI and the Google Transparency Report, and a limits box.
 
 This is the final project for AI Dev Tools Zoomcamp 2026.
 
@@ -59,6 +59,8 @@ Every finding was checked claim by claim by the [`evidence-reviewer`](.claude/ag
 
 One mismatch: the reviewer's own summary line in the finance-bill-2024 log says 15 VERIFIED and 11 EXTERNAL, but its 26-row table has 17 and 9. The table is unedited and its count is used here; the log notes the difference. The other four summary lines match their tables.
 
+To rerun the review for a finding, start Claude Code from the repository root with the compose stack up and seeded (`docker compose up -d --build`) and a human-written `content/drafts/<slug>.yaml`, then type `/new-finding <slug>`. It needs the database (through the MCP server's `query_snapshot`) and the `evidence-reviewer` subagent, re-reviews the draft and overwrites `docs/reviews/<slug>.md`. A finding that already exists in `content/findings/` makes the command stop at its first step. Then `uv run --directory backend pytest tests/unit/test_content_language.py tests/unit/test_content_reviewed.py -v` checks the language rules and that every finding has a clean log ([agent-capabilities/README.md](agent-capabilities/README.md)). After the first runs, the reviewer's output format got a rule (one verdict word per row, and the counts in the summary line must match the table) because of the nonstandard verdict text and the mismatched summary line; see [docs/ai-workflow-log.md](docs/ai-workflow-log.md).
+
 ### Tests
 
 One command runs every suite (needs the compose database running and seeded, and says so if it is not):
@@ -96,9 +98,11 @@ The webhook is received by a small `oncall` service, which writes each alert to 
 
 ## Run it locally
 
-Prerequisites: Docker with Docker Compose. Node 22 and [uv](https://docs.astral.sh/uv/) are needed only to run tests outside Docker.
+Prerequisites: Docker with Docker Compose. Python 3.12, Node 22 and [uv](https://docs.astral.sh/uv/) are needed only to run tests outside Docker.
 
 ```bash
+git clone https://github.com/Sanjomwa/clio-findings-explorer.git
+cd clio-findings-explorer
 cp .env.example .env              # skip if you already have a .env
 docker compose up -d --build      # starts Postgres, loads the snapshot, starts the API and the app
 curl -s localhost:8000/api/health
@@ -144,7 +148,7 @@ For backend and frontend details see [backend/README.md](backend/README.md) and 
 ## Deployment and CI/CD
 
 - **Hosting:** Google Cloud Run in `europe-west1` and Neon Postgres on AWS `eu-central-1`, with one Neon branch per environment. Services scale to zero.
-- **Dev:** every push to `main` runs CI; when it passes, [`deploy.yml`](.github/workflows/deploy.yml) builds both images, runs the seed job, deploys and smoke-tests `/api/health`. A red CI deploys nothing. The first deploy was commit `c5ce7f8`: Deploy #1 to dev ran automatically, and Deploy #2 promoted it to production. Deploy #3 (commit `fa43623`, run 39063387329) also ran automatically to dev, and passed its smoke test.
+- **Dev:** every push to `main` runs CI; when it passes, [`deploy.yml`](.github/workflows/deploy.yml) builds both images, runs the seed job, deploys and smoke-tests `/api/health`. A red CI deploys nothing. Deploys have worked this way since the first one (commit `c5ce7f8`).
 - **Production:** a manual "Promote to production" run behind a GitHub environment that needs Sam's approval. It reuses the images dev already ran and never rebuilds.
 - **Rollback:** route traffic back to the previous Cloud Run revision (commands in [docs/deploy.md](docs/deploy.md)). A rollback was rehearsed on dev on 17 October 2026: traffic was moved to the previous revision of both services, the health check passed, then traffic was moved back to the latest ([record](docs/deploy.md#rollback-tried-on-dev)).
 - **One-time setup** (Neon, Cloud Shell script, GitHub variables and environments) is in [docs/deploy.md](docs/deploy.md). Authentication is Workload Identity Federation; there are no key files.
@@ -163,6 +167,10 @@ flowchart LR
   GH["GitHub Actions"] --> AR["Artifact Registry"] --> Run["Cloud Run"]
   API -->|OTLP| LGTM["Grafana LGTM (local compose)"]
   API -->|JSON logs| CL["Cloud Logging (Cloud Run)"]
+  LGTM -->|"alert webhook"| OC["oncall (receiver)"]
+  OC -->|writes| Inbox["ops/oncall/inbox/"]
+  Inbox -->|read| Agent["On-call agent (host, started by hand)"]
+  Agent -->|"one allow-listed docker compose action"| Run2["Compose services: db, backend, frontend"]
 ```
 
 - **Frontend:** React and TypeScript, built to static files and served by nginx, which also proxies `/api` to the backend. All HTTP goes through one client.
@@ -171,6 +179,7 @@ flowchart LR
 - **Seed:** verifies the snapshot's checksums, then loads `data/snapshot/` and `content/` (the human-written content). It is safe to run on every deploy.
 - **CI/CD:** GitHub Actions builds images into Artifact Registry and deploys them to Cloud Run.
 - **Observability:** the backend sends traces and metrics over OTLP to a local Grafana LGTM container, and writes JSON logs with the trace ID that Cloud Run sends to Cloud Logging. See [docs/observability.md](docs/observability.md).
+- **On-call:** the `oncall` service (in `docker-compose.yml`) receives the Grafana alert webhook and writes each alert to a git-ignored inbox folder. The agent runs on the host, started by hand, reads the inbox and runs at most one allow-listed `docker compose start` or `restart` for `db`, `backend` or `frontend`. See [docs/on-call.md](docs/on-call.md).
 
 ## How it was built: the agent team and process
 
@@ -215,6 +224,7 @@ mcp-server/         The read-only MCP tools
 agent-hooks/        The git guard and spec-first guard
 .claude/            The evidence-reviewer subagent and /new-finding
 custom-agent/       Source copy of the evidence-reviewer
+agent-capabilities/ The /new-finding workflow (canonical copy)
 docs/               Process, agent team, deploy, CI, permissions, observability, alerting, on-call, review logs, incident reports, workflow log, images
 .github/workflows/  ci.yml and deploy.yml
 ```
@@ -236,9 +246,14 @@ docs/               Process, agent team, deploy, CI, permissions, observability,
 
 Open issues, in priority order:
 
-1. The traceability test ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)).
-2. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), and small fixes ([#11](https://github.com/Sanjomwa/clio-findings-explorer/issues/11)).
-3. Shift-left security checks: ruff `S` rules, CodeQL, dependency audit and injection tests ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)).
+1. The traceability test ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)), because there is "No automated traceability test yet" (see Limitations): it would recompute every evidence-card number from the snapshot files and fail if the API differs.
+2. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), because the reviewer was inconsistent across runs (see Limitations). Small fixes ([#11](https://github.com/Sanjomwa/clio-findings-explorer/issues/11)), because attribution text can end with a doubled full stop and ledger accessible names can repeat the state.
+3. Shift-left security checks ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)): ruff `S` rules, CodeQL, dependency audit and injection tests, because no automated check would catch a regression in SQL-injection protection before merge.
+
+Not yet in the tracker (possible next steps, not promises):
+
+- Make the alert see a stopped backend, for example by alerting when the request metrics go missing. The rule has `noDataState: OK`, so a down backend leaves it Normal (see Limitations).
+- Run the on-call agent as a long-running service instead of by hand, because an unattended outage is not fixed today (see Limitations).
 
 ## Self-evaluation
 
