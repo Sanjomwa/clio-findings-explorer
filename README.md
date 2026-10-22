@@ -82,7 +82,15 @@ That is 584 tests in a full run. CI runs the same suites as separate jobs on eve
 
 The backend emits OpenTelemetry traces (one per request, with database spans), metrics per route template and structured JSON logs that carry the trace ID. `docker compose up -d` starts a local Grafana at <http://127.0.0.1:3000> with a provisioned "Finding-page journey" dashboard; on Cloud Run the same logs go to Cloud Logging with the trace ID. What is collected, what never is, and how to move between a log line and its trace are in [docs/observability.md](docs/observability.md) ([#5](https://github.com/Sanjomwa/clio-findings-explorer/issues/5)).
 
+<img alt="The Finding-page journey dashboard in Grafana: request rate, 5xx rate and p95 latency per route, and recent traces" src="docs/images/grafana-dashboard.png" width="800">
+
+*The "Finding-page journey" dashboard on the local Grafana after about 100 requests: request rate, 5xx rate and p95 latency per route, and the most recent traces.*
+
 A provisioned Grafana alert rule pages a webhook when, over 5 minutes with at least 10 requests, more than 5% of `/api/findings/*` requests return 5xx or their p95 latency exceeds 2 s. `ops/alerting/trigger-db-down.sh` fires it on purpose by stopping the database. The numbers, the recorded run and the webhook payload are in [docs/alerting.md](docs/alerting.md) ([#6](https://github.com/Sanjomwa/clio-findings-explorer/issues/6)).
+
+<img alt="Grafana's alert rule list showing the provisioned rule Finding pages failing or slow in the Normal state" src="docs/images/grafana-alert-rule.png" width="800">
+
+*The provisioned rule "Finding pages failing or slow" in Grafana's alert rule list, in the Normal state (the green tick) during normal traffic.*
 
 The webhook is received by a small `oncall` service, which writes each alert to a git-ignored inbox folder. The on-call agent ([`ops/oncall/actor.py`](ops/oncall/actor.py), [#7](https://github.com/Sanjomwa/clio-findings-explorer/issues/7)) is started by hand, reads that inbox, collects evidence, asks one pinned model (Claude Sonnet 5.5, read-only tools) for a diagnosis, and, if the answer passes validation, runs one allow-listed `docker compose start` or `restart`. It counts the fix only if the service is healthy, a replay of the failing request passes, a fast test suite passes and the alert returns to Normal; otherwise it escalates with a GitHub issue labelled `incident`. Every incident gets a report folder in `docs/incidents/`. Usage guards (cooldown, call budgets, a kill switch) are described with the recorded end-to-end run, where the agent restarted a stopped database with no human step, in [docs/on-call.md](docs/on-call.md) ([incident report](docs/incidents/20261021T071101Z-1ee17afeb9fa5762/summary.md)).
 
@@ -106,6 +114,20 @@ The app is at <http://localhost:8080>; the API stays on `127.0.0.1:8000`. Expect
 
 `.env.example` holds local-only placeholders for a throwaway Postgres container (user, password, database name). Nothing in it is secret, and no cloud credentials ever go there.
 
+**Configuration.** Compose reads these from `.env` (copied from `.env.example`) or from your shell.
+
+| Variable | Required? | Default | What it does |
+|---|---|---|---|
+| `POSTGRES_USER` | Yes (in `.env`) | none; `.env.example` sets `clio` | Database user, for the `db` container and the API's connection string |
+| `POSTGRES_PASSWORD` | Yes (in `.env`) | none; `.env.example` sets `clio-local-only` | Database password, used the same way |
+| `POSTGRES_DB` | Yes (in `.env`) | none; `.env.example` sets `clio_findings` | Database name, used the same way |
+| `GF_ADMIN_PASSWORD` | No | `change-me-local-only` | Grafana's admin password (viewing needs no login) |
+| `ONCALL_WEBHOOK_URL` | No | `http://oncall:8090/alert` | Where the Grafana alert posts its webhook; the default is the `oncall` service |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | `http://lgtm:4318` | Where the API sends traces and metrics; set it to an empty string to export nothing (CI does) |
+| `ONCALL_UID`, `ONCALL_GID` | No | `1000`, `1000` | The user and group the `oncall` container runs as, so the files it writes to `ops/oncall/inbox/` are yours |
+
+The on-call agent is not started by compose; its switches are `ONCALL_ENABLED=1`, which it needs in order to do anything, and an `ops/oncall/PAUSE` file, which stops it while the file exists (`touch ops/oncall/PAUSE`; remove it to resume). See [docs/on-call.md](docs/on-call.md). `BACKEND_URL` and `CONTENT_DIR` are fixed in `docker-compose.yml`, so there is nothing to set locally. On Cloud Run the deploy workflow sets them, plus `GOOGLE_CLOUD_PROJECT`; see [docs/deploy.md](docs/deploy.md).
+
 **The data.** The snapshot in `data/snapshot/` is committed. [`MANIFEST.json`](data/snapshot/MANIFEST.json) records, per file, the source table, the exact SQL, the row count, a sha256 checksum and the export time. Licence terms are in [data/README.md](data/README.md).
 
 **Troubleshooting**
@@ -113,6 +135,9 @@ The app is at <http://localhost:8080>; the API stays on `127.0.0.1:8000`. Expect
 - `curl` prints nothing right after compose returns: the API can take a few seconds to start. Run it again.
 - Port 5432 is already in use: compose does not use it. The database is published on `127.0.0.1:55432`, so a local Postgres on 5432 does not clash.
 - The first image build stalls while downloading Python packages (seen once, in `uv sync`): stop it and run the build again.
+- "Cannot connect to the Docker daemon", or `docker` is "not found in this WSL 2 distro" (Windows): Docker Desktop is not running or its WSL integration is off. Start Docker Desktop, then in Settings → Resources → WSL integration turn on your distro.
+- The build fails or stalls with low disk space: the stack builds four images (backend, seed, frontend and oncall) and pulls Grafana's all-in-one image (3.7 GB on disk). Check the space with `docker system df` and free some before you run it again.
+- The Grafana dashboard is empty: it only shows data after requests. Open a few finding pages, then set the time range to the last 15 minutes.
 
 For backend and frontend details see [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md). The full command list is in [AGENTS.md](AGENTS.md).
 
@@ -213,8 +238,7 @@ Open issues, in priority order:
 
 1. The traceability test ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)).
 2. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), and small fixes ([#11](https://github.com/Sanjomwa/clio-findings-explorer/issues/11)).
-3. The final README pass and a clean-clone check ([#12](https://github.com/Sanjomwa/clio-findings-explorer/issues/12)).
-4. Shift-left security checks: ruff `S` rules, CodeQL, dependency audit and injection tests ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)).
+3. Shift-left security checks: ruff `S` rules, CodeQL, dependency audit and injection tests ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)).
 
 ## Self-evaluation
 
@@ -235,6 +259,8 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Alerting on user impact | 1 | 1 | Provisioned rule on 5xx share and p95 latency: [docs/alerting.md](docs/alerting.md), [rules.yaml](ops/grafana/provisioning/alerting/rules.yaml), [test_alert_rules.py](backend/tests/unit/test_alert_rules.py); fired on purpose with [trigger-db-down.sh](ops/alerting/trigger-db-down.sh) |
 | On-call agent | 2 | 2 | Agent that wakes on the alert, diagnoses with a pinned model, restarts the stopped service and verifies, with usage guards and an incident report: [docs/on-call.md](docs/on-call.md), [actor.py](ops/oncall/actor.py), [tests](ops/tests/test_oncall_actor.py); fixed run [docs/incidents/20261021T071101Z-1ee17afeb9fa5762/](docs/incidents/20261021T071101Z-1ee17afeb9fa5762/summary.md); escalation run [docs/incidents/20261021T074249Z-1ee17afeb9fa5762/](docs/incidents/20261021T074249Z-1ee17afeb9fa5762/escalation.md) and its issue [#15](https://github.com/Sanjomwa/clio-findings-explorer/issues/15) |
 | **Total** | **24** | **24** | |
+
+These scores are a self-assessment with links to the evidence; the course reviewer makes the final judgment.
 
 ## Data and licence
 
