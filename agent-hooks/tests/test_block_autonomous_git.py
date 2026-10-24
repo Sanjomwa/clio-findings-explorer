@@ -184,6 +184,128 @@ class TestBlockedGhCommands(HookTestCase):
                 self.assertBlocked(command)
 
 
+class TestBlockedWorkingTreeAndAliasCommands(HookTestCase):
+    """stash, checkout, switch, clean, discarding restore, gh alias writes."""
+
+    def test_stash_in_every_form(self):
+        for command in [
+            "git stash",
+            "git stash push",
+            "git stash push -m x -- README.md",
+            "git stash pop",
+            "git stash apply",
+            "git stash drop",
+            "git stash clear",
+            "git stash list",
+            "git stash -u",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_checkout_switch_clean(self):
+        for command in [
+            "git checkout main",
+            "git checkout -b new",
+            "git checkout -- README.md",
+            "git checkout HEAD -- README.md",
+            "git checkout .",
+            "git switch main",
+            "git switch -c new",
+            "git clean -fd",
+            "git clean -n",
+            "git clean -fdx",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_restore_that_discards(self):
+        for command in [
+            "git restore README.md",
+            "git restore .",
+            "git restore",
+            "git restore --worktree README.md",
+            "git restore --staged --worktree README.md",
+            "git restore --worktree --staged README.md",
+            "git restore -S -W README.md",
+            "git restore -SW README.md",
+            "git restore --source=HEAD~1 README.md",
+            "git restore --source HEAD --staged --worktree README.md",
+            "git restore --wor README.md",
+            "git restore --s README.md",
+            "git restore -- --staged",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_gh_alias_writes(self):
+        for command in [
+            "gh alias set co 'pr checkout'",
+            "gh alias import aliases.yml",
+            "gh alias delete co",
+            "gh -R o/r alias set x 'pr merge'",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_through_wrappers_globals_chains_and_fallback(self):
+        for command in [
+            "env X=1 git stash",
+            "FOO=1 git checkout main",
+            "sudo git clean -fd",
+            "git -C . stash",
+            "git -C a -c k=v --no-pager switch main",
+            "git -C . restore README.md",
+            "true && git clean -fd",
+            "git status; git stash pop",
+            "echo $(git checkout main)",
+            "env GH_TOKEN=x gh alias set x 'pr merge'",
+            "/usr/bin/git stash",
+            "GIT.exe stash",
+            "GIT.EXE clean -fd",
+            "git.exe checkout main",
+            "gh.exe alias delete co",
+            "echo 'unterminated && git stash",
+            "echo 'unterminated && GIT.exe clean -fd",
+            "echo 'unterminated && git checkout main",
+            "echo 'unterminated && git switch main",
+            "echo 'unterminated && git restore README.md",
+            "echo 'unterminated && git restore --staged --worktree README.md",
+            "echo 'unterminated && gh alias set x y",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_message_names_the_command(self):
+        result = self.assertBlocked("git status && git stash pop")
+        self.assertIn("`git stash`", result.stderr)
+
+    def test_end_to_end_payload_for_git_stash(self):
+        result = run_hook(payload("git stash"))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Blocked by block-autonomous-git: `git stash` is not allowed", result.stderr)
+        self.assertIn("AGENTS.md hard rule 1", result.stderr)
+
+    def test_allowed_neighbours(self):
+        for command in [
+            "git restore --staged README.md",
+            "git restore --staged -- README.md",
+            "git restore -S README.md",
+            "git restore --stage README.md",
+            "git -C . restore --staged README.md",
+            "gh alias list",
+            "git status",
+            "git diff",
+            "git add README.md",
+            "git branch -m old new",
+            "git add stash.py clean.py",
+            "git log --grep=stash",
+            "echo 'git stash'",
+            "echo it's 'unbalanced stash",
+        ]:
+            with self.subTest(command=command):
+                self.assertAllowed(command)
+
+
 class TestChainedAndNestedForms(HookTestCase):
     def test_separators(self):
         for command in [

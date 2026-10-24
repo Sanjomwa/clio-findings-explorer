@@ -10,6 +10,9 @@ Claude Code hooks that enforce rules from [AGENTS.md](../AGENTS.md). Python; `bl
 
 - `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `update-ref`, `commit-tree`, in every form. That includes `git reset` without `--hard` and read-only uses such as `git tag -l`, because the rule names the subcommand, not a flag.
 - `git branch -d`, `-D`, `--delete`, and bundled short flags containing `d` or `D` (for example `-df`).
+- `git stash`, in every form (`push`, `pop`, `apply`, `drop`, `clear`, `list`), `git checkout` (switching branches and `checkout -- <file>`), `git switch` and `git clean`, because they move or discard working-tree changes.
+- `git restore` that can discard changes: any `restore` without `--staged`, and `restore --staged --worktree` (or `-W`). `git restore --staged <path>` stays allowed. Git accepts unique abbreviations of long options, so `--stag` counts as `--staged`; `--s` is ambiguous with `--source` and is treated as not staged.
+- `gh alias set`, `import` and `delete`, so a blocked `gh` write cannot be renamed. `gh alias list` stays allowed.
 - `gh issue` `close`, `reopen`, `edit`, `delete`, `transfer`, `lock`, `unlock`, `pin`, `unpin`, `develop`.
 - `gh label` `edit`, `delete`, `clone`.
 - `gh repo` `create` (and `new`), `edit`, `delete`, `archive`, `unarchive`, `rename`, `fork`, `sync`, `set-default`.
@@ -18,7 +21,7 @@ Claude Code hooks that enforce rules from [AGENTS.md](../AGENTS.md). Python; `bl
 - `gh pr`, every action except `list`, `view`, `diff`, `checks` and `status`.
 - `gh api`, entirely, since it can write anything. Read through `gh issue view` and `gh issue list`.
 
-The only `gh` writes left open are `gh issue create`, `gh issue comment` and `gh label create`, which AGENTS.md allows only when a prompt asks for them (see "Task tracker" there). Everything else is allowed. That includes `git status`, `diff`, `log`, `show`, `fetch`, `add`, `restore --staged`, `git branch` for listing, and read-only `gh` commands such as `gh issue view` and `gh issue list`.
+The only `gh` writes left open are `gh issue create`, `gh issue comment` and `gh label create`, which AGENTS.md allows only when a prompt asks for them (see "Task tracker" there). Everything else is allowed. That includes `git status`, `diff`, `log`, `show`, `fetch`, `add`, `restore --staged <path>`, `git branch` for listing, and read-only `gh` commands such as `gh issue view` and `gh issue list`.
 
 ### Forms it recognises
 
@@ -45,7 +48,7 @@ This is a string parser for the Bash tool's command text. It catches the common 
 - **git aliases:** for example `git ci` configured as `commit`, or `git -c alias.x=commit x`.
 - **Substitution inside double quotes:** `echo "$(git push)"`. The whole quoted string is one word.
 - **Wrapper flags that take a separate value** but are not in the hook's list, for example `sudo -C 3 git push`.
-- **Destructive commands that are not on the list:** plain `git restore <file>` (discards working-tree changes), `git checkout -- <file>`, `git stash`, `git clean` and `git branch -m`/`-M`/`-f`. AGENTS.md does not forbid these, so the hook allows them.
+- **Destructive commands that are not on the list:** `git branch -m`/`-M`/`-f`. AGENTS.md does not forbid these, so the hook allows them.
 - **Tools other than Bash:** the hook is registered on the Bash tool only.
 
 ## spec-first-guard

@@ -18,6 +18,8 @@ import sys
 DENIED_GIT_SUBCOMMANDS = frozenset({
     "commit", "push", "pull", "tag", "merge", "rebase", "reset",
     "cherry-pick", "revert", "am", "update-ref", "commit-tree",
+    # Moves or discards working-tree changes: the tree stays as it is for review.
+    "stash", "checkout", "switch", "clean",
 })
 
 # `git branch` is allowed except for deletion.
@@ -42,11 +44,19 @@ DENIED_GH_ACTIONS = {
     "secret": frozenset({"set", "delete"}),
     "variable": frozenset({"set", "delete"}),
     "release": ALL,
+    # An alias could rename a blocked write; `alias list` stays open.
+    "alias": frozenset({"set", "import", "delete"}),
 }
 # pr: every action is denied except these read-only ones.
 ALLOWED_GH_PR_ACTIONS = frozenset({"list", "view", "diff", "checks", "status"})
 # Denied whatever follows: `gh api` can write anything.
 DENIED_GH_GROUPS = frozenset({"api"})
+
+# `git restore` is allowed only as `restore --staged <path>`; any other form
+# (no --staged, or --worktree as well) discards working-tree changes. Git
+# accepts unique abbreviations of long options, so --st... and --w... count.
+RESTORE_STAGED = "--staged"
+RESTORE_WORKTREE = "--worktree"
 
 # git global options that take their value as the next word.
 GIT_GLOBAL_OPTS_WITH_VALUE = frozenset({
@@ -189,6 +199,24 @@ def strip_prefixes(words):
     return words[i:]
 
 
+def restore_discards(args):
+    """True if `git restore` with these words (after `restore`) can discard
+    working-tree changes: anything but --staged without --worktree."""
+    staged = worktree = False
+    for arg in args:
+        if arg == "--":
+            break
+        if arg.startswith("--"):
+            if len(arg) >= 4 and RESTORE_STAGED.startswith(arg.split("=")[0]):
+                staged = True
+            elif len(arg) >= 3 and RESTORE_WORKTREE.startswith(arg.split("=")[0]):
+                worktree = True
+        elif arg.startswith("-") and arg != "-":
+            staged = staged or "S" in arg
+            worktree = worktree or "W" in arg
+    return worktree or not staged
+
+
 def git_violation(args):
     """Return the denied git subcommand in `args` (words after `git`), or None."""
     i = 0
@@ -205,6 +233,8 @@ def git_violation(args):
     subcommand = args[i]
     if subcommand in DENIED_GIT_SUBCOMMANDS:
         return subcommand
+    if subcommand == "restore" and restore_discards(args[i + 1:]):
+        return "restore (without --staged, or with --worktree)"
     if subcommand == "branch":
         for arg in args[i + 1:]:
             if arg == "--":
@@ -257,6 +287,8 @@ def fallback_violation(command):
         for word in words:
             if word in DENIED_GIT_SUBCOMMANDS:
                 return f"git {word}"
+        if "restore" in words and restore_discards(words[words.index("restore") + 1:]):
+            return "git restore"
         if "branch" in words and re.search(r"(?:^|\s)(-[A-Za-z]*[dD][A-Za-z]*|--delete)\b", match.group("rest")):
             return "git branch delete"
     for match in FALLBACK_GH.finditer(command):
