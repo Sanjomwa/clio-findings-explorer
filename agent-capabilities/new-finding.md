@@ -15,11 +15,12 @@ Read `content/drafts/<slug>.yaml`. If it does not exist, STOP. If `content/findi
 
 ## 2. Validate the shape
 
-The draft is the finding format (`slug`, `week_start_date`, `iso2`, `position`, `title`, `teaser`, `summary_md`, `published_at`, `caveats`) with a required `citations` list. Check, and STOP on the first failure:
+The draft is the finding format (`slug`, `week_start_date`, `iso2`, `position`, `title`, `teaser`, `summary_md`, `published_at`, `caveats`, and the optional `key_phrase`) with a required `citations` list. Check, and STOP on the first failure:
 
-- exactly those ten keys, no others (a `sources` key is the old name of `citations`: STOP and say to rename it);
+- exactly those ten keys plus, optionally, `key_phrase`, no others (a `sources` key is the old name of `citations`: STOP and say to rename it);
 - `slug` equals `<slug>`; `week_start_date` is an unquoted YAML date `YYYY-MM-DD` (a quoted one, such as `"2022-08-06"`, loads as a string: STOP and say to remove the quotes); `published_at` is an ISO 8601 timestamp with a timezone; `position` is an integer >= 1 not used by another file in `content/findings/`; `iso2` is `KE`;
 - `title`, `teaser`, `summary_md` are non-blank strings;
+- `key_phrase`, if present, is a non-blank string and an exact substring of `teaser` (the seed loader enforces the same rule);
 - `caveats` has at least one item, each exactly `{severity, caveat_md}` with severity `limitation` or `do_not_conclude`;
 - `citations` must be present and be a list (it may be empty). Each item, if any, is exactly `{claim, citation, url}` with all three non-blank and `url` starting with `https://`. Whether every real-world event statement and every statement of CLIO's rules has a source is not a shape check; the reviewer's EXTERNAL rule enforces it and the workflow stops on EXTERNAL NO SOURCE.
 
@@ -90,7 +91,7 @@ Use the `Counted:` line from step 5, not the reviewer's summary line.
 - Any `UNSUPPORTED`: STOP. Do not write the finding. List the assertions. The human rewrites or removes them in the draft.
 - Any `CORRECTED`: STOP. Show each correction and its query for the human to apply to the draft. Never apply it yourself.
 - Any `EXTERNAL` with `NO SOURCE`: STOP. Say which sentence needs a cited public source in `citations`.
-- Otherwise: write `content/findings/<slug>.yaml` with the draft's ten finding keys, same values, `citations` included. Do not alter any wording.
+- Otherwise: write `content/findings/<slug>.yaml` with the draft's finding keys (ten, or eleven with `key_phrase`), same values, `citations` included. Do not alter any wording.
 
 Re-running after the human edits the draft starts again at step 1 and overwrites `docs/reviews/<slug>.md`.
 

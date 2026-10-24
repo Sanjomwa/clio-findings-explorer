@@ -735,3 +735,10 @@ A running record of the work coding agents do in this repository, appended after
 - **Verified:** `uv run --directory backend pytest tests/unit` 149 passed (was 132), including `test_agent_sync`; a test runs the command from `new-finding.md` over a fixture and checks its output against the table; ruff check passes; all ten draft and finding files load `week_start_date` as a date.
 - **Found along the way:** the prompt calls `agent-capabilities/README.md` the canonical copy; the canonical file synced by `test_agent_sync.py` is `agent-capabilities/new-finding.md`, and the README only describes the steps. The shape check exists only as instructions in `new-finding.md`, so the date rule is enforced by the new unit test over the files. The five existing logs have no `Counted:` line; the `general-election-2022` and `post-election-violence-2008` logs use a `Summary (reviewer's line):` label.
 - **Not verified:** that a live reviewer reads `MANIFEST.json` or that a live `/new-finding` runs the counting command (no model calls here; the re-runs are the next session).
+
+## 2026-10-24: /new-finding accepts the optional key_phrase field (#10)
+
+- **Agent:** Cowork planning session (Claude Opus 5.5) wrote the edit; Sam applied it with a guarded script and ran the tests.
+- **Task as given:** the first E2 re-run of general-election-2022 stopped at step 2 because the workflow required exactly ten draft keys, while all five drafts (and the published findings) carry the optional `key_phrase` added with contract v0.7.0 on 15 October. The workflow file had not been updated then.
+- **Produced:** both copies of `new-finding.md` accept an optional `key_phrase`, which must be a non-blank exact substring of `teaser` (the same rule as `backend/app/seed/content.py`), and step 6 writes ten or eleven keys.
+- **Verified:** `uv run --directory backend pytest tests/unit -q` (including the copy-sync test). The stopped run made no reviewer call and wrote no log; the finding, review log and draft were restored with `cp` and checked byte-identical with `cmp`.
