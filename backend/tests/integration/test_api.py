@@ -484,3 +484,55 @@ def test_requests_run_in_read_only_transactions(client, engine):
         s.execute(text("SET TRANSACTION READ ONLY"))
         with pytest.raises(Exception, match="read-only"):
             s.execute(text("DELETE FROM findings"))
+
+
+# ---- injection strings -------------------------------------------------------------------------
+
+INJECTIONS = {
+    "or-1=1": "' OR 1=1--",
+    "drop-table": "; DROP TABLE findings;--",
+    "percent-27": "%27",
+    "double-encoded-quote": "%2527",
+    "union-select": "' UNION SELECT slug FROM findings--",
+    "very-long": "A" * 5000,
+    "very-long-quote": "'" * 5000,
+}
+INJECTION_IDS = list(INJECTIONS)
+INJECTION_VALUES = list(INJECTIONS.values())
+SAFE_STATUSES = (404, 422)
+
+
+def _row_counts(client) -> dict:
+    r = client.get("/api/health")
+    assert r.status_code == 200
+    return r.json()["row_counts"]
+
+
+@pytest.fixture
+def rows_unchanged(client):
+    before = _row_counts(client)
+    yield
+    assert _row_counts(client) == before
+
+
+@pytest.mark.parametrize("value", INJECTION_VALUES, ids=INJECTION_IDS)
+@pytest.mark.parametrize(
+    "suffix", ["", "/evidence/acled", "/evidence/ooni", "/evidence/google-transparency"]
+)
+def test_injection_in_slug_is_422_or_404(client, rows_unchanged, value, suffix):
+    from urllib.parse import quote
+
+    r = client.get(f"/api/findings/{quote(value, safe='')}{suffix}")
+    assert r.status_code in SAFE_STATUSES
+
+
+@pytest.mark.parametrize("value", INJECTION_VALUES, ids=INJECTION_IDS)
+@pytest.mark.parametrize("param", ["country", "from", "to", "state"])
+def test_injection_in_timeline_parameter_is_422(client, rows_unchanged, value, param):
+    r = client.get("/api/timeline", params={param: value})
+    assert r.status_code in SAFE_STATUSES
+
+
+def test_injection_in_every_timeline_parameter_at_once(client, rows_unchanged):
+    params = {name: INJECTIONS["or-1=1"] for name in ("country", "from", "to", "state")}
+    assert client.get("/api/timeline", params=params).status_code in SAFE_STATUSES

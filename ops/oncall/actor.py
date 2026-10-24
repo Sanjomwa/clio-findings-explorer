@@ -370,7 +370,7 @@ class Docker:
                 "-f", str(self.cfg.compose_file), *args]
 
     def run(self, *args: str, timeout: float = 120) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(self.argv(*args), capture_output=True, text=True, timeout=timeout,
+        return subprocess.run(self.argv(*args), capture_output=True, text=True, timeout=timeout,  # noqa: S603  list argv, no shell; arguments come from the actor's own allow-list
                               env=tool_env(), cwd=self.cfg.repo, check=False)
 
     def ps(self) -> str:
@@ -386,7 +386,7 @@ class Docker:
                 raise Refused(f"{key} is set; the actor only runs against the local compose project")
         try:
             endpoint = subprocess.run(
-                ["docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"],
+                ["docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"],  # noqa: S607  fixed `docker` CLI looked up on PATH, as in argv() above
                 capture_output=True, text=True, timeout=30, env=tool_env(), check=False).stdout.strip()
         except (OSError, subprocess.TimeoutExpired) as error:
             raise Refused(f"cannot inspect the docker context ({type(error).__name__})") from None
@@ -486,7 +486,7 @@ def call_model(cfg: Config, state: State, incident_id: str, prompt: str, cwd: Pa
     """One real model call, logged to usage.jsonl whether or not it works."""
     started = time.monotonic()
     try:
-        done = subprocess.run(model_argv(cfg), input=prompt, capture_output=True, text=True,
+        done = subprocess.run(model_argv(cfg), input=prompt, capture_output=True, text=True,  # noqa: S603  list argv from model_argv(); prompt goes on stdin, not the command line
                               timeout=cfg.model_timeout_s, cwd=cwd, env=model_env(), check=False)
         code, out, err = done.returncode, done.stdout, done.stderr
     except subprocess.TimeoutExpired:
@@ -662,7 +662,7 @@ def escalate(cfg: Config, state: State, inc: Incident, alert: dict[str, Any], re
         title = f"Incident: {RULE_TITLE} {inc.started.strftime('%Y%m%dT%H%M%SZ')}"
         argv = ["gh", "issue", "create", "--label", cfg.gh_label, "--title", title, "--body-file", str(summary)]
         try:
-            done = subprocess.run(argv, capture_output=True, text=True, timeout=60, env=tool_env(),
+            done = subprocess.run(argv, capture_output=True, text=True, timeout=60, env=tool_env(),  # noqa: S603  list argv, no shell; fixed `gh issue create` with a --body-file path
                                   cwd=cfg.repo, check=False)
             if done.returncode == 0:
                 url = done.stdout.strip().splitlines()[-1] if done.stdout.strip() else "(no URL printed)"
@@ -711,7 +711,7 @@ def verify_command(cfg: Config) -> tuple[list[str], dict[str, str]]:
 def run_tests(cfg: Config, inc: Incident) -> tuple[bool, str]:
     argv, env = verify_command(cfg)
     try:
-        done = subprocess.run(argv, capture_output=True, text=True, timeout=cfg.verify_test_timeout_s,
+        done = subprocess.run(argv, capture_output=True, text=True, timeout=cfg.verify_test_timeout_s,  # noqa: S603  list argv from verify_command(); no shell
                               env=env, cwd=cfg.repo, check=False)
     except subprocess.TimeoutExpired:
         return False, "tests timed out"

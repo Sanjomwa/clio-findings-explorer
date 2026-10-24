@@ -74,11 +74,11 @@ scripts/test-all.sh
 | Hook tests | 74 | The git guard and the spec-first guard |
 | Snapshot export, on-call receiver, on-call actor and docs-link tests | 142 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only); the webhook receiver; the on-call actor's guards, gates and escalation, with fake `claude`, `docker` and `gh` (no Docker, no model, no network); that every relative link in `AGENTS.md`, `README.md` and `docs/*.md` resolves and every doc is linked from `AGENTS.md` |
 | Backend unit | 132 | Evidence functions, content language check, schemas; no database |
-| Backend integration | 82 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml`; and a traceability test that recomputes every evidence-card number from the snapshot files |
+| Backend integration | 139 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml`; a traceability test that recomputes every evidence-card number from the snapshot files; and injection strings sent to the slug, country, date and state parameters get 422 or 404, never 500, with row counts unchanged |
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 104 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 588 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 645 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 
@@ -153,7 +153,7 @@ For backend and frontend details see [backend/README.md](backend/README.md) and 
 - **Rollback:** route traffic back to the previous Cloud Run revision (commands in [docs/deploy.md](docs/deploy.md)). A rollback was rehearsed on dev on 17 October 2026: traffic was moved to the previous revision of both services, the health check passed, then traffic was moved back to the latest ([record](docs/deploy.md#rollback-tried-on-dev)).
 - **One-time setup** (Neon, Cloud Shell script, GitHub variables and environments) is in [docs/deploy.md](docs/deploy.md). Authentication is Workload Identity Federation; there are no key files.
 
-CI ([`ci.yml`](.github/workflows/ci.yml), [docs/ci.md](docs/ci.md)) runs seven jobs: ruff lint; OpenAPI 3.1 validation of `openapi.yaml`; hook and export tests; backend unit tests; integration tests plus the MCP tests against Postgres; frontend checks (generated API types match the contract, typecheck, lint, tests, build); and a compose smoke test of the whole stack.
+CI ([`ci.yml`](.github/workflows/ci.yml), [docs/ci.md](docs/ci.md)) runs eight jobs: ruff lint (including the `S` security rules); OpenAPI 3.1 validation of `openapi.yaml`; hook and export tests; backend unit tests; integration tests plus the MCP tests against Postgres; frontend checks (generated API types match the contract, typecheck, lint, tests, build); a compose smoke test of the whole stack; and `audit`, which runs `pip-audit` on the locked backend and MCP server dependencies and `npm audit` on the frontend's runtime dependencies. Dependabot opens weekly update pull requests.
 
 ## Architecture
 
@@ -249,7 +249,7 @@ docs/               Process, agent team, deploy, CI, permissions, observability,
 Open issues, in priority order:
 
 1. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), because the reviewer was inconsistent across runs (see Limitations).
-2. Shift-left security checks ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)): ruff `S` rules, CodeQL, dependency audit and injection tests, because no automated check would catch a regression in SQL-injection protection before merge.
+2. CodeQL for Python and TypeScript (the rest of [#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)), because no automated check would catch a regression in SQL-injection protection before merge and the issue asks for results in the Security tab. The ruff `S` rules, dependency audits, Dependabot and injection tests are done.
 
 Not yet in the tracker (possible next steps, not promises):
 
@@ -267,7 +267,7 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Agent team specification | 2 | 2 | [docs/agent-team.md](docs/agent-team.md): five roles with responsibilities, inputs, outputs, limits and how each is enforced, the issue-to-deploy process, and issue #6 traced end to end; [How it was built](#how-it-was-built-the-agent-team-and-process), [docs/permissions.md](docs/permissions.md) |
 | Context management | 2 | 2 | [AGENTS.md](AGENTS.md) with its "Where things are documented" map, [docs/process.md](docs/process.md), and the link test [test_docs_links.py](ops/tests/test_docs_links.py) (every relative link resolves; every doc is linked from `AGENTS.md`) |
 | Application | 2 | 2 | [Run it locally](#run-it-locally); frontend, backend and Postgres work end to end with one command |
-| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 588 passing |
+| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 645 passing |
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
 | CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |

@@ -117,7 +117,7 @@ def run_bq(sql: str, *, dry_run: bool = False, max_rows: int = MAX_ROWS) -> str:
         cmd.append("--dry_run")
     cmd.append(sql)
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603  list argv, no shell; the query text is built from constants in this file
     except FileNotFoundError:
         raise ExportError("the bq CLI was not found on PATH") from None
     if proc.returncode != 0:
@@ -187,7 +187,7 @@ REGIME_SQL = f"""SELECT
   {_select_list(_names(REGIME_COLUMNS))}
 FROM intelligence.acled_pressure_regimes
 WHERE country = 'Kenya'
-{_order_by(REGIME_COLUMNS, "week_start_date")}"""
+{_order_by(REGIME_COLUMNS, "week_start_date")}"""  # noqa: S608  identifiers come from this file's constant column tuples, not input
 
 SIGNAL_COLUMNS = (
     ("week_start_date", DATE),
@@ -213,7 +213,7 @@ SIGNAL_SQL = f"""SELECT
 FROM features.acled_pressure_signals
 WHERE country = 'Kenya'
   AND {_window_predicate()}
-{_order_by(SIGNAL_COLUMNS, "week_start_date")}"""
+{_order_by(SIGNAL_COLUMNS, "week_start_date")}"""  # noqa: S608  identifiers come from this file's constant column tuples, not input
 
 OONI_COLUMNS = (
     ("week_start_date", DATE),
@@ -239,7 +239,7 @@ OONI_SQL = f"""SELECT
   {_select_list(_names(OONI_COLUMNS))}
 FROM features.ooni_weekly_signals
 WHERE country = 'KE'
-{_order_by(OONI_COLUMNS, "week_start_date", "test_name")}"""
+{_order_by(OONI_COLUMNS, "week_start_date", "test_name")}"""  # noqa: S608  identifiers come from this file's constant column tuples, not input
 
 GOOGLE_COLUMNS = (
     ("time_period", STRING),
@@ -257,7 +257,7 @@ GOOGLE_SQL = f"""SELECT
   {_select_list(_names(GOOGLE_COLUMNS))}
 FROM stg.google_transparency_requests
 WHERE country = 'Kenya'
-{_order_by(GOOGLE_COLUMNS, "period_date", "requestor", "product", "reason")}"""
+{_order_by(GOOGLE_COLUMNS, "period_date", "requestor", "product", "reason")}"""  # noqa: S608  identifiers come from this file's constant column tuples, not input
 
 SCHEMA_SQL_TEMPLATE = """SELECT
   table_name,
@@ -839,7 +839,7 @@ def export_snapshot(
         check_out_dir(out)
         if out.exists():
             out.rmdir()
-        os.chmod(tmp, 0o755)
+        os.chmod(tmp, 0o755)  # noqa: S103  a directory needs its execute bit; 0o755 is the normal mode for the public snapshot dir
         os.rename(tmp, out)
     except BaseException:
         shutil.rmtree(tmp, ignore_errors=True)

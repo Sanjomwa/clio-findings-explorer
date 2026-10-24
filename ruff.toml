@@ -5,10 +5,10 @@ line-length = 100
 target-version = "py312"
 
 [lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["E", "F", "I", "UP", "B", "S"]
 
 [lint.per-file-ignores]
-"**/tests/**" = ["E501"]
+"**/tests/**" = ["E501", "S101"]  # S101: pytest/unittest tests are assertions
 # Existing long lines (hook messages, docstrings, export SQL/text) in non-backend code;
 # reflowing them is churn with no behaviour benefit.
 "agent-hooks/*.py" = ["E501"]
@@ -18,3 +18,14 @@ select = ["E", "F", "I", "UP", "B"]
 # zip() over equal-length sequences by construction; adding strict= is a behaviour edit.
 "ops/export_snapshot.py" = ["B905"]
 "ops/tests/test_export_snapshot.py" = ["B905"]
+# Test-only S findings below; nothing here applies to non-test code.
+# Hook tests run the hook script with sys.executable and a fixed argv (no shell); "/tmp" is the
+# fake cwd in a JSON payload, never opened.
+"agent-hooks/tests/*.py" = ["S603", "S108"]
+# Test table names come from the COUNTS dict in the file, not from input.
+"backend/tests/integration/test_seed.py" = ["S608"]
+# SECRET_LINE is a deliberately fake credential, used to prove the actor redacts it; "/tmp/i" is
+# a config string asserted back, never opened.
+"ops/tests/test_oncall_actor.py" = ["S105", "S108"]
+# Spawns the receiver script with sys.executable and a fixed argv (no shell).
+"ops/tests/test_oncall_receiver.py" = ["S603"]

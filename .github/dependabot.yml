@@ -1,0 +1,23 @@
+version: 2
+# Weekly and capped at 3 open PRs per ecosystem, so it stays quiet around the submission.
+updates:
+  - package-ecosystem: uv
+    directories: ["/backend", "/mcp-server"]
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+  - package-ecosystem: docker
+    directories: ["/backend", "/frontend", "/ops/oncall"]
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3

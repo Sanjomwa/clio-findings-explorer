@@ -118,6 +118,36 @@ jobs:
             exit 1
           fi
 
+  # Parallel to the others; nothing needs it. Fails on any known vulnerability in the locked
+  # runtime dependencies (Python) or on high/critical ones (npm).
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: pip-audit backend (locked runtime dependencies)
+        run: |
+          uv export --directory backend --frozen --no-dev --no-emit-project --format requirements-txt \
+            | uvx pip-audit@2.10.1 -r /dev/stdin --require-hashes --disable-pip
+      - name: pip-audit mcp-server (locked runtime dependencies)
+        run: |
+          uv export --directory mcp-server --frozen --no-dev --no-emit-project --format requirements-txt \
+            | uvx pip-audit@2.10.1 -r /dev/stdin --require-hashes --disable-pip
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: npm audit frontend (runtime dependencies)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high
+
   frontend:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
