@@ -742,3 +742,29 @@ A running record of the work coding agents do in this repository, appended after
 - **Task as given:** the first E2 re-run of general-election-2022 stopped at step 2 because the workflow required exactly ten draft keys, while all five drafts (and the published findings) carry the optional `key_phrase` added with contract v0.7.0 on 15 October. The workflow file had not been updated then.
 - **Produced:** both copies of `new-finding.md` accept an optional `key_phrase`, which must be a non-blank exact substring of `teaser` (the same rule as `backend/app/seed/content.py`), and step 6 writes ten or eleven keys.
 - **Verified:** `uv run --directory backend pytest tests/unit -q` (including the copy-sync test). The stopped run made no reviewer call and wrote no log; the finding, review log and draft were restored with `cp` and checked byte-identical with `cmp`.
+
+## 2026-10-24: Issue #10 part 2, attempt 2: re-run of general-election-2022 (stopped)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5 (main session); `evidence-reviewer` subagent, frontmatter `model: opus`.
+- **Task as given:** re-review `general-election-2022` and `finance-bill-2024` with the updated `/new-finding` and reviewer; one run per finding, no retries; back up the finding, review log and draft with `cp` to `/tmp/cfe-e2-run3-<slug>/` (subfolders `findings/`, `drafts/`, `reviews/`), move the finding out, restore by `cp` and `cmp` if a run is not clean. Nothing deleted.
+- **Runs:** 1 `/new-finding` run (general-election-2022), 1 reviewer run (opus). `finance-bill-2024` was not run, as the prompt requires after a stopped run.
+- **Result:** the run passed shape validation (including `key_phrase`) and stopped at step 6. Counted line: 20 VERIFIED, 0 CORRECTED, 1 UNSUPPORTED, 13 EXTERNAL (1 without source); the reviewer's summary line matched. UNSUPPORTED: row 20, the word "because" in the summary ("CRISIS was held ... because leaving CRISIS takes three consecutive lower weeks"). EXTERNAL NO SOURCE: row 11, "against their own previous 12 weeks" (no citation covers the 12-week baseline rule). The reviewer also noted, outside the draft's claims, that the week's `classification_reason` is `CRISIS:THREE_FAMILY_SEVERE` while `protest_band` is NORMAL, for a human to check.
+- **Restored:** finding, review log and draft copied back with `cp` from the run3 backups; `cmp` shows all three identical to the backups, and the finding identical to the moved original. `git status` is clean.
+- **Found along the way:** my first backup attempt (folder `/tmp/cfe-e2-run2-general-election-2022/`) collided because the finding and the draft share a filename; it stopped before anything was moved. That folder holds a partial backup and was left as it is.
+- **Not verified:** the README step, which depends on both runs being clean.
+
+## 2026-10-24: Issue #10 part 2, attempt 3: re-run of general-election-2022 after Sam's draft edit (stopped)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5 (main session); `evidence-reviewer` subagent, frontmatter `model: opus`.
+- **Task as given:** re-run `/new-finding` for `general-election-2022` (draft reworded by Sam: the "because" sentence now states the exit-persistence rule, with new citations), then `finance-bill-2024`; one run per finding, no retries; backups in `/tmp/cfe-e2-run4-<slug>/`, no deletions, no draft edits.
+- **Runs:** 1 `/new-finding` run (general-election-2022), 1 reviewer run (opus). `finance-bill-2024` was not run, as the prompt requires after a stopped run. The README step was not done (no slug passed).
+- **Result:** shape validation passed; stopped at step 6. Counted line: 25 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 13 EXTERNAL (2 without source); the reviewer's summary line matched. The "because" wording is gone (no UNSUPPORTED). Stop reasons: row 6, "is computed only from ACLED offline events" (teaser), cites methodology.yaml with no URL (citation 12), and the reviewer notes the document does not say the CRISIS label is "computed only from" ACLED; row 31, "ACLED data are the classification's own input" (caveat 1), cites methodology.yaml with no URL (citation 13).
+- **Restored:** finding, draft and review log copied back with `cp` from `/tmp/cfe-e2-run4-general-election-2022/`; `cmp` shows all three identical to the backups. The stopped run's log is kept at `/tmp/cfe-e2-run4-general-election-2022/review-stopped-run.md`. `git status` shows only the draft edit and this log.
+- **Found along the way:** the reviewer reports that Q2 as written in `new-finding.md` names columns (`prior_weeks`, `prior_12w_median_events`) that the table does not have; they are aliases of the query itself, so this is probably a misreading, and the median was recomputed (38.5). It also notes `classification_reason` reads `CRISIS:THREE_FAMILY_SEVERE` for a week where only two families are SEVERE.
+- **Not verified:** step 7, the YAML comparison and the README step (no finding written).
+
+## 2026-10-24: #10 re-review attempts recorded; general-election-2022 rewording deferred
+
+- **Agent:** Cowork planning session (Claude Opus 5.5) wrote this note and the README edit; Sam applied them.
+- **Outcome:** three re-review attempts of general-election-2022 today (entries above): attempt 1 stopped at the shape check (`key_phrase`, since fixed), attempt 2 on a causal "because" and an uncited 12-week baseline, attempt 3 (after Sam's draft edit) on two citations the reviewer read as having no URL although both have one. finance-bill-2024 was not re-run. Each stop was restored from `/tmp` backups and checked with `cmp`.
+- **Decision (Sam):** stop re-running before submission. The edited draft was saved outside the repo, and `content/drafts/general-election-2022.yaml` was returned to `HEAD`, so the published finding, draft and review log are unchanged. README Limitations and Future work state this. #10 stays open.
