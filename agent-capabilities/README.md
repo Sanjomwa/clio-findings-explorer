@@ -9,18 +9,18 @@ Canonical file: [`new-finding.md`](new-finding.md). Claude Code loads it as a pr
 It is the only sanctioned way to add a finding. Steps:
 
 1. Read the human-written draft `content/drafts/<slug>.yaml`.
-2. Validate its shape (the finding format plus a `citations` list; see [content/README.md](../content/README.md)).
+2. Validate its shape (the finding format plus a `citations` list; see [content/README.md](../content/README.md)). `week_start_date` must be an unquoted YAML date; a quoted one is a STOP.
 3. Gather the week's numbers with `query_snapshot`: the `regime_weeks` row, the `acled_signal_context` row with the median of the 12 weeks before it, the `ooni_weekly_signals` rows, and the half-year's `google_transparency_requests` totals. The exact queries are in the workflow file.
 4. Invoke the [`evidence-reviewer`](../custom-agent/evidence-reviewer/README.md) subagent.
-5. Write the verdict log to `docs/reviews/<slug>.md`.
-6. Branch on the verdicts.
+5. Write the verdict log to `docs/reviews/<slug>.md`, then count its verdicts with a script and add a `Counted: N VERIFIED, N CORRECTED, N UNSUPPORTED, N EXTERNAL (N without source).` line under the reviewer's summary line.
+6. Branch on the verdicts, using the counted line, not the reviewer's.
 7. If a finding was written: run the seed, curl the finding and its three evidence endpoints, run the two content tests.
 
 ### Stop conditions
 
 | Condition | What happens |
 |---|---|
-| No or malformed slug; draft missing; finding already exists; draft shape invalid | STOP before any query |
+| No or malformed slug; draft missing; finding already exists; draft shape invalid (including a quoted `week_start_date`) | STOP before any query |
 | `query_snapshot` returns an error (database down) | STOP |
 | Any `UNSUPPORTED` verdict (includes every causal, response or targeting claim) | STOP; log written; no finding |
 | Any `CORRECTED` verdict | STOP; corrections shown for the human to apply to the draft; never auto-applied |

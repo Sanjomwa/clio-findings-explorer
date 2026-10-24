@@ -18,7 +18,7 @@ Read `content/drafts/<slug>.yaml`. If it does not exist, STOP. If `content/findi
 The draft is the finding format (`slug`, `week_start_date`, `iso2`, `position`, `title`, `teaser`, `summary_md`, `published_at`, `caveats`) with a required `citations` list. Check, and STOP on the first failure:
 
 - exactly those ten keys, no others (a `sources` key is the old name of `citations`: STOP and say to rename it);
-- `slug` equals `<slug>`; `week_start_date` is `YYYY-MM-DD`; `published_at` is an ISO 8601 timestamp with a timezone; `position` is an integer >= 1 not used by another file in `content/findings/`; `iso2` is `KE`;
+- `slug` equals `<slug>`; `week_start_date` is an unquoted YAML date `YYYY-MM-DD` (a quoted one, such as `"2022-08-06"`, loads as a string: STOP and say to remove the quotes); `published_at` is an ISO 8601 timestamp with a timezone; `position` is an integer >= 1 not used by another file in `content/findings/`; `iso2` is `KE`;
 - `title`, `teaser`, `summary_md` are non-blank strings;
 - `caveats` has at least one item, each exactly `{severity, caveat_md}` with severity `limitation` or `do_not_conclude`;
 - `citations` must be present and be a list (it may be empty). Each item, if any, is exactly `{claim, citation, url}` with all three non-blank and `url` starting with `https://`. Whether every real-world event statement and every statement of CLIO's rules has a source is not a shape check; the reviewer's EXTERNAL rule enforces it and the workflow stops on EXTERNAL NO SOURCE.
@@ -75,7 +75,17 @@ Call the `evidence-reviewer` subagent with the full draft text (including `citat
 
 Write `docs/reviews/<slug>.md`: a heading, the date, the models used, the draft's `week_start_date`, the step-3 queries with results, the reviewer's table verbatim, and its summary line. Resolution marker for the later steps: a human who has fixed a `CORRECTED` row or added a source for an `EXTERNAL` row appends `RESOLVED` (uppercase) to the end of that table row, in the evidence cell, after the draft has been fixed and the workflow re-run. This workflow never adds `RESOLVED` itself.
 
+Then count the verdicts in the table you just wrote with this command (a script, not the reviewer's count) and append its output to the log as its own line directly under the reviewer's summary line:
+
+```bash
+python3 -c 'import re,sys; rows=[[c.strip() for c in l.strip().strip("|").split("|")] for l in open(sys.argv[1],encoding="utf-8") if l.lstrip().startswith("|")]; rows=[(re.sub(r"[`*_ ]","",r[2]).upper(),"|".join(r[3:])) for r in rows if len(r)>=4 and r[0].isdigit()]; n=lambda v: sum(x[0]==v for x in rows); print("Counted: %d VERIFIED, %d CORRECTED, %d UNSUPPORTED, %d EXTERNAL (%d without source)." % (n("VERIFIED"),n("CORRECTED"),n("UNSUPPORTED"),n("EXTERNAL"),sum(x[0]=="EXTERNAL" and "NO SOURCE" in x[1] for x in rows)))' docs/reviews/<slug>.md
+```
+
+`without source` counts the `EXTERNAL` rows whose evidence cell contains `NO SOURCE`, resolved or not. `test_content_reviewed.py` fails a log whose `Counted:` line differs from its table. If the reviewer's summary line differs from the counted line, say so in the report; the counted line is the one that counts.
+
 ## 6. Branch on the verdicts (first match wins)
+
+Use the `Counted:` line from step 5, not the reviewer's summary line.
 
 - Any `UNSUPPORTED`: STOP. Do not write the finding. List the assertions. The human rewrites or removes them in the draft.
 - Any `CORRECTED`: STOP. Show each correction and its query for the human to apply to the draft. Never apply it yourself.

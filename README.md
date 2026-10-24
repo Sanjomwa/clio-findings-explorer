@@ -73,12 +73,12 @@ scripts/test-all.sh
 |---|---|---|
 | Hook tests | 82 | The git guard and the spec-first guard |
 | Snapshot export, on-call receiver, on-call actor and docs-link tests | 142 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only); the webhook receiver; the on-call actor's guards, gates and escalation, with fake `claude`, `docker` and `gh` (no Docker, no model, no network); that every relative link in `AGENTS.md`, `README.md` and `docs/*.md` resolves and every doc is linked from `AGENTS.md` |
-| Backend unit | 132 | Evidence functions, content language check, schemas; no database |
+| Backend unit | 149 | Evidence functions, content language check, schemas; no database |
 | Backend integration | 139 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml`; a traceability test that recomputes every evidence-card number from the snapshot files; and injection strings sent to the slug, country, date and state parameters get 422 or 404, never 500, with row counts unchanged |
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 104 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 653 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 670 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 
@@ -267,7 +267,7 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Agent team specification | 2 | 2 | [docs/agent-team.md](docs/agent-team.md): five roles with responsibilities, inputs, outputs, limits and how each is enforced, the issue-to-deploy process, and issue #6 traced end to end; [How it was built](#how-it-was-built-the-agent-team-and-process), [docs/permissions.md](docs/permissions.md) |
 | Context management | 2 | 2 | [AGENTS.md](AGENTS.md) with its "Where things are documented" map, [docs/process.md](docs/process.md), and the link test [test_docs_links.py](ops/tests/test_docs_links.py) (every relative link resolves; every doc is linked from `AGENTS.md`) |
 | Application | 2 | 2 | [Run it locally](#run-it-locally); frontend, backend and Postgres work end to end with one command |
-| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 653 passing |
+| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 670 passing |
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
 | CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |
