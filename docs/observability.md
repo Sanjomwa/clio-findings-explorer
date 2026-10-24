@@ -36,7 +36,7 @@ Open <http://127.0.0.1:3000>. Anyone on this machine can view and use Explore wi
 
 The dashboard **Finding-page journey** is in the folder *CLIO Findings Explorer* (<http://127.0.0.1:3000/d/cfe-finding-journey>). It is provisioned from [`ops/grafana/dashboards/finding-journey.json`](../ops/grafana/dashboards/finding-journey.json) and [`ops/grafana/provisioning/dashboards/cfe.yaml`](../ops/grafana/provisioning/dashboards/cfe.yaml), so it cannot be edited in the UI. It shows request rate, 5xx rate and p95 latency for each of the six journey routes, a table of recent traces and the logs.
 
-The telemetry is sent only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. Compose sets it for the backend; CI, the tests and Cloud Run do not, and then nothing is exported. The backend does not wait for `lgtm`: with it stopped the API answers as usual, and the exporter logs a warning every few seconds.
+The telemetry is sent only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. Compose sets it for the backend; CI, the tests and Cloud Run do not, and then nothing is exported. The backend does not wait for `lgtm`: with it stopped the API answers as usual, and the exporter logs a warning every few seconds. On `docker compose stop`, `lgtm` (the upstream `grafana/otel-lgtm` image, which is not patched here) exits 137, a kill after its own shutdown, which is known and harmless; `backend` and `oncall` exit 0.
 
 ## From a log line to its trace, and back
 

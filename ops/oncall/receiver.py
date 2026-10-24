@@ -15,7 +15,9 @@ import json
 import logging
 import os
 import re
+import signal
 import sys
+import threading
 import time
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -200,6 +202,9 @@ def main() -> None:
     port = int(os.environ.get("ONCALL_PORT", "8090"))
     server = make_server(inbox, port=port)
     LOG.info(f"listening on port {port}, inbox {inbox}")
+    # As PID 1 in the container, Python ignores SIGTERM unless a handler is set. shutdown() blocks
+    # until serve_forever() returns, so it must run off the main thread, which is inside it.
+    signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown).start())
     try:
         server.serve_forever()
     except KeyboardInterrupt:

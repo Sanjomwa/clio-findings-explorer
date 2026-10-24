@@ -50,6 +50,8 @@ services:
       # Export telemetry to lgtm. Not a depends_on: the API starts and serves with lgtm down.
       # Set OTEL_EXPORTER_OTLP_ENDPOINT to an empty string to export nothing (CI does).
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT-http://lgtm:4318}
+      # Caps every OTLP export at 1 s, including the final flush at shutdown, so a stopping lgtm cannot hold the exit.
+      OTEL_EXPORTER_OTLP_TIMEOUT: "1"
     volumes:
       - ./content:/content:ro
     ports:

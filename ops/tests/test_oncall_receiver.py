@@ -9,7 +9,11 @@ Run from the repository root:
 import http.client
 import io
 import json
+import os
 import re
+import signal
+import socket
+import subprocess
 import sys
 import tempfile
 import threading
@@ -224,6 +228,29 @@ class FingerprintNames(unittest.TestCase):
     def test_fallback_when_absent_or_empty(self) -> None:
         self.assertEqual(receiver.fingerprint_of({}), "nofingerprint")
         self.assertEqual(receiver.fingerprint_of({"fingerprint": "../"}), "nofingerprint")
+
+
+class Sigterm(unittest.TestCase):
+    def test_sigterm_stops_the_receiver_with_exit_0(self) -> None:
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            port = s.getsockname()[1]
+        with tempfile.TemporaryDirectory() as inbox:
+            env = {**os.environ, "ONCALL_INBOX": inbox, "ONCALL_PORT": str(port)}
+            proc = subprocess.Popen(
+                [sys.executable, str(Path(receiver.__file__))], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            self.addCleanup(proc.kill)
+            for _ in range(100):  # wait until it accepts connections
+                try:
+                    socket.create_connection(("127.0.0.1", port), timeout=0.1).close()
+                    break
+                except OSError:
+                    proc.poll()
+                    self.assertIsNone(proc.returncode, "receiver exited before listening")
+                    threading.Event().wait(0.05)
+            proc.send_signal(signal.SIGTERM)
+            self.assertEqual(proc.wait(timeout=5), 0)
 
 
 if __name__ == "__main__":
