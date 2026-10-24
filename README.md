@@ -74,11 +74,11 @@ scripts/test-all.sh
 | Hook tests | 74 | The git guard and the spec-first guard |
 | Snapshot export, on-call receiver, on-call actor and docs-link tests | 142 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only); the webhook receiver; the on-call actor's guards, gates and escalation, with fake `claude`, `docker` and `gh` (no Docker, no model, no network); that every relative link in `AGENTS.md`, `README.md` and `docs/*.md` resolves and every doc is linked from `AGENTS.md` |
 | Backend unit | 132 | Evidence functions, content language check, schemas; no database |
-| Backend integration | 81 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml` |
+| Backend integration | 82 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml`; and a traceability test that recomputes every evidence-card number from the snapshot files |
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 104 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 587 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 588 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 
@@ -239,7 +239,6 @@ docs/               Process, agent team, deploy, CI, permissions, observability,
 - **ACLED is the classifier's own input.** The ACLED card is not independent confirmation of CLIO's label.
 - **Narrow source windows.** The OONI rows run from 27 May 2023 to 28 June 2025, so earlier findings show no OONI data. Google data is half-yearly, so its card shows a half-year, not a week.
 - **The reviewer is an LLM and was inconsistent across runs.** It gave a summary line that did not match its own table, and wrote a nonstandard verdict text in seven rows, which the clean-review test rejected ([docs/ai-workflow-log.md](docs/ai-workflow-log.md), 15 October 2026). A format rule was added afterwards.
-- **No automated traceability test yet.** That every number on a finding page equals a snapshot value is checked by the reviewer and by tests of the evidence functions, not by a test that recomputes each card ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)).
 - **Cloud Run's platform logs record caller IP addresses.** The nginx access log does not, but the platform's cannot be switched off ([docs/deploy.md](docs/deploy.md)).
 - **The on-call agent does service actions only.** It can start or restart `db`, `backend` or `frontend`; code and config fixes are not enabled, so it escalates anything else ([docs/on-call.md](docs/on-call.md)). A failed check after an action is not reverted (undoing a start would recreate the outage); it escalates instead.
 - **The on-call agent runs only when started by hand** (`ONCALL_ENABLED=1 python3 ops/oncall/actor.py --watch`). It does not start at boot or from compose, so an unattended outage is not fixed. It has been run end to end against the local stack: one fix, and one escalation that opened [#15](https://github.com/Sanjomwa/clio-findings-explorer/issues/15) without calling the model.
@@ -249,9 +248,8 @@ docs/               Process, agent team, deploy, CI, permissions, observability,
 
 Open issues, in priority order:
 
-1. The traceability test ([#13](https://github.com/Sanjomwa/clio-findings-explorer/issues/13)), because there is "No automated traceability test yet" (see Limitations): it would recompute every evidence-card number from the snapshot files and fail if the API differs.
-2. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), because the reviewer was inconsistent across runs (see Limitations). Small fixes ([#11](https://github.com/Sanjomwa/clio-findings-explorer/issues/11)), because attribution text can end with a doubled full stop and ledger accessible names can repeat the state.
-3. Shift-left security checks ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)): ruff `S` rules, CodeQL, dependency audit and injection tests, because no automated check would catch a regression in SQL-injection protection before merge.
+1. Reviewer consistency fixes and two finding re-runs ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), because the reviewer was inconsistent across runs (see Limitations).
+2. Shift-left security checks ([#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)): ruff `S` rules, CodeQL, dependency audit and injection tests, because no automated check would catch a regression in SQL-injection protection before merge.
 
 Not yet in the tracker (possible next steps, not promises):
 
@@ -269,7 +267,7 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Agent team specification | 2 | 2 | [docs/agent-team.md](docs/agent-team.md): five roles with responsibilities, inputs, outputs, limits and how each is enforced, the issue-to-deploy process, and issue #6 traced end to end; [How it was built](#how-it-was-built-the-agent-team-and-process), [docs/permissions.md](docs/permissions.md) |
 | Context management | 2 | 2 | [AGENTS.md](AGENTS.md) with its "Where things are documented" map, [docs/process.md](docs/process.md), and the link test [test_docs_links.py](ops/tests/test_docs_links.py) (every relative link resolves; every doc is linked from `AGENTS.md`) |
 | Application | 2 | 2 | [Run it locally](#run-it-locally); frontend, backend and Postgres work end to end with one command |
-| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 587 passing |
+| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 588 passing |
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
 | CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |

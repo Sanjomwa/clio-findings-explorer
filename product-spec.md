@@ -177,7 +177,7 @@ The project succeeds if it does three things CLIO's own README says CLIO cannot 
 
 ### 9.2 Evidence integrity
 
-- **Traceability.** Every number on a finding page equals a value in `data/snapshot/`, checked by an automated test, and the page shows the query that produced it.
+- **Traceability.** Every number on a finding page equals a value in `data/snapshot/`, checked by an automated test, and the About page shows the SQL behind each snapshot file.
 - **No unsupported claims.** Every factual sentence in a finding has a logged reviewer verdict. None is published with an UNSUPPORTED verdict.
 - **Limits are visible.** Every finding has at least one caveat, enforced in the database and the API. A source with no data returns a card that says so. Weeks with INSUFFICIENT_DATA confidence look different on the timeline from confident STABLE weeks.
 - **No causal language.** An automated check over the curated content rejects wording that asserts causation or targeting.
