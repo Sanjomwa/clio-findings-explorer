@@ -181,7 +181,10 @@ export default function LedgerGrid({ weeks, findings }: { weeks: Week[]; finding
         {placed.map((p) => {
           const x = cellX(layout, p.col);
           const y = cellY(layout, p.row);
-          const name = `Finding: ${titleNoDate(p.finding.title)}, week of ${longDate(p.week.week_start_date)}, ${p.week.regime_state}`;
+          const title = titleNoDate(p.finding.title);
+          // A title that opens with the state already says it; don't repeat it.
+          const state = title.startsWith(p.week.regime_state) ? "" : `, ${p.week.regime_state}`;
+          const name = `Finding: ${title}, week of ${longDate(p.week.week_start_date)}${state}`;
           const leaderEnd = labelX - 11;
           return (
             <g

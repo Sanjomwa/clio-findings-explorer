@@ -414,6 +414,16 @@ def test_provenance_notes_name_source_table_and_version(client):
         assert table in note and VERSION in note
 
 
+def test_no_double_full_stop_in_attribution_text(client):
+    notes = []
+    for week in SLUG:
+        sources = get(client, f"/api/findings/{SLUG[week]}").json()["finding"]["sources"]
+        notes += [s["provenance_note"] for s in sources]
+    notes += [s["note"] for s in get(client, "/api/methodology").json()["sources"]]
+    assert len(notes) == 5 * 3 + 3
+    assert not [n for n in notes if ".." in n]
+
+
 # ---- methodology -------------------------------------------------------------------------------
 
 

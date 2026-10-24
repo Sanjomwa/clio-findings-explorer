@@ -49,7 +49,7 @@ def get_methodology(session: Annotated[Session, Depends(get_session)]):
                 name=a["name"],
                 note=(
                     f"Licence: {a['licence']}. Filter: {a['filter']}. "
-                    f"Manipulation: {a['manipulation']}."
+                    f"Manipulation: {a['manipulation'].rstrip('.')}."
                 ),
             )
         )

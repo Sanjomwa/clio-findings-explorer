@@ -59,7 +59,7 @@ def _source_ref(source: str, attribution: dict, version: str) -> SourceRef:
         name=a["name"],
         provenance_note=(
             f"{a['name']}. Licence: {a['licence']}. Filter: {a['filter']}. "
-            f"Manipulation: {a['manipulation']}. Snapshot version {version}."
+            f"Manipulation: {a['manipulation'].rstrip('.')}. Snapshot version {version}."
         ),
     )
 

@@ -228,6 +228,21 @@ describe("Ledger keyboard and navigation", () => {
     ).toBeInTheDocument();
   });
 
+  it("never repeats the state in a finding's accessible name", async () => {
+    mockApi();
+    renderLedger();
+    await screen.findByRole("img");
+    const names = screen.getAllByRole("link").map((l) => l.getAttribute("aria-label") ?? "");
+    const findingNames = names.filter((n) => n.startsWith("Finding:"));
+    expect(findingNames).toHaveLength(FINDINGS.length);
+    for (const n of findingNames) {
+      for (const state of ["STABLE", "ESCALATION", "CRISIS"]) {
+        expect(n.split(state).length - 1, n).toBeLessThanOrEqual(1);
+      }
+    }
+    expect(findingNames).toContain("Finding: CRISIS, with OONI signals flat, week of 15 July 2023");
+  });
+
   it("opens a finding when its outline is clicked", async () => {
     mockApi();
     const { router } = renderLedger();
