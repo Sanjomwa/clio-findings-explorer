@@ -91,3 +91,5 @@ January - June 2024 | requests 9 | items_requested_removal 12 | items_removed_le
 | 26 | "This finding records only that they fall in the same week." | VERIFIED | The OONI rows exist for week_start_date `2024-06-22` (query in row 18 returns 5 rows). That week runs 22–28 June, so it includes 25 June. The dates of the protests and the disruption themselves are EXTERNAL (rows 15–16). The sentence states co-occurrence only and makes no causal claim. |
 
 Summary: 15 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 11 EXTERNAL (0 without source).
+Counted: 17 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 9 EXTERNAL (0 without source).
+(Counted line added on 25 October 2026 by the script in agent-capabilities/new-finding.md step 5. The review above is unchanged, including the reviewer's own summary line.)

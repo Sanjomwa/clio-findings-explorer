@@ -113,3 +113,5 @@ January - June 2025 | requests 16 | items_requested_removal 42 | items_removed_l
 | 39 | "This finding records only what fell in the same week and how CLIO's rules classified it." | VERIFIED | limitation statement; no data claim |
 
 Summary: 28 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 11 EXTERNAL (0 without source).
+Counted: 28 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 11 EXTERNAL (0 without source).
+(Counted line added on 25 October 2026 by the script in agent-capabilities/new-finding.md step 5. The review above is unchanged, including the reviewer's own summary line.)

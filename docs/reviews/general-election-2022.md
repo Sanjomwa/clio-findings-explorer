@@ -98,6 +98,8 @@ July - December 2022 | requests 5 | items_requested_removal 5 | items_removed_le
 | 35 | "This finding records only that these coincide in time." (caveat 4) | VERIFIED | limitation statement. The co-occurrence depends on row 24 (EXTERNAL election date of 9 Aug) falling inside week 2022-08-06 to 08-12 (Q-A) |
 
 Summary (reviewer's line): 23 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 12 EXTERNAL (0 without source).
+Counted: 23 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 12 EXTERNAL (0 without source).
+(Counted line added on 25 October 2026 by the script in agent-capabilities/new-finding.md step 5. The review above is unchanged, including the reviewer's own summary line.)
 
 The table's own count matches this line (23 + 12 = 35 rows).
 

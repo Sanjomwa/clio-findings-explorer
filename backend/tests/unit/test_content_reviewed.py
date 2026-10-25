@@ -120,9 +120,28 @@ def test_missing_review_fails(tmp_path):
     assert problems == ["no-review-here.md does not exist"]
 
 
-def test_logs_without_a_counted_line_still_pass():
+def test_checker_accepts_a_fixture_without_a_counted_line():
     text = (FIXTURES / "ok-verified.md").read_text(encoding="utf-8")
     assert "Counted:" not in text and counted_problems("x.md", text) == []
+
+
+def test_every_published_log_has_a_counted_line():
+    """The fixtures may lack a Counted line; a published log may not, and it must match its table."""
+    findings = sorted((REPO_ROOT / "content" / "findings").glob("*.yaml"))
+    assert findings
+    problems = []
+    for path in findings:
+        log = REPO_ROOT / "docs" / "reviews" / f"{path.stem}.md"
+        if not log.is_file():
+            problems.append(f"{log.name} does not exist")
+            continue
+        text = log.read_text(encoding="utf-8")
+        counted = [line for line in text.splitlines() if line.startswith("Counted:")]
+        if len(counted) != 1 or not COUNTED.match(counted[0]):
+            problems.append(f"{log.name}: needs exactly one well-formed Counted line")
+            continue
+        problems += counted_problems(log.name, text)
+    assert not problems, "\n".join(problems)
 
 
 def test_the_counting_command_in_new_finding_matches_the_test_logic():

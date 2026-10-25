@@ -110,3 +110,5 @@ No row.
 | 52 | "This finding records only that these coincide in time." | VERIFIED | Week bounds only (the events are EXTERNAL, rows 37-38): `SELECT DATE '2008-01-19' + 6 AS week_end, DATE '2007-12-27' BETWEEN DATE '2007-12-22' AND DATE '2007-12-28' AS election_in_wk, DATE '2008-01-24' BETWEEN DATE '2008-01-19' AND DATE '2008-01-25' AS jan24_in_wk` -> `2008-01-25, true, true` |
 
 Summary (reviewer's line): 35 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 17 EXTERNAL (0 without source).
+Counted: 35 VERIFIED, 0 CORRECTED, 0 UNSUPPORTED, 17 EXTERNAL (0 without source).
+(Counted line added on 25 October 2026 by the script in agent-capabilities/new-finding.md step 5. The review above is unchanged, including the reviewer's own summary line.)

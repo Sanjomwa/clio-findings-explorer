@@ -61,7 +61,7 @@ Every finding was checked claim by claim by the [`evidence-reviewer`](.claude/ag
 | june-july-2025 | 39 | 28 | 0 | 0 | 11 | [log](docs/reviews/june-july-2025.md) |
 | post-election-violence-2008 | 52 | 35 | 0 | 0 | 17 | [log](docs/reviews/post-election-violence-2008.md) |
 
-One mismatch: the reviewer's own summary line in the finance-bill-2024 log says 15 VERIFIED and 11 EXTERNAL, but its 26-row table has 17 and 9. The table is unedited and its count is used here; the log notes the difference. The other four summary lines match their tables. All five published logs predate the script-counted verdict line added on 24 October, so they do not carry one; the counts in this table were read from each log's verdict table, and the finance-bill-2024 summary line itself is unchanged.
+One mismatch: the reviewer's own summary line in the finance-bill-2024 log says 15 VERIFIED and 11 EXTERNAL, but its 26-row table has 17 and 9. The table is unedited and its count is used here; the log notes the difference. The other four summary lines match their tables. Each published log now also carries a script-computed `Counted:` line under the reviewer's own summary line (added 25 October 2026; the review itself is unchanged), and a test requires that line in every published log and checks it against the table. The reviewer's summary line is kept as written, so finance-bill-2024 still shows its original 15 and 11.
 
 To rerun the review for a finding, start Claude Code from the repository root with the compose stack up and seeded (`docker compose up -d --build`) and a human-written `content/drafts/<slug>.yaml`, then type `/new-finding <slug>`. It needs the database (through the MCP server's `query_snapshot`) and the `evidence-reviewer` subagent, re-reviews the draft and overwrites `docs/reviews/<slug>.md`. A finding that already exists in `content/findings/` makes the command stop at its first step. Then `uv run --directory backend pytest tests/unit/test_content_language.py tests/unit/test_content_reviewed.py -v` checks the language rules and that every finding has a clean log ([agent-capabilities/README.md](agent-capabilities/README.md)). After the first runs, the reviewer's output format got a rule (one verdict word per row, and the counts in the summary line must match the table) because of the nonstandard verdict text and the mismatched summary line; see [docs/ai-workflow-log.md](docs/ai-workflow-log.md).
 
@@ -77,12 +77,12 @@ scripts/test-all.sh
 |---|---|---|
 | Hook tests | 82 | The git guard and the spec-first guard |
 | Snapshot export, on-call receiver, on-call actor and docs-link tests | 142 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only); the webhook receiver; the on-call actor's guards, gates and escalation, with fake `claude`, `docker` and `gh` (no Docker, no model, no network); that every relative link in `AGENTS.md`, `README.md` and `docs/*.md` resolves and every doc is linked from `AGENTS.md` |
-| Backend unit | 149 | Evidence functions, content language check, schemas; no database |
+| Backend unit | 150 | Evidence functions, content language check, schemas, and that every published review log carries a `Counted:` line equal to its table; no database |
 | Backend integration | 139 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml`; a traceability test that recomputes every evidence-card number from the snapshot files; and injection strings sent to the slug, country, date and state parameters get 422 or 404, never 500, with row counts unchanged |
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 104 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 670 tests, and all six suites passed in one run of `scripts/test-all.sh` on the submitted code on 25 October 2026. CI runs the same suites as separate jobs on every push to `main` and every pull request ([CI runs](https://github.com/Sanjomwa/clio-findings-explorer/actions/workflows/ci.yml)), so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 671 tests, and all six suites passed in one run of `scripts/test-all.sh` on the submitted code on 25 October 2026. CI runs the same suites as separate jobs on every push to `main` and every pull request ([CI runs](https://github.com/Sanjomwa/clio-findings-explorer/actions/workflows/ci.yml)), so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 
@@ -272,7 +272,7 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Agent team specification | 2 | 2 | [docs/agent-team.md](docs/agent-team.md): five roles with responsibilities, inputs, outputs, limits and how each is enforced, the issue-to-deploy process, and issue #6 traced end to end; [How it was built](#how-it-was-built-the-agent-team-and-process), [docs/permissions.md](docs/permissions.md) |
 | Context management | 2 | 2 | [AGENTS.md](AGENTS.md) with its "Where things are documented" map, [docs/process.md](docs/process.md), and the link test [test_docs_links.py](ops/tests/test_docs_links.py) (every relative link resolves; every doc is linked from `AGENTS.md`) |
 | Application | 2 | 2 | [Run it locally](#run-it-locally); frontend, backend and Postgres work end to end with one command |
-| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 670 passing |
+| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 671 passing |
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
 | CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |
