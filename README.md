@@ -11,6 +11,8 @@ This is the final project for AI Dev Tools Zoomcamp 2026.
 | Production | <https://cfe-frontend-prod-qf6bvfuxjq-ew.a.run.app> |
 | Dev | <https://cfe-frontend-dev-qf6bvfuxjq-ew.a.run.app> |
 
+Reviewing this project? Try the 2-minute [reader test](docs/reader-test.md) and record your answers with the Reader test issue template.
+
 <img alt="The ledger: one row per year, one cell per week, coloured by regime state" src="docs/images/ledger-light.png" width="800">
 
 *The landing page: 1,523 classified weeks drawn as a ledger, with the five findings outlined.*
@@ -239,6 +241,7 @@ docs/               Process, agent team, deploy, CI, permissions, observability,
 - **ACLED is the classifier's own input.** The ACLED card is not independent confirmation of CLIO's label.
 - **Narrow source windows.** The OONI rows run from 27 May 2023 to 28 June 2025, so earlier findings show no OONI data. Google data is half-yearly, so its card shows a half-year, not a week.
 - **The reviewer is an LLM and was inconsistent across runs.** It gave a summary line that did not match its own table, and wrote a nonstandard verdict text in seven rows, which the clean-review test rejected ([docs/ai-workflow-log.md](docs/ai-workflow-log.md), 15 October 2026). A format rule was added afterwards. On 24 October, three re-reviews of general-election-2022 each stopped on a different point: a causal "because" in a rule statement and an uncited 12-week baseline (both passed on 14 October), then two citations it read as having no URL, although both have one. A script-counted verdict line now catches a summary that disagrees with its table, but the run-to-run variation in verdicts is not solved, and the published general-election-2022 summary still contains that "because" until a clean re-review.
+- **The reader test (spec §9.3) has not been run yet.** Its protocol is ready in docs/reader-test.md, and readers, including peer reviewers, are invited to take it.
 - **Cloud Run's platform logs record caller IP addresses.** The nginx access log does not, but the platform's cannot be switched off ([docs/deploy.md](docs/deploy.md)).
 - **The on-call agent does service actions only.** It can start or restart `db`, `backend` or `frontend`; code and config fixes are not enabled, so it escalates anything else ([docs/on-call.md](docs/on-call.md)). A failed check after an action is not reverted (undoing a start would recreate the outage); it escalates instead.
 - **The on-call agent runs only when started by hand** (`ONCALL_ENABLED=1 python3 ops/oncall/actor.py --watch`). It does not start at boot or from compose, so an unattended outage is not fixed. It has been run end to end against the local stack: one fix, and one escalation that opened [#15](https://github.com/Sanjomwa/clio-findings-explorer/issues/15) without calling the model.

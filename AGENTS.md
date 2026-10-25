@@ -104,6 +104,8 @@ Commands are added here when they exist and have been run successfully. Do not a
 | [docs/process.md](docs/process.md) | The tracker, commit conventions, the sync rule, STOP and report, definition of done |
 | [docs/agent-team.md](docs/agent-team.md) | The roles (Sam, the planning session, Claude Code, `evidence-reviewer`, the on-call agent), what each may not do and how it is enforced, and a worked example |
 | [docs/permissions.md](docs/permissions.md) | A one-page summary of what a coding agent may and may not do |
+| [docs/reader-test.md](docs/reader-test.md) | The 2-minute reader test (spec §9.3): protocol, expected answers, results |
+| [docs/clio-give-back.md](docs/clio-give-back.md) | What transfers to CLIO's roadmap (spec §9.4), and a question for CLIO |
 | [docs/ai-workflow-log.md](docs/ai-workflow-log.md) | A running record of every AI-assisted task: the task, what was produced, what was verified |
 | [docs/ci.md](docs/ci.md) | The CI workflow, job by job, and how to reproduce each locally |
 | [docs/deploy.md](docs/deploy.md) | Cloud Run and Neon setup, dev and production, promotion and rollback |
