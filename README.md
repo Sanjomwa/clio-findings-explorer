@@ -1,5 +1,7 @@
 # CLIO Findings Explorer
 
+[![CI](https://github.com/Sanjomwa/clio-findings-explorer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Sanjomwa/clio-findings-explorer/actions/workflows/ci.yml)
+
 CLIO Findings Explorer is a public archive that helps journalists, researchers and civil-society readers check what data from CLIO (Civil Liberties Intelligence Observatory) shows about civil-liberties pressure in Kenya in specific weeks, and what it does not. CLIO scores pressure families from ACLED conflict events each week and assigns one of seven regime states; the app adds OONI network measurements and Google takedown requests as evidence. It presents five curated findings from a committed snapshot of CLIO output, each with its regime state, a plain-language summary, evidence from ACLED, OONI and the Google Transparency Report, and a limits box.
 
 This is the final project for AI Dev Tools Zoomcamp 2026.
@@ -59,7 +61,7 @@ Every finding was checked claim by claim by the [`evidence-reviewer`](.claude/ag
 | june-july-2025 | 39 | 28 | 0 | 0 | 11 | [log](docs/reviews/june-july-2025.md) |
 | post-election-violence-2008 | 52 | 35 | 0 | 0 | 17 | [log](docs/reviews/post-election-violence-2008.md) |
 
-One mismatch: the reviewer's own summary line in the finance-bill-2024 log says 15 VERIFIED and 11 EXTERNAL, but its 26-row table has 17 and 9. The table is unedited and its count is used here; the log notes the difference. The other four summary lines match their tables.
+One mismatch: the reviewer's own summary line in the finance-bill-2024 log says 15 VERIFIED and 11 EXTERNAL, but its 26-row table has 17 and 9. The table is unedited and its count is used here; the log notes the difference. The other four summary lines match their tables. All five published logs predate the script-counted verdict line added on 24 October, so they do not carry one; the counts in this table were read from each log's verdict table, and the finance-bill-2024 summary line itself is unchanged.
 
 To rerun the review for a finding, start Claude Code from the repository root with the compose stack up and seeded (`docker compose up -d --build`) and a human-written `content/drafts/<slug>.yaml`, then type `/new-finding <slug>`. It needs the database (through the MCP server's `query_snapshot`) and the `evidence-reviewer` subagent, re-reviews the draft and overwrites `docs/reviews/<slug>.md`. A finding that already exists in `content/findings/` makes the command stop at its first step. Then `uv run --directory backend pytest tests/unit/test_content_language.py tests/unit/test_content_reviewed.py -v` checks the language rules and that every finding has a clean log ([agent-capabilities/README.md](agent-capabilities/README.md)). After the first runs, the reviewer's output format got a rule (one verdict word per row, and the counts in the summary line must match the table) because of the nonstandard verdict text and the mismatched summary line; see [docs/ai-workflow-log.md](docs/ai-workflow-log.md).
 
@@ -80,7 +82,7 @@ scripts/test-all.sh
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 104 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 670 tests in a full run. CI runs the same suites as separate jobs on every push to `main` and every pull request, so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 670 tests, and all six suites passed in one run of `scripts/test-all.sh` on the submitted code on 25 October 2026. CI runs the same suites as separate jobs on every push to `main` and every pull request ([CI runs](https://github.com/Sanjomwa/clio-findings-explorer/actions/workflows/ci.yml)), so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 
