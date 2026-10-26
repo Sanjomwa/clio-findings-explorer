@@ -27,6 +27,8 @@ Runs one read query against the local seeded database, so an agent can check a d
 - `snapshot_reader` can still read `pg_catalog` and `information_schema` (Postgres default), and a heavy read within 5 s is allowed.
 - Needs the compose `db` up and seeded; without it the tool returns an `error`.
 
+Data attribution: tables derived from ACLED (Armed Conflict Location & Event Data) are used under ACLED's EULA and Attribution Policy; see [data/README.md](../data/README.md).
+
 ## Registration
 
 [`.mcp.json`](../.mcp.json) at the repository root (project scope):

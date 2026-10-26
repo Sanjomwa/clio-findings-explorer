@@ -801,3 +801,12 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** AGENTS.md rule 9, the appended snapshot sentence and version 4; `"permissions": {"deny": ["Edit(/data/snapshot/**)"]}` in `.claude/settings.json`, `hooks` unchanged.
 - **Verified:** the pre-checks (clean tree at fd604e4, settings held only `hooks`, the named AGENTS.md lines present); `python3 -m json.tool .claude/settings.json`; the hook and `ops` test suites; `git diff` shows only three files. The deny rule was not tested by attempting a write to `data/snapshot/`.
 - **Not verified:** that the deny rule blocks an edit in a live session.
+
+## 2026-10-26: ACLED attribution for the query_snapshot MCP tool
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Origin:** the CLIO planning session's read-only check of ACLED's EULA (8 July 2025), §7.2, which requires an AI tool that references ACLED content to credit ACLED as the source.
+- **Task as given:** add an "AI tools" paragraph to the ACLED-derived files section of `data/README.md`, a data-attribution line to `mcp-server/README.md`, and this entry; docs only. No git writes, no code.
+- **Produced:** the "AI tools" paragraph as the last paragraph of "ACLED-derived files" in `data/README.md`; a `Data attribution:` line at the end of the `query_snapshot` section (before "Registration") in `mcp-server/README.md`, linking to `../data/README.md`; this entry.
+- **Verified:** pre-checks (clean tree at b8c6ed1; the "They contain no event-level records" line present in `data/README.md`; no "ACLED" in `mcp-server/README.md` beforehand); the relative link resolves from `mcp-server/` (`ls ../data/README.md`); `git diff --stat` shows the three expected files; `ops/tests/test_docs_links.py` passed.
+- **Not done:** no code change; the tool's description string is unchanged. Possible follow-up: attribute ACLED at call time in the tool's output or description.

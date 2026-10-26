@@ -14,6 +14,8 @@ The ACLED-derived files hold CLIO's weekly regime classifications for Kenya (`re
 
 They contain no event-level records, no sub-national data and no data broken down by ACLED's sub-event types. They cannot be used to recreate ACLED's dataset. Use of ACLED-derived material is governed by ACLED's End User License Agreement (EULA) and ACLED's Attribution Policy.
 
+**AI tools.** This repository's `query_snapshot` MCP tool lets coding agents query the snapshot through a read-only database role. Of ACLED's data, it exposes only the derived files described above (national weekly totals and CLIO's z-scores, flags and classifications), which are already published here as transformative material, and no event-level, sub-national or sub-event-type ACLED data. It is not used to train, test, develop or improve any AI model. As ACLED's EULA (§7.2, version of 8 July 2025) requires of AI tools that reference ACLED content, ACLED is credited as the source here and in the tool's documentation.
+
 ## How the snapshot is made
 
 The snapshot is produced once, by hand, with [`ops/export_snapshot.py`](../ops/export_snapshot.py) (see [ops/README.md](../ops/README.md)). Nothing in it is edited after export.
