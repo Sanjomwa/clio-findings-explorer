@@ -792,3 +792,12 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** two added lines (the counted line and a note) in each of the five `docs/reviews/*.md`; the new test in `backend/tests/unit/test_content_reviewed.py` and the rename of `test_logs_without_a_counted_line_still_pass` to `test_checker_accepts_a_fixture_without_a_counted_line`; README Evidence review sentence, Tests table (backend unit 150), total 671 and the Self-evaluation Testing row.
 - **Verified:** counting command from `agent-capabilities/new-finding.md` step 5 run as written on each log; `git diff` shows 10 insertions and no deletions across the five logs; finance-bill-2024 Counted 17 VERIFIED, 9 EXTERNAL against the reviewer's 15 and 11. Proof the test bites: a copy of july-2023 with its Counted line removed was checked with the test's own `COUNTED` pattern and reported a problem (repo untouched). `scripts/test-all.sh`: all six suites passed (82, 142, 150, 139, 54, 104). Per-section sha256 against `HEAD`: only Evidence review, Tests and Self-evaluation changed; `ops/tests/test_docs_links.py` passed.
 - **Not done:** nothing staged or committed; general-election-2022 rewording (#10) untouched.
+
+## 2026-10-26: editing guardrails (AGENTS.md rule 9, snapshot deny rule)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Origin:** a handoff from the CLIO planning session, adapted by Cowork against the Claude Code docs and the 2.1.309 changelog. Reason: from 2.1.309, `/rewind` no longer restores files changed by `sed -i`, and the `spec-first-guard` hook only sees the Edit and Write tools, so shell or script edits bypass it.
+- **Task as given:** add one hard rule (edit files only with the Edit and Write tools), one sentence on the snapshot rule, an AGENTS.md version bump, a `permissions.deny` rule for `data/snapshot/` in `.claude/settings.json`, and this entry. No git writes, no hook code, no other permission rules.
+- **Produced:** AGENTS.md rule 9, the appended snapshot sentence and version 4; `"permissions": {"deny": ["Edit(/data/snapshot/**)"]}` in `.claude/settings.json`, `hooks` unchanged.
+- **Verified:** the pre-checks (clean tree at fd604e4, settings held only `hooks`, the named AGENTS.md lines present); `python3 -m json.tool .claude/settings.json`; the hook and `ops` test suites; `git diff` shows only three files. The deny rule was not tested by attempting a write to `data/snapshot/`.
+- **Not verified:** that the deny rule blocks an edit in a live session.

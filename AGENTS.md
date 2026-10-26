@@ -2,7 +2,7 @@
 
 Project instructions for any coding agent working in this repository. Read this file fully before acting. `CLAUDE.md` is a one-line pointer to it.
 
-**Version:** 3 (2026-10-21: the tracker detail moved to `docs/process.md`, and a documentation map was added; first revised 2026-10-05). This file grows as the project does. When a rule here turns out to be wrong or missing, say so in your report; do not work around it.
+**Version:** 4 (2026-10-26: rule on editing with the Edit and Write tools; snapshot deny rule; 2026-10-21: the tracker detail moved to `docs/process.md`, and a documentation map was added; first revised 2026-10-05). This file grows as the project does. When a rule here turns out to be wrong or missing, say so in your report; do not work around it.
 
 ## What this project is
 
@@ -30,10 +30,11 @@ This repository is not CLIO. It has no access to CLIO's repository, pipeline or 
 6. **No causation or targeting claims.** A conflict-event spike and a network anomaly in the same week are a correlation. Never write that one caused the other or that anyone was targeted, in code, fixtures, prose or tests.
 7. **Docs change in the same change.** If a change alters behaviour that `README.md`, `product-spec.md`, `openapi.yaml` or anything in `docs/` describes, update that document in the same piece of work.
 8. **Stop at stop points.** When a prompt says STOP, stop and report. Do not continue to the next step on your own judgment.
+9. **Edit files with the Edit and Write tools.** Never change a tracked file with `sed -i`, `perl -i`, `awk -i inplace`, a shell redirect (`>`, `>>`, `tee`) or a script that writes files itself (for example `python3 -c` or a Python or Node heredoc). The `spec-first-guard` hook only sees the Edit and Write tools, so a shell or script edit to `openapi.yaml` or a router would bypass it. The snapshot deny rule does not cover scripts either. And from Claude Code 2.1.309, `/rewind` no longer restores files changed by `sed -i`.
 
 ## Data rules
 
-- `data/snapshot/` is read-only for the agent. Do not edit, regenerate or "fix" snapshot files.
+- `data/snapshot/` is read-only for the agent. Do not edit, regenerate or "fix" snapshot files. A deny rule in `.claude/settings.json` enforces this for Claude Code's file tools and the shell edits it recognises.
 - `ops/export_snapshot.py` is run by Sam only. You may write and test it against fixtures; you never run it against BigQuery.
 - Nothing flagged synthetic enters the snapshot, the database, the curated content or the UI. The export enforces this strictly: it refuses any source table that carries a synthetic flag column at all (any column whose name ends in `is_synthetic`), whatever its values, and the manifest's synthetic-data audit records the tables checked and the result. CLIO's Lumen-derived signal and its composite pressure score are excluded entirely.
 - One exception, for tests only: fixtures under `ops/tests/` may contain an obviously fake synthetic flag column, to prove the export refuses it.

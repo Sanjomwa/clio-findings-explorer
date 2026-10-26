@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "deny": [
+      "Edit(/data/snapshot/**)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
