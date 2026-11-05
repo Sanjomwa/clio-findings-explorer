@@ -1,12 +1,15 @@
 """PreToolUse hook: block-autonomous-git.
 
 Enforces AGENTS.md hard rule 1 (no git writes by the agent). Claude Code runs
-this before every Bash tool call and passes the call as JSON on stdin. Exit 0
-lets the command run; exit 2 blocks it and the stderr text is shown to the
-agent as the reason.
+this before every Bash tool call and before every Monitor command (since
+Claude Code 2.1.314 a hook that matches Bash also runs for commands started
+by the Monitor tool) and passes the call as JSON on stdin. Exit 0 lets the
+command run; exit 2 blocks it and the stderr text is shown to the agent as
+the reason.
 
 The hook fails closed: if its input cannot be read, or the hook itself errors,
-it exits 2. Standard library only. See agent-hooks/README.md.
+it exits 2. A Monitor call with no shell command (a WebSocket source) is
+blocked too. Standard library only. See agent-hooks/README.md.
 """
 
 import json
@@ -20,7 +23,13 @@ DENIED_GIT_SUBCOMMANDS = frozenset({
     "cherry-pick", "revert", "am", "update-ref", "commit-tree",
     # Moves or discards working-tree changes: the tree stays as it is for review.
     "stash", "checkout", "switch", "clean",
+    # Both change the index and the working tree.
+    "rm", "mv",
 })
+
+# Tools whose shell command the hook checks. Claude Code runs a hook that
+# matches Bash for Monitor commands too (since 2.1.314).
+CHECKED_TOOLS = frozenset({"Bash", "Monitor"})
 
 # `git branch` is allowed except for deletion.
 BRANCH_DELETE_LONG = frozenset({"--delete"})
@@ -339,9 +348,17 @@ def main():
         payload = json.loads(sys.stdin.read())
         if not isinstance(payload, dict):
             raise ValueError("payload is not a JSON object")
-        if payload.get("tool_name", "Bash") != "Bash":
+        tool_name = payload.get("tool_name", "Bash")
+        if tool_name not in CHECKED_TOOLS:
             return 0
-        command = payload["tool_input"]["command"]
+        tool_input = payload["tool_input"]
+        if tool_name == "Monitor" and (
+            not isinstance(tool_input, dict) or tool_input.get("command") is None
+        ):
+            # A Monitor call without a shell command (for example a WebSocket
+            # source) cannot be checked, so it is blocked.
+            raise ValueError("Monitor call has no shell command to check")
+        command = tool_input["command"]
         if not isinstance(command, str):
             raise ValueError("tool_input.command is not a string")
     except Exception as exc:  # fail closed on any unreadable input

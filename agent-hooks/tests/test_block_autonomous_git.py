@@ -37,16 +37,22 @@ def payload(command, tool_name="Bash"):
 
 
 class HookTestCase(unittest.TestCase):
-    def assertBlocked(self, command):
-        result = run_hook(payload(command))
-        self.assertEqual(result.returncode, 2, f"expected block: {command!r}\nstderr: {result.stderr}")
+    def assertBlocked(self, command, tool_name="Bash"):
+        result = run_hook(payload(command, tool_name=tool_name))
+        self.assertEqual(
+            result.returncode, 2,
+            f"expected block: {tool_name} {command!r}\nstderr: {result.stderr}",
+        )
         self.assertIn("AGENTS.md hard rule 1", result.stderr)
         self.assertIn("Leave the working tree exactly as it is for human review", result.stderr)
         return result
 
-    def assertAllowed(self, command):
-        result = run_hook(payload(command))
-        self.assertEqual(result.returncode, 0, f"expected allow: {command!r}\nstderr: {result.stderr}")
+    def assertAllowed(self, command, tool_name="Bash"):
+        result = run_hook(payload(command, tool_name=tool_name))
+        self.assertEqual(
+            result.returncode, 0,
+            f"expected allow: {tool_name} {command!r}\nstderr: {result.stderr}",
+        )
         self.assertEqual(result.stderr, "")
 
 
@@ -92,6 +98,100 @@ class TestBlockedGitCommands(HookTestCase):
     def test_message_names_the_command(self):
         result = self.assertBlocked("git status && git push origin main")
         self.assertIn("`git push`", result.stderr)
+
+
+class TestBlockedRmAndMv(HookTestCase):
+    """git rm and git mv change the index and the working tree."""
+
+    COMMANDS = [
+        "git rm x",
+        "git rm --cached x",
+        "git mv a b",
+        "git -C somewhere rm x",
+        "git -C somewhere mv a b",
+    ]
+
+    def test_blocked_in_bash(self):
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_blocked_in_monitor(self):
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                self.assertBlocked(command, tool_name="Monitor")
+
+    def test_message_names_the_command(self):
+        result = self.assertBlocked("git rm x")
+        self.assertIn("`git rm`", result.stderr)
+
+    def test_lookalikes_are_allowed(self):
+        for command in ["rm x", "mv a b", "git add rm.py mv.py", "git log --grep=rm"]:
+            with self.subTest(command=command):
+                self.assertAllowed(command)
+
+
+class TestMonitorTool(HookTestCase):
+    """Since Claude Code 2.1.314 a hook matching Bash also runs for Monitor."""
+
+    def test_git_writes_are_blocked(self):
+        for command in ["git commit -m x", "git push"]:
+            with self.subTest(command=command):
+                self.assertBlocked(command, tool_name="Monitor")
+
+    def test_chained_write_is_blocked(self):
+        result = self.assertBlocked("git status && git push origin main", tool_name="Monitor")
+        self.assertIn("`git push`", result.stderr)
+
+    def test_read_commands_are_allowed(self):
+        for command in ["git status", "tail -f app.log"]:
+            with self.subTest(command=command):
+                self.assertAllowed(command, tool_name="Monitor")
+
+    def test_gh_write_is_blocked(self):
+        self.assertBlocked("gh pr merge 3", tool_name="Monitor")
+
+    def test_no_command_is_blocked(self):
+        # A WebSocket source carries `ws` and no `command`.
+        for tool_input in [
+            {"ws": {"url": "wss://events.example.com/stream"}, "description": "d"},
+            {"description": "d", "timeout_ms": 1000},
+            {"command": None, "description": "d"},
+            {},
+        ]:
+            with self.subTest(tool_input=tool_input):
+                result = run_hook(json.dumps({"tool_name": "Monitor", "tool_input": tool_input}))
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("Monitor call has no shell command", result.stderr)
+                self.assertIn("Leave the working tree exactly as it is for human review", result.stderr)
+
+    def test_non_string_command_is_blocked(self):
+        for command in [["git", "push"], 5, {"a": 1}]:
+            with self.subTest(command=command):
+                result = run_hook(json.dumps({"tool_name": "Monitor", "tool_input": {"command": command}}))
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("could not read the hook input", result.stderr)
+
+    def test_missing_tool_input_is_blocked(self):
+        result = run_hook(json.dumps({"tool_name": "Monitor"}))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("could not read the hook input", result.stderr)
+
+    def test_bash_is_unchanged(self):
+        self.assertAllowed("git status")
+        self.assertBlocked("git commit -m x")
+
+    def test_missing_tool_name_still_counts_as_bash(self):
+        result = run_hook(json.dumps({"tool_input": {"command": "git push"}}))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("`git push`", result.stderr)
+
+    def test_other_tools_are_allowed(self):
+        for tool_name in ["Read", "Write", "WebFetch"]:
+            with self.subTest(tool_name=tool_name):
+                result = run_hook(payload("git push", tool_name=tool_name))
+                self.assertEqual(result.returncode, 0)
+                self.assertEqual(result.stderr, "")
 
 
 class TestBlockedGhCommands(HookTestCase):
