@@ -10,7 +10,8 @@ Claude Code hooks that enforce rules from [AGENTS.md](../AGENTS.md). Python; `bl
 
 - `git commit`, `push`, `pull`, `tag`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `am`, `update-ref`, `commit-tree`, in every form. That includes `git reset` without `--hard` and read-only uses such as `git tag -l`, because the rule names the subcommand, not a flag.
 - `git branch -d`, `-D`, `--delete`, and bundled short flags containing `d` or `D` (for example `-df`).
-- `git stash`, in every form (`push`, `pop`, `apply`, `drop`, `clear`, `list`), `git checkout` (switching branches and `checkout -- <file>`), `git switch` and `git clean`, because they move or discard working-tree changes.
+- `git stash`, in every form (`push`, `pop`, `apply`, `drop`, `clear`, `list`), `git checkout` (switching branches and `checkout -- <file>`), `git switch` and `git clean`, because they move or discard working-tree changes. `git rm` and `git mv` are blocked as well, because they change the index and the working tree.
+- **Monitor commands.** Since Claude Code 2.1.314 a hook that matches `Bash` also runs for commands started by the Monitor tool. The hook checks the Monitor tool's `command` the same way as a Bash command. A Monitor call with no shell command (a `ws` WebSocket source) or a non-string command is blocked, because there is nothing to check.
 - `git restore` that can discard changes: any `restore` without `--staged`, and `restore --staged --worktree` (or `-W`). `git restore --staged <path>` stays allowed. Git accepts unique abbreviations of long options, so `--stag` counts as `--staged`; `--s` is ambiguous with `--source` and is treated as not staged.
 - `gh alias set`, `import` and `delete`, so a blocked `gh` write cannot be renamed. `gh alias list` stays allowed.
 - `gh issue` `close`, `reopen`, `edit`, `delete`, `transfer`, `lock`, `unlock`, `pin`, `unpin`, `develop`.
@@ -40,7 +41,7 @@ A command that `shlex` cannot tokenize, such as `echo it's` with an unbalanced q
 
 ### Known gaps
 
-This is a string parser for the Bash tool's command text. It catches the common forms, not every way to run git. AGENTS.md hard rule 1 applies whether or not the hook catches a command. It does **not** catch:
+This is a string parser for the command text of the Bash and Monitor tools. It catches the common forms, not every way to run git. AGENTS.md hard rule 1 applies whether or not the hook catches a command. It does **not** catch:
 
 - **Commands run by another interpreter:** `sh -c "git commit"`, `bash -c '...'`, `eval "git push"`, `env -S '...'`. The git command there is one quoted string.
 - **Commands inside scripts:** a shell script, Makefile or npm script that runs git. The hook only sees `./script.sh`.
@@ -49,7 +50,7 @@ This is a string parser for the Bash tool's command text. It catches the common 
 - **Substitution inside double quotes:** `echo "$(git push)"`. The whole quoted string is one word.
 - **Wrapper flags that take a separate value** but are not in the hook's list, for example `sudo -C 3 git push`.
 - **Destructive commands that are not on the list:** `git branch -m`/`-M`/`-f`. AGENTS.md does not forbid these, so the hook allows them.
-- **Tools other than Bash:** the hook is registered on the Bash tool only.
+- **Tools other than Bash and Monitor:** the hook is registered with the matcher `Bash`, which Claude Code also applies to Monitor commands; any other tool is allowed. The Monitor behaviour follows the Claude Code 2.1.314 changelog and is covered by tests that send a Monitor-shaped payload. It was confirmed live on 5 November 2026 with Claude Code 2.1.318: `git tag -l` run through the Monitor tool was blocked, and the error was labelled `PreToolUse:Monitor`.
 
 ## spec-first-guard
 
