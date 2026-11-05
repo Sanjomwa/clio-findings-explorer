@@ -76,13 +76,13 @@ scripts/test-all.sh
 | Suite | Tests | Covers |
 |---|---|---|
 | Hook tests | 96 | The git guard and the spec-first guard |
-| Snapshot export, on-call receiver, on-call actor and docs-link tests | 142 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only); the webhook receiver; the on-call actor's guards, gates and escalation, with fake `claude`, `docker` and `gh` (no Docker, no model, no network); that every relative link in `AGENTS.md`, `README.md` and `docs/*.md` resolves and every doc is linked from `AGENTS.md` |
+| Snapshot export, on-call receiver, on-call actor, docs-link and deploy-workflow tests | 160 | The export, including that it refuses any synthetic-flagged table (fake BigQuery, fixtures only); the webhook receiver; the on-call actor's guards, gates and escalation, with fake `claude`, `docker` and `gh` (no Docker, no model, no network); that every relative link in `AGENTS.md`, `README.md` and `docs/*.md` resolves and every doc is linked from `AGENTS.md`; the deploy input check |
 | Backend unit | 150 | Evidence functions, content language check, schemas, and that every published review log carries a `Counted:` line equal to its table; no database |
 | Backend integration | 139 | Real Postgres 16 with the real snapshot; every response validated against `openapi.yaml`; a traceability test that recomputes every evidence-card number from the snapshot files; and injection strings sent to the slug, country, date and state parameters get 422 or 404, never 500, with row counts unchanged |
 | MCP server | 54 | `spec_lookup` and the read-only `query_snapshot` tool |
 | Frontend | 104 | Vitest and Testing Library; also checks that only `client.ts` calls `fetch` |
 
-That is 685 tests. All six suites passed in one run of `scripts/test-all.sh` on the submitted code on 25 October 2026, when the hook suite had 82 tests; the 14 hook tests added on 5 November 2026 (Monitor commands, `git rm` and `git mv`) run in CI with the rest of that suite. CI runs the same suites as separate jobs on every push to `main` and every pull request ([CI runs](https://github.com/Sanjomwa/clio-findings-explorer/actions/workflows/ci.yml)), so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
+That is 703 tests. All six suites passed in one run of `scripts/test-all.sh` on the submitted code on 25 October 2026 (671 tests at the time); the tests added since then run in CI on every pull request. CI runs the same suites as separate jobs on every push to `main` and every pull request ([CI runs](https://github.com/Sanjomwa/clio-findings-explorer/actions/workflows/ci.yml)), so `scripts/test-all.sh` is not part of CI. See [docs/ci.md](docs/ci.md).
 
 ### Monitoring
 

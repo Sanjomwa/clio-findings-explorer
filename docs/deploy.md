@@ -45,7 +45,7 @@ Authentication is Workload Identity Federation: the job gets a short-lived token
 ## How to promote to production
 
 1. Open the dev deploy run and copy the SHA from its summary.
-2. Actions, **Deploy**, Run workflow (branch `main`), paste the SHA in `sha`.
+2. Actions, **Deploy**, Run workflow (branch `main`), paste the SHA in `sha`. Leading and trailing spaces or line breaks around the pasted SHA are trimmed. Anything else that is not a full 40-character lowercase SHA still fails before anything is deployed.
 3. The run waits for approval on the `production` environment. Approve it.
 4. The job checks that both images exist for that SHA (it fails with a clear message if not; **it never rebuilds**), runs `cfe-seed-prod`, deploys the production backend and frontend, and smoke-tests the frontend URL.
 
