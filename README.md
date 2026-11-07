@@ -157,7 +157,7 @@ For backend and frontend details see [backend/README.md](backend/README.md) and 
 - **Rollback:** route traffic back to the previous Cloud Run revision (commands in [docs/deploy.md](docs/deploy.md)). A rollback was rehearsed on dev on 17 October 2026: traffic was moved to the previous revision of both services, the health check passed, then traffic was moved back to the latest ([record](docs/deploy.md#rollback-tried-on-dev)).
 - **One-time setup** (Neon, Cloud Shell script, GitHub variables and environments) is in [docs/deploy.md](docs/deploy.md). Authentication is Workload Identity Federation; there are no key files.
 
-CI ([`ci.yml`](.github/workflows/ci.yml), [docs/ci.md](docs/ci.md)) runs eight jobs: ruff lint (including the `S` security rules); OpenAPI 3.1 validation of `openapi.yaml`; hook and export tests; backend unit tests; integration tests plus the MCP tests against Postgres; frontend checks (generated API types match the contract, typecheck, lint, tests, build); a compose smoke test of the whole stack; and `audit`, which runs `pip-audit` on the locked backend and MCP server dependencies and `npm audit` on the frontend's runtime dependencies. Dependabot opens weekly update pull requests.
+CI ([`ci.yml`](.github/workflows/ci.yml), [docs/ci.md](docs/ci.md)) runs eight jobs: ruff lint (including the `S` security rules); OpenAPI 3.1 validation of `openapi.yaml`; hook and export tests; backend unit tests; integration tests plus the MCP tests against Postgres; frontend checks (generated API types match the contract, typecheck, lint, tests, build); a compose smoke test of the whole stack; and `audit`, which runs `pip-audit` on the locked backend and MCP server dependencies and `npm audit` on the frontend's runtime dependencies. Dependabot opens weekly update pull requests. A separate workflow, [`codeql.yml`](.github/workflows/codeql.yml), runs CodeQL on Python, JavaScript/TypeScript and the GitHub Actions workflows on every push and pull request and weekly, with results in the Security tab.
 
 ## Architecture
 
@@ -254,7 +254,6 @@ docs/               Process, agent team, deploy, CI, permissions, observability,
 Open issues, in priority order:
 
 1. A consistent re-review of general-election-2022 and finance-bill-2024 ([#10](https://github.com/Sanjomwa/clio-findings-explorer/issues/10)), because three re-runs on 24 October stopped on different points (see Limitations). The reviewer and workflow fixes are done, and a reworded general-election-2022 draft is ready.
-2. CodeQL for Python and TypeScript (the rest of [#14](https://github.com/Sanjomwa/clio-findings-explorer/issues/14)), because no automated check would catch a regression in SQL-injection protection before merge and the issue asks for results in the Security tab. The ruff `S` rules, dependency audits, Dependabot and injection tests are done.
 
 Not yet in the tracker (possible next steps, not promises):
 
