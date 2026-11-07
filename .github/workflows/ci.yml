@@ -30,7 +30,7 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       # ruff version = the one pinned in backend/uv.lock; config is the root ruff.toml.
-      - run: uvx ruff@0.17.1 check backend mcp-server agent-hooks ops
+      - run: uvx ruff@0.17.3 check backend mcp-server agent-hooks ops
 
   contract:
     runs-on: ubuntu-24.04
