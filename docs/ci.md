@@ -1,6 +1,6 @@
 # Continuous integration
 
-One workflow, `.github/workflows/ci.yml`, runs every test suite and check in the repository. It runs on push to `main`, on every pull request and on manual dispatch. It needs **no secrets**: the Postgres service and the compose stack use the local-only placeholder values from `.env.example` (`clio` / `clio-local-only` / `clio_findings`) on a throwaway runner. There is no deploy job in this workflow; deployment is the separate `deploy.yml`, which runs after this one passes on `main` (see [deploy.md](deploy.md)).
+Two workflows check the code. `.github/workflows/ci.yml` runs every test suite and check in the repository; `.github/workflows/codeql.yml` does code scanning (see [CodeQL](#codeql)). `ci.yml` runs on push to `main`, on every pull request and on manual dispatch. It needs **no secrets**: the Postgres service and the compose stack use the local-only placeholder values from `.env.example` (`clio` / `clio-local-only` / `clio_findings`) on a throwaway runner. There is no deploy job in this workflow; deployment is the separate `deploy.yml`, which runs after this one passes on `main` (see [deploy.md](deploy.md)).
 
 Settings: `permissions: contents: read`; one concurrency group per ref with `cancel-in-progress`; a `timeout-minutes` on every job. Actions are pinned to a full commit SHA with the version in a comment. Jobs run in parallel and each sets up its own environment (`astral-sh/setup-uv`, Python 3.12, uv cache on).
 
@@ -25,7 +25,11 @@ Settings: `permissions: contents: read`; one concurrency group per ref with `can
 - **Workflow lint.** `docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.7 -color`. The first real run on GitHub happens after the first push.
 - **Ruff `S` rules (#14).** `S` (flake8-bandit) is on in the root `ruff.toml` and in `backend/pyproject.toml` (which takes precedence for `backend/`). Tests ignore `S101` (assertions). Eleven findings in `ops/` carry a per-line `# noqa: S<code>` with the reason: `subprocess` calls with a list argv and no shell (`S603`, `S607`), the export's SQL built from constant column tuples (`S608`), and the snapshot directory's `0o755` mode (`S103`). Test-only findings in `agent-hooks/tests`, `backend/tests/integration/test_seed.py` and two `ops/tests` files are per-file ignores in the config, each with a comment. No `agent-hooks/` source file has a finding, and none was edited.
 - **Injection tests (#14).** `backend/tests/integration/test_api.py` sends seven injection strings (including `' OR 1=1--`, `; DROP TABLE findings;--`, `%27` and 5,000-character strings) to the slug (all four routes), and to the timeline's `country`, `from`, `to` and `state` parameters. Each must return 404 or 422, and the `/api/health` row counts must be the same afterwards. The MCP tests already reject non-`SELECT` and stacked statements (`mcp-server/tests/test_query_snapshot_unit.py`).
-- **CodeQL is not in CI yet.** It is the rest of #14 and the issue stays open for it.
+- **CodeQL runs in its own workflow.** `codeql.yml` is the rest of #14; see below.
+
+## CodeQL
+
+`.github/workflows/codeql.yml` scans Python, JavaScript/TypeScript and the GitHub Actions workflows (`actions`) with CodeQL's default query suite, one matrix job per language with `build-mode: none`. It runs on push to `main`, on pull requests to `main` and weekly (Tuesday 03:47 UTC). It needs no secrets and uses the same pinning rules as `ci.yml` (`contents: read` at the top, `security-events: write` on the job only). Results appear in the repository's Security tab under Code scanning. The repository's check-run failure threshold for security alerts is High or higher, set in Settings, not in the workflow. It only runs on GitHub; there is no local reproduction beyond linting it with actionlint.
 
 ## Dependabot
 
