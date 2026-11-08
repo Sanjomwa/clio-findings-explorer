@@ -72,7 +72,7 @@ jobs:
             --image "${REGISTRY}/backend:${SHA}" \
             --service-account "$RUNTIME_SA" \
             --port 8000 \
-            --set-secrets DATABASE_URL=cfe-database-url-dev:latest \
+            --set-secrets DATABASE_URL=cfe-database-url-dev-reader:latest \
             --set-env-vars "CONTENT_DIR=/content,GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}" \
             --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
             --allow-unauthenticated
@@ -161,7 +161,7 @@ jobs:
             --image "${REGISTRY}/backend:${SHA}" \
             --service-account "$RUNTIME_SA" \
             --port 8000 \
-            --set-secrets DATABASE_URL=cfe-database-url-prod:latest \
+            --set-secrets DATABASE_URL=cfe-database-url-prod-reader:latest \
             --set-env-vars "CONTENT_DIR=/content,GOOGLE_CLOUD_PROJECT=${{ vars.GCP_PROJECT_ID }}" \
             --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi \
             --allow-unauthenticated
