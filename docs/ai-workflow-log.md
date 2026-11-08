@@ -884,3 +884,13 @@ A running record of the work coding agents do in this repository, appended after
 - **Slip:** one no-op shell redirect (`cat >> file <<E` with empty body) touched `test_api.py` without changing it; the edit itself used the Edit tool.
 - **PR #36 CI fixes:** (1) CI / frontend failed at "Generated types match openapi.yaml" because `schema.d.ts` was not regenerated after the ValidationError description changed; fixed with `npm run gen:api` (comment-only diff). (2) CodeQL alert py/bad-tag-filter (High) on the `<script>(.*?)</script>` regex in `ops/tests/test_security_headers.py`, which misses upper-case and attributed tags; replaced by an `html.parser.HTMLParser` scan of `<script>`, `<style>` and `style=` (regex kept only for nginx config), tests still 172.
 - **Not done:** the CSP has not been checked in a real browser (planning session, on dev, after deploy). Nothing staged or committed.
+
+## 2026-11-08: a dedicated CI/CD doc and a docs freshness pass (branch docs/ci-cd)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Origin:** a prompt from the planning session. Peer review of project 1 asked for a markdown doc dedicated to the CI/CD criterion; `docs/ci.md` covers CI only and CD sat in `docs/deploy.md`. A freshness audit found docs made stale by #36.
+- **Task as given:** new `docs/ci-cd.md` (pipeline diagram, triggers, gates, smoke test, builds, credentials, supply chain, rollback, evidence, limits); pointer lines in `docs/ci.md` and `docs/deploy.md`; fix the 422 sentence in `backend/README.md`, the smoke-test wording in `docs/deploy.md` and the README, the README rubric row and layout lines; one row in `AGENTS.md`. Docs only; no git or gh writes.
+- **Findings (Task 0):** read the three workflows, `dependabot.yml`, `smoke-test.sh` and `gcp-setup.sh`. Everything matched the prompt's facts. Details used: `deploy-dev` runs only for `workflow_run` with conclusion `success` and triggering event `push`; `promote-production` only for `workflow_dispatch` on `refs/heads/main`; the SHA input is trimmed and must match `^[0-9a-f]{40}$`; the registry cleanup policy keeps the 10 most recent versions of each image. The GitHub settings (ruleset, environment approval, security settings) could not be seen and were taken from the prompt.
+- **Produced:** `docs/ci-cd.md`; edits to `docs/ci.md`, `docs/deploy.md`, `backend/README.md`, `README.md` and `AGENTS.md` (table row only; the version line is unchanged, since a table row is not a rule change).
+- **Verified:** the ops tests, including the docs-link test, pass (see the report). `mmdc` is not installed, so the Mermaid block was checked by eye only; GitHub renders it.
+- **Not done:** nothing staged or committed; no workflow, code, test or settings change.

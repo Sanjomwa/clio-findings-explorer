@@ -108,6 +108,7 @@ Commands are added here when they exist and have been run successfully. Do not a
 | [docs/reader-test.md](docs/reader-test.md) | The 2-minute reader test (spec §9.3): protocol, expected answers, results |
 | [docs/clio-give-back.md](docs/clio-give-back.md) | What transfers to CLIO's roadmap (spec §9.4), and a question for CLIO |
 | [docs/ai-workflow-log.md](docs/ai-workflow-log.md) | A running record of every AI-assisted task: the task, what was produced, what was verified |
+| [docs/ci-cd.md](docs/ci-cd.md) | The pipeline from pull request to production: triggers, gates, smoke test, credentials, rollback, evidence |
 | [docs/ci.md](docs/ci.md) | The CI workflow, job by job, and how to reproduce each locally |
 | [docs/deploy.md](docs/deploy.md) | Cloud Run and Neon setup, dev and production, promotion and rollback |
 | [docs/observability.md](docs/observability.md) | Traces, metrics and logs, what is never collected, the Grafana dashboard |
