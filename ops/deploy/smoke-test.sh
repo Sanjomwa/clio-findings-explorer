@@ -17,6 +17,27 @@ for attempt in $(seq 1 12); do
   sleep 10
 done
 
+# Browser security headers on the frontend's own page.
+headers="$(curl -fsS --max-time 30 -D - -o /dev/null "${url%/}/")"
+for h in content-security-policy x-frame-options x-content-type-options; do
+  echo "$headers" | grep -qi "^${h}:" || { echo "::error::${url}/ has no ${h} header"; exit 1; }
+done
+echo "ok: security headers present"
+
+# A 422 body must not echo the rejected input.
+invalid="$(mktemp)"
+trap 'rm -f "$health" "$invalid"' EXIT
+code="$(curl -sS --max-time 30 -o "$invalid" -w '%{http_code}' "${url%/}/api/findings/%27")"
+[ "$code" = 422 ] || { echo "::error::/api/findings/%27 returned ${code}, expected 422"; exit 1; }
+python3 - "$invalid" <<'PY'
+import json
+import sys
+
+for err in json.load(open(sys.argv[1]))["detail"]:
+    assert "input" not in err and "ctx" not in err, err
+print("ok: 422 body has no input or ctx")
+PY
+
 python3 - "$health" <<'PY'
 import json
 import sys

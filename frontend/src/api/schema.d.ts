@@ -274,7 +274,10 @@ export interface components {
             /** @description Human-readable reason. */
             detail: string;
         };
-        /** @description FastAPI's default request-validation body, kept as is. */
+        /**
+         * @description FastAPI's request-validation body, with `loc`, `msg` and `type` for each error. The
+         *     rejected input is not echoed back: `input` and `ctx` are left out.
+         */
         ValidationError: {
             detail: ({
                 loc: (string | number)[];
