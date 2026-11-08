@@ -151,8 +151,10 @@ For backend and frontend details see [backend/README.md](backend/README.md) and 
 
 ## Deployment and CI/CD
 
+The whole pipeline, from pull request to production, is in [docs/ci-cd.md](docs/ci-cd.md). Merging into `main` needs the required checks green (a repository ruleset).
+
 - **Hosting:** Google Cloud Run in `europe-west1` and Neon Postgres on AWS `eu-central-1`, with one Neon branch per environment. Services scale to zero.
-- **Dev:** every push to `main` runs CI; when it passes, [`deploy.yml`](.github/workflows/deploy.yml) builds both images, runs the seed job, deploys and smoke-tests `/api/health`. A red CI deploys nothing. Deploys have worked this way since the first one (commit `c5ce7f8`).
+- **Dev:** every push to `main` runs CI; when it passes, [`deploy.yml`](.github/workflows/deploy.yml) builds both images, runs the seed job, deploys and smoke-tests the result (`/api/health`, the browser security headers on `/`, and that a 422 body does not echo the input). A red CI deploys nothing. Deploys have worked this way since the first one (commit `c5ce7f8`).
 - **Production:** a manual "Promote to production" run behind a GitHub environment that needs Sam's approval. It reuses the images dev already ran and never rebuilds.
 - **Rollback:** route traffic back to the previous Cloud Run revision (commands in [docs/deploy.md](docs/deploy.md)). A rollback was rehearsed on dev on 17 October 2026: traffic was moved to the previous revision of both services, the health check passed, then traffic was moved back to the latest ([record](docs/deploy.md#rollback-tried-on-dev)).
 - **One-time setup** (Neon, Cloud Shell script, GitHub variables and environments) is in [docs/deploy.md](docs/deploy.md). Authentication is Workload Identity Federation; there are no key files.
@@ -232,8 +234,8 @@ agent-hooks/        The git guard and spec-first guard
 .claude/            The evidence-reviewer subagent and /new-finding
 custom-agent/       Source copy of the evidence-reviewer
 agent-capabilities/ The /new-finding workflow (canonical copy)
-docs/               Process, agent team, deploy, CI, permissions, observability, alerting, on-call, review logs, incident reports, workflow log, images
-.github/workflows/  ci.yml and deploy.yml
+docs/               Process, agent team, CI/CD, deploy, CI, permissions, observability, alerting, on-call, review logs, incident reports, workflow log, images
+.github/            workflows/ (ci.yml, codeql.yml, deploy.yml) and dependabot.yml
 ```
 
 ## Limitations
@@ -271,10 +273,10 @@ Against the [course rubric](https://github.com/DataTalksClub/ai-dev-tools-zoomca
 | Agent team specification | 2 | 2 | [docs/agent-team.md](docs/agent-team.md): five roles with responsibilities, inputs, outputs, limits and how each is enforced, the issue-to-deploy process, and issue #6 traced end to end; [How it was built](#how-it-was-built-the-agent-team-and-process), [docs/permissions.md](docs/permissions.md) |
 | Context management | 2 | 2 | [AGENTS.md](AGENTS.md) with its "Where things are documented" map, [docs/process.md](docs/process.md), and the link test [test_docs_links.py](ops/tests/test_docs_links.py) (every relative link resolves; every doc is linked from `AGENTS.md`) |
 | Application | 2 | 2 | [Run it locally](#run-it-locally); frontend, backend and Postgres work end to end with one command |
-| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 671 passing |
+| Testing | 2 | 2 | [Tests](#tests): unit and integration, `scripts/test-all.sh`, 734 tests (671 at submission) |
 | Containerization | 2 | 2 | [docker-compose.yml](docker-compose.yml): db, seed, backend, frontend and the local Grafana stack with one command |
 | Deployment | 2 | 2 | [Live site](#live-site); [docs/deploy.md](docs/deploy.md) |
-| CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml), [docs/deploy.md](docs/deploy.md) |
+| CI/CD | 3 | 3 | CI tests, automatic deploy to dev, manual promotion to production: [docs/ci-cd.md](docs/ci-cd.md), [ci.yml](.github/workflows/ci.yml), [deploy.yml](.github/workflows/deploy.yml) |
 | Observability | 2 | 2 | [docs/observability.md](docs/observability.md); provisioned dashboard [finding-journey.json](ops/grafana/dashboards/finding-journey.json); privacy and trace-ID tests in [test_telemetry.py](backend/tests/unit/test_telemetry.py) and [test_telemetry_db.py](backend/tests/integration/test_telemetry_db.py); Cloud Logging trace fields on Cloud Run |
 | Alerting on user impact | 1 | 1 | Provisioned rule on 5xx share and p95 latency: [docs/alerting.md](docs/alerting.md), [rules.yaml](ops/grafana/provisioning/alerting/rules.yaml), [test_alert_rules.py](backend/tests/unit/test_alert_rules.py); fired on purpose with [trigger-db-down.sh](ops/alerting/trigger-db-down.sh) |
 | On-call agent | 2 | 2 | Agent that wakes on the alert, diagnoses with a pinned model, restarts the stopped service and verifies, with usage guards and an incident report: [docs/on-call.md](docs/on-call.md), [actor.py](ops/oncall/actor.py), [tests](ops/tests/test_oncall_actor.py); fixed run [docs/incidents/20261021T071101Z-1ee17afeb9fa5762/](docs/incidents/20261021T071101Z-1ee17afeb9fa5762/summary.md); escalation run [docs/incidents/20261021T074249Z-1ee17afeb9fa5762/](docs/incidents/20261021T074249Z-1ee17afeb9fa5762/escalation.md) and its issue [#15](https://github.com/Sanjomwa/clio-findings-explorer/issues/15) |

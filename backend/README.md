@@ -76,7 +76,7 @@ uv run uvicorn app.main:app --reload --port 8000
 (`regime_states`, `confidence_levels`, `family_bands`: lists of `{state|level|band, definition}`).
 If the file is absent those arrays are empty; definitions are never invented. Evidence cards are computed
 per request from the snapshot tables, as each evidence operation's description in `openapi.yaml` states.
-Error bodies: 404 `{"detail": "..."}` for an unknown slug, FastAPI's default body for 422, and `/api/health`
+Error bodies: 404 `{"detail": "..."}` for an unknown slug, `{"detail": [{"loc", "msg", "type"}]}` for 422 (the rejected `input` and `ctx` are left out, as `openapi.yaml`'s `ValidationError` describes), and `/api/health`
 returns 503 with the `Health` body when the database is unreachable or no snapshot is loaded; the other
 seven operations return 503 with `{"detail": "..."}` when no snapshot is loaded.
 

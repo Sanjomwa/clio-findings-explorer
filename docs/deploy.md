@@ -1,5 +1,7 @@
 # Deployment
 
+This page is the cloud setup and the deploy, promotion and rollback steps. For the pipeline as a whole, from pull request to production, see [ci-cd.md](ci-cd.md).
+
 Two environments, **dev** and **production**, each with a backend and a frontend service on Google Cloud Run (`europe-west1`) and its own Neon Postgres branch (AWS `eu-central-1`). See `product-spec.md` §7.1.
 
 | Thing | Dev | Production |
@@ -84,7 +86,7 @@ Pushing to `main` runs CI. When CI finishes with `success`, `.github/workflows/d
 1. build both images and push them tagged with the commit SHA;
 2. deploy and run the `cfe-seed-dev` job (waits for it);
 3. deploy `cfe-backend-dev`, read its URL, deploy `cfe-frontend-dev` with that `BACKEND_URL`;
-4. smoke test: `/api/health` through the frontend URL must return the `snapshot_version` in `data/snapshot/MANIFEST.json` and `findings: 5` (`ops/deploy/smoke-test.sh`);
+4. smoke test (`ops/deploy/smoke-test.sh`): `/api/health` through the frontend URL must return the `snapshot_version` in `data/snapshot/MANIFEST.json` and `findings: 5`; `/` must carry the `content-security-policy`, `x-frame-options` and `x-content-type-options` headers; and a 422 response (`/api/findings/%27`) must not echo the input (no `input` or `ctx` in the body);
 5. the run summary shows the SHA and both URLs.
 
 Authentication is Workload Identity Federation: the job gets a short-lived token as `cfe-deployer`. There are no key files in the repository, the images or the logs. The database URLs are only in Secret Manager.
