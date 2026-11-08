@@ -66,4 +66,6 @@ The same two IDs are in the raw stdout lines (`docker compose logs backend`), so
 
 Cloud Run (dev and production) has logs only. The JSON lines on stdout go to Cloud Logging, and with `GOOGLE_CLOUD_PROJECT` set (from `GCP_PROJECT_ID` in [`deploy.yml`](../.github/workflows/deploy.yml)) each line inside a request also carries `logging.googleapis.com/trace` (`projects/<project>/traces/<trace_id>`) and `logging.googleapis.com/spanId`. The backend continues the W3C `traceparent` that Cloud Run sends, so the platform's request log and the app's lines share a trace ID. There is no metrics or trace UI on Cloud Run: those exist only in the local stack.
 
+The frontend's nginx rate limit on `/api/` answers 429 without logging the rejection (it would carry the client address); the access log has no client IP.
+
 Cloud Run's own request logs record caller IP addresses. That is a platform behaviour we cannot switch off, and it is outside what this app collects.

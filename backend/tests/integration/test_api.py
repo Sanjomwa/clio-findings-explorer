@@ -536,3 +536,33 @@ def test_injection_in_timeline_parameter_is_422(client, rows_unchanged, value, p
 def test_injection_in_every_timeline_parameter_at_once(client, rows_unchanged):
     params = {name: INJECTIONS["or-1=1"] for name in ("country", "from", "to", "state")}
     assert client.get("/api/timeline", params=params).status_code in SAFE_STATUSES
+
+
+# ---- 422 bodies do not echo the input ----------------------------------------------------------
+
+
+def _assert_trimmed_422(r, value):
+    assert r.status_code == 422
+    detail = r.json()["detail"]
+    assert detail
+    for err in detail:
+        assert set(err) == {"loc", "msg", "type"}
+    assert value not in r.text
+
+
+@pytest.mark.parametrize("value", INJECTION_VALUES, ids=INJECTION_IDS)
+def test_422_slug_body_has_no_input_or_ctx(client, value):
+    from urllib.parse import quote
+
+    r = client.get(f"/api/findings/{quote(value, safe='')}")
+    if r.status_code == 404:
+        pytest.skip("not a validation error for this value")
+    _assert_trimmed_422(r, value)
+
+
+@pytest.mark.parametrize("param", ["country", "from", "to", "state"])
+def test_422_query_body_has_no_input_or_ctx(client, param):
+    value = INJECTIONS["or-1=1"]
+    r = client.get("/api/timeline", params={param: value})
+    _assert_trimmed_422(r, value)
+    assert "ctx" not in r.text and '"input"' not in r.text

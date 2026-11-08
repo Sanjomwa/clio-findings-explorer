@@ -1,11 +1,24 @@
 # No client IPs: the format has no $remote_addr, and $uri leaves out the query string.
 log_format no_ip '$time_iso8601 $request_method $uri $status $body_bytes_sent $request_time';
 
+# Rate limit on /api/: one global bucket (constant key), 30 requests/s. No per-client limit: the
+# client address behind Cloud Run's front end is not shown to be unforgeable (a client-supplied
+# X-Forwarded-For is kept, with Google's addresses appended), so a per-address key could be
+# dodged or abused. A finding page makes at most 6 API calls on load (see frontend/README.md).
+limit_req_zone $server_name zone=api_global:1m rate=30r/s;
+
 server {
     listen 8080;
     access_log /dev/stdout no_ip;
     server_name _;
     server_tokens off;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    limit_req_status 429;
+    # nginx logs rejections to the error log WITH the client address. The image's error_log level
+    # is notice; rejections at info fall below it, so they are not written. Do not raise this.
+    limit_req_log_level info;
 
     root /usr/share/nginx/html;
 
@@ -15,6 +28,8 @@ server {
     resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
 
     location /api/ {
+        limit_req zone=api_global burst=60 nodelay;
+        include /etc/nginx/snippets/security-headers.conf;
         set $backend_upstream "${BACKEND_URL}";
         proxy_pass $backend_upstream;
         # Works for http://backend:8000 (compose) and an https://...run.app backend.
@@ -25,15 +40,18 @@ server {
     # Hashed build files never change under the same name.
     location /assets/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
+        include /etc/nginx/snippets/security-headers.conf;
         try_files $uri =404;
     }
 
     location = /index.html {
         add_header Cache-Control "no-cache";
+        include /etc/nginx/snippets/security-headers.conf;
     }
 
     location / {
         add_header Cache-Control "no-cache";
+        include /etc/nginx/snippets/security-headers.conf;
         try_files $uri /index.html;
     }
 }
