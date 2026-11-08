@@ -7,8 +7,11 @@ Two environments, **dev** and **production**, each with a backend and a frontend
 | Backend service | `cfe-backend-dev` | `cfe-backend-prod` |
 | Frontend service | `cfe-frontend-dev` | `cfe-frontend-prod` |
 | Migrate-and-seed job | `cfe-seed-dev` | `cfe-seed-prod` |
-| Secret | `cfe-database-url-dev` | `cfe-database-url-prod` |
+| Secret, owner URL (seed job only) | `cfe-database-url-dev` | `cfe-database-url-prod` |
+| Secret, read-only URL (backend only) | `cfe-database-url-dev-reader` | `cfe-database-url-prod-reader` |
 | Neon branch | `dev` | `production` |
+
+The backend services connect as `cfe_api_reader`, a login that can only read (see step 4 of the setup). The seed jobs connect as the database owner, because migrations and the seed write.
 
 Shared: Google project `clio-findings-explorer-1012`, Artifact Registry repository `cfe` (images `backend` and `frontend`, tagged with the commit SHA), service accounts `cfe-runtime` (what the services run as) and `cfe-deployer` (what GitHub Actions acts as), Workload Identity pool `github` with provider `clio-findings-explorer`.
 
@@ -24,11 +27,55 @@ How it fits together: one **backend image** (built from the repository root with
    bash ops/deploy/gcp-setup.sh
    ```
 
-   It enables the APIs, creates the registry (keeping the 10 most recent versions of each image), both service accounts with their minimum roles, the two secrets, and the Workload Identity pool and provider (restricted to the repository `Sanjomwa/clio-findings-explorer`). It asks for the two Neon URLs with hidden input, converts `postgresql://` or `postgres://` to `postgresql+psycopg://` (keeping the query string, such as `?sslmode=require`) and stores each as a secret version. It never prints or saves a URL. It is safe to run again; press Enter at a prompt to keep the stored value.
-4. **GitHub repository variables.** The script ends by printing six `gh variable set …` lines (`GCP_PROJECT_ID`, `GCP_REGION`, `WIF_PROVIDER`, `DEPLOYER_SA`, `RUNTIME_SA`, `AR_REPO`). Run them yourself, where `gh` is logged in. They are not secrets.
-5. **GitHub environments.** Settings, Environments: create `dev` (no rules) and `production` with **Required reviewers: Sam**. Optionally limit `production` to the `main` branch.
-6. **Org policy check.** The services allow unauthenticated access (it is a public read-only site). If the project sits under an organisation with "Domain restricted sharing", the first deploy fails at the `allUsers` binding; relax that policy for this project.
-7. **Budget alert.** Console, Billing, Budgets and alerts: create a budget on the project (for example 5 USD a month) with email alerts at 50%, 90% and 100%. Scale-to-zero services and Neon's free plan should cost nothing at this traffic, but the alert catches a mistake.
+   It enables the APIs, creates the registry (keeping the 10 most recent versions of each image), both service accounts with their minimum roles, the four secrets (each with `secretAccessor` for `cfe-runtime`), and the Workload Identity pool and provider (restricted to the repository `Sanjomwa/clio-findings-explorer`). It asks for the two owner Neon URLs and then, optionally, the two `cfe_api_reader` URLs (press Enter to skip them; step 4 creates and stores them), with hidden input, converts `postgresql://` or `postgres://` to `postgresql+psycopg://` (keeping the query string, such as `?sslmode=require`) and stores each as a secret version. It never prints or saves a URL. It is safe to run again; press Enter at a prompt to keep the stored value.
+4. **Read-only login for the backend.** Every API request already runs `SET TRANSACTION READ ONLY`; this step makes the backend's login unable to write at all. Migration `0002` created a no-login role `snapshot_reader` with `SELECT` on the public tables (and on tables added later). The seed only deletes and inserts rows, so those grants survive a re-seed. You add one login that inherits it, on **each** Neon branch (`dev` and `production`; roles belong to a branch, so one branch's role does not exist on the other).
+
+   Run this in Cloud Shell, after step 3 has stored the owner URLs. It reads the branch's owner URL from Secret Manager, generates a random password into a shell variable, creates (or re-keys) the role through `psql` with the password passed as a `psql` variable, builds the reader URL and stores it straight in Secret Manager. The password is never printed, typed, pasted or written to a file, and the role is not created in the Neon SQL editor, whose query history would keep it. If `psql` is missing: `sudo apt-get install -y postgresql-client`.
+
+   ```bash
+   P=clio-findings-explorer-1012
+   REGION=europe-west1
+   RUNTIME_SA="cfe-runtime@${P}.iam.gserviceaccount.com"
+
+   make_reader() {
+     local env="$1" owner pw reader secret="cfe-database-url-$1-reader"
+     owner="$(gcloud secrets versions access latest --secret "cfe-database-url-${env}" --project "$P")" || return 1
+     pw="$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | cut -c1-32)"
+     [ "${#pw}" -eq 32 ] || { echo "password generation failed" >&2; return 1; }
+     psql "postgresql://${owner#*://}" -q -v ON_ERROR_STOP=1 -v VERBOSITY=terse -v pw="$pw" <<'SQL' || return 1
+   SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'cfe_api_reader') AS reader_exists \gset
+   \if :reader_exists
+   ALTER ROLE cfe_api_reader WITH LOGIN PASSWORD :'pw';
+   \else
+   CREATE ROLE cfe_api_reader LOGIN PASSWORD :'pw';
+   \endif
+   GRANT snapshot_reader TO cfe_api_reader;
+   SQL
+     reader="postgresql+psycopg://cfe_api_reader:${pw}@${owner#*@}"
+     gcloud secrets describe "$secret" --project "$P" >/dev/null 2>&1 \
+       || gcloud secrets create "$secret" --project "$P" --replication-policy user-managed --locations "$REGION"
+     gcloud secrets add-iam-policy-binding "$secret" --project "$P" \
+       --member "serviceAccount:${RUNTIME_SA}" --role roles/secretmanager.secretAccessor >/dev/null
+     printf '%s' "$reader" | gcloud secrets versions add "$secret" --project "$P" --data-file=- >/dev/null
+     psql "postgresql://${reader#*://}" -tA -c "SELECT current_user, (SELECT count(*) FROM findings)"
+     echo "Stored a new version of $secret."
+   }
+
+   make_reader dev      # expect: cfe_api_reader|5
+   make_reader prod     # expect: cfe_api_reader|5
+   unset -f make_reader
+   ```
+
+   Neon requires a password with at least 60 bits of entropy; 32 random letters and digits is far above that. Each branch gets its own password. Running `make_reader` again rotates the password and stores a new secret version (redeploy the backend afterwards). If a `psql` error appears, the role was not changed or stored; fix the cause and run it again.
+
+   **Create the role with SQL, not in the Neon console, CLI or API.** Roles made there are automatically members of `neon_superuser` (`CREATEDB`, `CREATEROLE`, `BYPASSRLS`, `REPLICATION`, and `pg_read_all_data` and `pg_write_all_data`), which can write everything. Neon's documentation says roles created with SQL "are not granted membership in the `neon_superuser` role", so `cfe_api_reader` has only what `snapshot_reader` gives it.
+
+   **Order: the reader secrets must hold a value before the pull request that switches the backend to them is merged.** The automatic dev deploy reads `cfe-database-url-dev-reader:latest`; if it is empty or missing, the deploy fails. So: run this step for `dev` and `prod`, then merge.
+
+5. **GitHub repository variables.** The script ends by printing six `gh variable set …` lines (`GCP_PROJECT_ID`, `GCP_REGION`, `WIF_PROVIDER`, `DEPLOYER_SA`, `RUNTIME_SA`, `AR_REPO`). Run them yourself, where `gh` is logged in. They are not secrets.
+6. **GitHub environments.** Settings, Environments: create `dev` (no rules) and `production` with **Required reviewers: Sam**. Optionally limit `production` to the `main` branch.
+7. **Org policy check.** The services allow unauthenticated access (it is a public read-only site). If the project sits under an organisation with "Domain restricted sharing", the first deploy fails at the `allUsers` binding; relax that policy for this project.
+8. **Budget alert.** Console, Billing, Budgets and alerts: create a budget on the project (for example 5 USD a month) with email alerts at 50%, 90% and 100%. Scale-to-zero services and Neon's free plan should cost nothing at this traffic, but the alert catches a mistake.
 
 ## How dev deploys
 
@@ -41,6 +88,16 @@ Pushing to `main` runs CI. When CI finishes with `success`, `.github/workflows/d
 5. the run summary shows the SHA and both URLs.
 
 Authentication is Workload Identity Federation: the job gets a short-lived token as `cfe-deployer`. There are no key files in the repository, the images or the logs. The database URLs are only in Secret Manager.
+
+### Check the backend uses the read-only login
+
+After a deploy, in the Neon SQL editor on the branch (this view needs a role that can see other sessions, such as the project owner role), run:
+
+```sql
+SELECT usename, count(*) FROM pg_stat_activity WHERE datname = current_database() GROUP BY 1;
+```
+
+API connections show as `cfe_api_reader`. The owner name appears only while the seed job runs or in your own editor session. The local test `backend/tests/integration/test_reader_login.py` proves the API answers every route as a reader and that such a login cannot insert, update, delete or create tables.
 
 ## How to promote to production
 
@@ -96,7 +153,7 @@ P=clio-findings-explorer-1012; R=europe-west1
 for e in dev prod; do
   gcloud run services delete cfe-frontend-$e cfe-backend-$e --region $R --project $P --quiet
   gcloud run jobs delete cfe-seed-$e --region $R --project $P --quiet
-  gcloud secrets delete cfe-database-url-$e --project $P --quiet
+  gcloud secrets delete cfe-database-url-$e cfe-database-url-$e-reader --project $P --quiet
 done
 gcloud artifacts repositories delete cfe --location $R --project $P --quiet
 gcloud iam workload-identity-pools delete github --location global --project $P

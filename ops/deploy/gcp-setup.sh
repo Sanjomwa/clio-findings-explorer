@@ -3,8 +3,9 @@
 #
 #   bash ops/deploy/gcp-setup.sh
 #
-# Safe to run again: every create checks first. It asks for the two Neon connection strings
-# without echoing them, stores them in Secret Manager, and never writes them to disk.
+# Safe to run again: every create checks first. It asks for the two owner Neon connection strings
+# (seed jobs) and the two read-only cfe_api_reader ones (backend services) without echoing them,
+# stores them in Secret Manager, and never writes them to disk.
 # Needs permission to administer the project (Owner is enough).
 set -euo pipefail
 
@@ -16,7 +17,10 @@ RUNTIME_SA_NAME="cfe-runtime"
 DEPLOYER_SA_NAME="cfe-deployer"
 WIF_POOL="github"
 WIF_PROVIDER_NAME="clio-findings-explorer"
-SECRETS=(cfe-database-url-dev cfe-database-url-prod)
+SECRETS=(
+  cfe-database-url-dev cfe-database-url-prod
+  cfe-database-url-dev-reader cfe-database-url-prod-reader
+)
 
 RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 DEPLOYER_SA="${DEPLOYER_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -109,9 +113,9 @@ store_database_url() {
   local secret="$1" label="$2" url
   if gcloud secrets versions list "$secret" --filter 'state=enabled' --limit 1 \
     --format 'value(name)' | grep -q .; then
-    printf '%s already has a value. Paste a new Neon URL to replace it, or press Enter to keep it: ' "$label"
+    printf '%s already has a value. Paste a new URL to replace it, or press Enter to keep it: ' "$label"
   else
-    printf 'Paste the Neon connection string for %s: ' "$label"
+    printf 'Paste the connection string for %s: ' "$label"
   fi
   read -rs url
   printf '\n'
@@ -146,6 +150,16 @@ say "Neon connection strings (input is hidden)"
 echo "Use the pooled or direct string of the matching Neon branch; the query string is kept."
 store_database_url cfe-database-url-dev "dev (Neon branch 'dev')"
 store_database_url cfe-database-url-prod "production (Neon branch 'production')"
+
+say "Read-only backend logins (input is hidden)"
+echo "These are for the backend services only. The seed jobs keep the owner URLs above."
+echo "Optional here: press Enter to skip. docs/deploy.md step 4 creates the role and stores these."
+store_database_url cfe-database-url-dev-reader \
+  "the read-only cfe_api_reader login of the dev branch (URL for user cfe_api_reader)" \
+  || echo "Skipped cfe-database-url-dev-reader: set it with docs/deploy.md step 4 before merging."
+store_database_url cfe-database-url-prod-reader \
+  "the read-only cfe_api_reader login of the production branch (URL for user cfe_api_reader)" \
+  || echo "Skipped cfe-database-url-prod-reader: set it with docs/deploy.md step 4 before promoting."
 
 say "Done. Run these in a terminal where 'gh' is logged in to the repository:"
 cat <<OUT
