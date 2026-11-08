@@ -18,6 +18,7 @@ import base64
 import hashlib
 import re
 import unittest
+from html.parser import HTMLParser
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
@@ -36,6 +37,62 @@ REQUIRED = [
     "Permissions-Policy",
     "Cross-Origin-Opener-Policy",
 ]
+
+
+class PageScan(HTMLParser):
+    """Collects <script> elements (attributes and text) and any <style> or style= use.
+
+    HTMLParser lower-cases tag and attribute names, so `<SCRIPT>` and `<script type=...>` count too.
+    convert_charrefs is off so the script text is the exact source, which is what the CSP hash covers.
+    """
+
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.scripts: list[tuple[dict, str]] = []
+        self.style_elements = 0
+        self.style_attributes = 0
+        self._open: tuple[dict, list[str]] | None = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            self._open = (dict(attrs), [])
+        elif tag == "style":
+            self.style_elements += 1
+        self.style_attributes += sum(1 for name, _ in attrs if name == "style")
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if tag == "script":
+            self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._open:
+            attrs, chunks = self._open
+            self.scripts.append((attrs, "".join(chunks)))
+            self._open = None
+
+    def handle_data(self, data):
+        if self._open:
+            self._open[1].append(data)
+
+    def handle_entityref(self, name):
+        if self._open:
+            self._open[1].append(f"&{name};")
+
+    def handle_charref(self, name):
+        if self._open:
+            self._open[1].append(f"&#{name};")
+
+
+def scan_index() -> PageScan:
+    page = PageScan()
+    page.feed(INDEX)
+    page.close()
+    return page
+
+
+def inline_scripts(page: PageScan) -> list[str]:
+    return [text for attrs, text in page.scripts if "src" not in attrs]
 
 
 def strip_comments(text: str) -> str:
@@ -68,14 +125,22 @@ class SecurityHeadersTest(unittest.TestCase):
         self.locations = locations(self.server)
 
     def test_csp_hash_matches_inline_theme_script(self):
-        scripts = re.findall(r"<script>(.*?)</script>", INDEX, re.S)
+        scripts = inline_scripts(scan_index())
         self.assertEqual(len(scripts), 1, "expected exactly one inline <script> in index.html")
         digest = base64.b64encode(hashlib.sha256(scripts[0].encode("utf-8")).digest()).decode()
         self.assertIn(f"'sha256-{digest}'", HEADERS, "update the CSP hash in security-headers.conf")
 
     def test_no_other_inline_script_or_style(self):
-        self.assertEqual(len(re.findall(r"<script(?![^>]*\bsrc=)", INDEX)), 1)
-        self.assertNotRegex(INDEX, r"<style|\sstyle=")
+        page = scan_index()
+        self.assertEqual(len(inline_scripts(page)), 1)
+        self.assertEqual(page.style_elements, 0, "inline <style> in index.html")
+        self.assertEqual(page.style_attributes, 0, "style= attribute in index.html")
+        # The scanner itself must see upper-case and attributed tags.
+        probe = PageScan()
+        probe.feed('<SCRIPT type="text/javascript">a()</SCRIPT><script src="/x.js"></script>'
+                   '<Style>p{}</Style><p STYLE="x">')
+        self.assertEqual(inline_scripts(probe), ["a()"])
+        self.assertEqual((probe.style_elements, probe.style_attributes), (1, 1))
 
     def test_every_required_header_has_always(self):
         for name in REQUIRED:
