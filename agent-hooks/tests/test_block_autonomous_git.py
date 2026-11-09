@@ -585,6 +585,135 @@ class TestAllowedCommands(HookTestCase):
                 self.assertAllowed(command)
 
 
+class TestShellExpansionInCommandSlots(HookTestCase):
+    """Bash expands words before it runs them, so a subcommand or program that
+    contains an expansion cannot be read from the text. The hook blocks it."""
+
+    def test_expansion_in_git_subcommand_is_blocked(self):
+        for command in [
+            "git $'commit' -m x",
+            'git $"push"',
+            "git co$''mmit -m x",
+            "git $'\\x63ommit' -m x",
+            "X=commit; git $X -m x",
+            "git ${X:-commit} -m x",
+            "git $(echo commit) -m x",
+            "git $(printf push)",
+            "git `echo commit` -m x",
+            "git c{o,}mmit -m x",
+            "git {commit,-m,x}",
+            "git comm*",
+            "git commi?",
+            "git [c]ommit",
+            "git -C /tmp $X",
+            "git --no-pager $X",
+            "git -c user.name=x $'commit'",
+            "FOO=1 git $'commit'",
+            "env -i git $X",
+            "/usr/bin/git $'push'",
+            "ls && git $'commit'",
+            "echo $(git $'push')",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_substitution_after_global_option_is_blocked(self):
+        # The subcommand lands in a later segment, so the slot looks empty.
+        self.assertBlocked("git -C $(pwd) commit -m x")
+        self.assertBlocked("git --no-pager `echo commit`")
+
+    def test_expansion_in_program_with_denied_subcommand_is_blocked(self):
+        for command in [
+            "$'git' commit -m x",
+            "G=git; $G commit -m x",
+            "$G -C /tmp push",
+            "${GIT:-git} tag -l",
+            "{git,commit}",
+            "g*t commit",
+            "$'git' restore x",
+            "$'git' branch -D old",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_expansion_in_program_with_gh_is_blocked(self):
+        for command in [
+            "$'gh' pr merge 1",
+            "$gh pr merge 1",
+            "G=gh; $G pr merge 1",
+            "$G api repos/x/y",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_expansion_in_gh_command_slots_is_blocked(self):
+        for command in [
+            "gh pr $'merge' 1",
+            "gh pr $X 1",
+            "gh $X merge 1",
+            "gh $(echo pr) merge 1",
+            "gh pr `echo merge` 1",
+            "gh -R owner/repo pr $'merge' 1",
+            "gh pr m{e,}rge 1",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+    def test_message_says_the_hook_cannot_know_what_is_expanded(self):
+        result = self.assertBlocked("git $'commit' -m x")
+        self.assertIn("cannot know what the shell will expand", result.stderr)
+        self.assertIn("subcommand", result.stderr)
+        result = self.assertBlocked("$G commit -m x")
+        self.assertIn("cannot know what the shell will expand", result.stderr)
+
+    def test_expansion_in_arguments_is_still_allowed(self):
+        for command in [
+            "git status",
+            'git "status"',
+            "git log --oneline -3",
+            'echo "git commit"',
+            'git -C "$DIR" status',
+            "git -C '$DIR' status",
+            "git log --format=%H",
+            "git diff HEAD~1 -- '*.md'",
+            "git diff -- *.md",
+            "git log --grep=$PATTERN",
+            'git show "$(git rev-parse HEAD)":README.md',
+            "git show $(git rev-parse HEAD)",
+            "git log `git rev-parse HEAD`",
+            "git add {a,b}.md",
+            "git\\ commit -m x",
+            "$PYTHON script.py",
+            "${PYTHON:-python3} -m unittest",
+            "$HOME/bin/tool --flag",
+            '[ "$1" = push ]',
+            "[[ -n $X ]]",
+            "VAR=$(git rev-parse --show-toplevel)",
+            "echo $(git status)",
+            "gh issue view 12",
+            "gh issue list --label $LABEL",
+            "gh -R owner/repo pr view $N",
+            "gh pr view $(git branch --show-current)",
+        ]:
+            with self.subTest(command=command):
+                self.assertAllowed(command)
+
+    def test_quoted_forms_stay_blocked(self):
+        for command in [
+            'git "commit"',
+            "git 'push'",
+            '"git" commit',
+            "g''it commit",
+            'FOO=1 git "commit"',
+            'env -i git "push"',
+            'command git "merge" x',
+            '/usr/bin/git "push"',
+            "\\git commit",
+        ]:
+            with self.subTest(command=command):
+                self.assertBlocked(command)
+
+
 class TestUntokenizableCommands(HookTestCase):
     """A command shlex cannot split falls back to a conservative text scan."""
 

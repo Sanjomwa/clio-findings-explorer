@@ -894,3 +894,14 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** `docs/ci-cd.md`; edits to `docs/ci.md`, `docs/deploy.md`, `backend/README.md`, `README.md` and `AGENTS.md` (table row only; the version line is unchanged, since a table row is not a rule change).
 - **Verified:** the ops tests, including the docs-link test, pass (see the report). `mmdc` is not installed, so the Mermaid block was checked by eye only; GitHub renders it.
 - **Not done:** nothing staged or committed; no workflow, code, test or settings change.
+
+## 2026-11-09: git guard blocks shell expansions in the command slots, plus deny rules (branch fix/hook-shell-expansion)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Origin:** a prompt from the planning session. Claude Code 2.1.319 fixed Bash permission bypasses with quoted words and env prefixes; the planning session found that anything bash expands in the subcommand or program slot (`git $'commit'`, `git $X`, `git $(echo commit)`, `$G commit`, `git c{o,}mmit`) got past our hook.
+- **One-off exception (Sam, 9 Nov 2026):** for this task only, the agent edited `agent-hooks/block_autonomous_git.py`, its test file and `agent-hooks/README.md`. No other file in `agent-hooks/` changed.
+- **Task as given:** a fail-closed hook rule for expansions in the git subcommand, `gh` group/action and program slots; tests for every bypass and every must-stay-allowed form; `permissions.deny` Bash rules in `.claude/settings.json` as a second layer; docs.
+- **Findings (Task 0):** the old hook returned exit 0 for all 14 bypass cases and exit 2 for the nine quoted forms, exactly as the prompt listed. Baseline 96 hook and 172 ops tests, ruff clean.
+- **Produced:** the rule in `block_autonomous_git.py` (segments now record when a `$(` or backtick cut them off); 8 new tests; 25 deny rules; a paragraph each in `agent-hooks/README.md` and `docs/permissions.md`; the test counts in `README.md`.
+- **Verified:** hook tests 104, ops tests 172, ruff clean; the Task 0 table re-run gives exit 2 for every bypass and exit 0 for every must-stay-allowed case. The deny-rule syntax was checked against Claude Code's permissions documentation (`:*` is equivalent to a trailing ` *`). A live check with read-only commands did not show the deny rules acting (see the report).
+- **Not done:** nothing staged or committed; no git or gh write.

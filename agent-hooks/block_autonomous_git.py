@@ -95,6 +95,15 @@ SHELL_KEYWORDS = frozenset({
 
 ENV_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
+# Anything bash expands in a word: $ (covers $'..', $"..", $X, ${..}, $(..)),
+# a backtick, { (brace expansion) and the glob characters * ? [. shlex keeps
+# the $ of $'commit' (it yields `$commit`), so the token text is enough.
+EXPANSION_CHARS = re.compile(r"[$`{*?\[]")
+# `[` and `[[` are the test commands, not an expansion.
+TEST_COMMANDS = frozenset({"[", "[["})
+# A bare `gh` / `gh.exe` word inside a larger word such as `$gh`.
+GH_MENTION = re.compile(r"(?<![\w.-])gh(?:\.exe)?(?![\w.-])", re.IGNORECASE)
+
 # Characters shlex returns as operator tokens instead of word characters.
 PUNCTUATION = ";&|()<>`\n"
 
@@ -111,6 +120,9 @@ FALLBACK_GIT = re.compile(r"(?:^|[^\w.-])git(?:\.exe)?(?![\w.-])(?P<rest>[^\n;&|
 FALLBACK_GH = re.compile(r"(?:^|[^\w.-])gh(?:\.exe)?(?![\w.-])(?P<rest>[^\n;&|]*)", re.IGNORECASE)
 
 RULE = "AGENTS.md hard rule 1: the agent never runs git writes"
+EXPANSION_REASON = (
+    "the hook cannot know what the shell will expand there, so it blocks"
+)
 LEAVE_TREE = (
     "Leave the working tree exactly as it is for human review. Do not retry, "
     "rephrase or work around this command; stop and report what you were "
@@ -143,6 +155,11 @@ def split_segments(command):
     Splits on ; & && | || newlines, ( ), $( ), backticks and process
     substitution. Redirection targets are dropped. Raises ValueError when the
     command cannot be tokenized (for example an unbalanced quote).
+
+    Returns (words, open_substitution) pairs. open_substitution is True when
+    the segment was cut off by a backtick or by `$(`, so the words that follow
+    in the shell command (for example the subcommand in `git $(echo commit)`
+    or `git -C $(pwd) commit`) sit in a later segment.
     """
     lexer = shlex.shlex(command, posix=True, punctuation_chars=PUNCTUATION)
     lexer.whitespace = " \t\r"
@@ -150,6 +167,7 @@ def split_segments(command):
     lexer.commenters = ""
 
     segments = [[]]
+    opened = [False]
     skip_next = False
     for token in lexer:
         is_operator = token != "" and all(c in PUNCTUATION for c in token)
@@ -158,7 +176,12 @@ def split_segments(command):
                 "&" in token and not any(c in "<>" for c in token)
             )
             if is_separator:
+                if "`" in token or (
+                    "(" in token and segments[-1] and segments[-1][-1].endswith("$")
+                ):
+                    opened[-1] = True
                 segments.append([])
+                opened.append(False)
                 skip_next = False
             else:
                 # Redirection: a preceding fd number (the 2 in 2>) belongs to
@@ -171,7 +194,12 @@ def split_segments(command):
             skip_next = False
             continue
         segments[-1].append(token)
-    return [s for s in segments if s]
+    return [(s, o) for s, o in zip(segments, opened, strict=True) if s]
+
+
+def has_expansion(word):
+    """True if bash would expand something in this word."""
+    return word not in TEST_COMMANDS and bool(EXPANSION_CHARS.search(word))
 
 
 def program_name(word):
@@ -226,8 +254,16 @@ def restore_discards(args):
     return worktree or not staged
 
 
-def git_violation(args):
-    """Return the denied git subcommand in `args` (words after `git`), or None."""
+class Expansion(str):
+    """A finding that is not a known denied operation but a word the shell
+    will expand, so the hook cannot tell what will run (fails closed)."""
+
+
+def git_violation(args, open_substitution=False):
+    """Return the denied git subcommand in `args` (words after `git`), or None.
+
+    Returns an Expansion if the subcommand slot holds something bash expands,
+    or is empty because a `$( )` or backtick segment was split off."""
     i = 0
     while i < len(args):
         arg = args[i]
@@ -238,8 +274,12 @@ def git_violation(args):
         else:
             break
     if i >= len(args):
+        if open_substitution:
+            return Expansion("a shell substitution where the subcommand should be")
         return None
     subcommand = args[i]
+    if has_expansion(subcommand):
+        return Expansion(f"a shell expansion in the subcommand (`{subcommand}`)")
     if subcommand in DENIED_GIT_SUBCOMMANDS:
         return subcommand
     if subcommand == "restore" and restore_discards(args[i + 1:]):
@@ -257,8 +297,11 @@ def git_violation(args):
     return None
 
 
-def gh_violation(args):
-    """Return the denied gh command in `args` (words after `gh`), or None."""
+def gh_violation(args, open_substitution=False):
+    """Return the denied gh command in `args` (words after `gh`), or None.
+
+    Returns an Expansion if the group or action slot holds something bash
+    expands, or is empty because a `$( )` or backtick segment was split off."""
     positionals = []
     i = 0
     while i < len(args) and len(positionals) < 2:
@@ -270,6 +313,11 @@ def gh_violation(args):
         else:
             positionals.append(arg)
             i += 1
+    for word in positionals:
+        if has_expansion(word):
+            return Expansion(f"a shell expansion in the command (`{word}`)")
+    if len(positionals) < 2 and open_substitution:
+        return Expansion("a shell substitution where the command should be")
     if not positionals:
         return None
     group = positionals[0]
@@ -314,27 +362,47 @@ def fallback_violation(command):
 
 
 def find_violation(command):
-    """Return (description, tokenized) for the first denied operation in a
-    shell command, or None if the command is allowed."""
+    """Return (description, tokenized, expansion) for the first denied
+    operation in a shell command, or None if the command is allowed.
+    `expansion` is True when the block is for a word the shell expands where
+    the subcommand or program belongs."""
     try:
         joined = LINE_CONTINUATION.sub(r"\1", strip_quoted_heredocs(command))
         segments = split_segments(joined)
     except ValueError:
         found = fallback_violation(command)
-        return (found, False) if found else None
-    for words in segments:
+        return (found, False, False) if found else None
+    for words, open_substitution in segments:
         words = strip_prefixes(words)
         if not words:
             continue
         name = program_name(words[0])
         if name == "git":
-            found = git_violation(words[1:])
-            if found:
-                return (f"git {found}", True)
+            found = git_violation(words[1:], open_substitution)
         elif name == "gh":
-            found = gh_violation(words[1:])
-            if found:
-                return (f"gh {found}", True)
+            found = gh_violation(words[1:], open_substitution)
+        elif has_expansion(words[0]):
+            found = program_expansion_violation(words)
+        else:
+            continue
+        if isinstance(found, Expansion):
+            return (f"{name} with {found}", True, True)
+        if found:
+            return (f"{name} {found}", True, False)
+    return None
+
+
+def program_expansion_violation(words):
+    """A command word that bash expands (`$G`, `$'git'`, `{git,commit}`) may be
+    git or gh. Block it only if the segment names a denied git subcommand or
+    mentions gh, so `$PYTHON script.py` stays allowed."""
+    pieces = re.findall(r"[\w.-]+", " ".join(words))
+    if any(piece in DENIED_GIT_SUBCOMMANDS for piece in pieces):
+        return Expansion(f"a shell expansion as the program (`{words[0]}`) and a denied git subcommand")
+    if any(GH_MENTION.search(word) for word in words):
+        return Expansion(f"a shell expansion as the program (`{words[0]}`) and a mention of gh")
+    if git_violation(words[1:]) or gh_violation(words[1:]):
+        return Expansion(f"a shell expansion as the program (`{words[0]}`) followed by a denied git or gh command")
     return None
 
 
@@ -370,7 +438,12 @@ def main():
     result = find_violation(command)
     if result is None:
         return 0
-    found, tokenized = result
+    found, tokenized, expansion = result
+    if expansion:
+        block(
+            f"Blocked by block-autonomous-git: {found}; {EXPANSION_REASON} "
+            f"({RULE}). {LEAVE_TREE}"
+        )
     if tokenized:
         block(f"Blocked by block-autonomous-git: `{found}` is not allowed ({RULE}). {LEAVE_TREE}")
     block(
