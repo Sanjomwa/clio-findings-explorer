@@ -161,6 +161,8 @@ The whole pipeline, from pull request to production, is in [docs/ci-cd.md](docs/
 
 CI ([`ci.yml`](.github/workflows/ci.yml), [docs/ci.md](docs/ci.md)) runs eight jobs: ruff lint (including the `S` security rules); OpenAPI 3.1 validation of `openapi.yaml`; hook and export tests; backend unit tests; integration tests plus the MCP tests against Postgres; frontend checks (generated API types match the contract, typecheck, lint, tests, build); a compose smoke test of the whole stack; and `audit`, which runs `pip-audit` on the locked backend and MCP server dependencies and `npm audit` on the frontend's runtime dependencies. Dependabot opens weekly update pull requests. A separate workflow, [`codeql.yml`](.github/workflows/codeql.yml), runs CodeQL on Python, JavaScript/TypeScript and the GitHub Actions workflows on every push and pull request and weekly, with results in the Security tab.
 
+The security layers, what each stops and the known gaps are in [docs/security.md](docs/security.md); to report a vulnerability, see [SECURITY.md](SECURITY.md).
+
 ## Architecture
 
 ```mermaid
@@ -249,6 +251,7 @@ docs/               Process, agent team, CI/CD, deploy, CI, permissions, observa
 - **Cloud Run's platform logs record caller IP addresses.** The nginx access log does not, but the platform's cannot be switched off ([docs/deploy.md](docs/deploy.md)).
 - **The on-call agent does service actions only.** It can start or restart `db`, `backend` or `frontend`; code and config fixes are not enabled, so it escalates anything else ([docs/on-call.md](docs/on-call.md)). A failed check after an action is not reverted (undoing a start would recreate the outage); it escalates instead.
 - **The on-call agent runs only when started by hand** (`ONCALL_ENABLED=1 python3 ops/oncall/actor.py --watch`). It does not start at boot or from compose, so an unattended outage is not fixed. It has been run end to end against the local stack: one fix, and one escalation that opened [#15](https://github.com/Sanjomwa/clio-findings-explorer/issues/15) without calling the model.
+- **The backend URL is public and skips the nginx rate limit.** A direct call to the backend does not pass through the frontend's nginx, so the rate limit does not apply; the instance cap and the spend cap still bound cost ([docs/security.md](docs/security.md#known-gaps)).
 - **The alert does not see a stopped backend.** A backend that is down emits no metrics, so the rule sees no data and stays Normal ([docs/alerting.md](docs/alerting.md)).
 
 ## Future work
