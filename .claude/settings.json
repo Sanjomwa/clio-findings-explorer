@@ -1,7 +1,32 @@
 {
   "permissions": {
     "deny": [
-      "Edit(/data/snapshot/**)"
+      "Edit(/data/snapshot/**)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git tag:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git reset:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git revert:*)",
+      "Bash(git am:*)",
+      "Bash(git update-ref:*)",
+      "Bash(git commit-tree:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git clean:*)",
+      "Bash(git rm:*)",
+      "Bash(git mv:*)",
+      "Bash(git branch -d:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git branch --delete:*)",
+      "Bash(gh api:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release:*)",
+      "Bash(gh repo delete:*)"
     ]
   },
   "hooks": {

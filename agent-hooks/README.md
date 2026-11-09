@@ -31,6 +31,7 @@ The only `gh` writes left open are `gh issue create`, `gh issue comment` and `gh
 - **git global options before the subcommand:** `-C <dir>`, `-c <key=value>`, `--git-dir`, `--work-tree`, `--namespace` (with or without `=`), `--no-pager` and so on.
 - **Program paths:** `/usr/bin/git`, `git.exe` and `GIT.EXE`. On WSL, `git.exe` runs the Windows git.
 - **Quoted text is not a command:** `echo "git commit"`, `grep "git push"` and the body of a quoted heredoc (`<<'EOF'`) are allowed. An unquoted heredoc body is still checked, because the shell expands `$( )` inside it.
+- **Shell expansions where the subcommand or program belongs are blocked.** Bash expands a word before it runs it, so the hook cannot know what `git $'commit'`, `git $X`, `git ${X:-commit}`, `git $(echo commit)`, `` git `echo commit` ``, `git c{o,}mmit` or `git comm*` will run. After prefixes and git global options are stripped, it blocks when the git subcommand, or the `gh` group or action, contains `$` (which covers `$'..'`, `$".."`, `$X`, `${..}` and `$(..)`), a backtick, `{` or a glob character `*`, `?`, `[`. It also blocks when that slot is empty because a `$( )` or backtick segment was split off right after `git` or `gh` (`git $(echo commit)`, `git -C $(pwd) commit`). If the program word itself is expanded (`$G commit`, `$'git' commit`, `$'gh' pr merge 1`, `{git,commit}`), it blocks when the segment names a denied git subcommand or `gh` command or mentions `gh`; `$PYTHON script.py` stays allowed. Expansions in arguments are fine (`git -C "$DIR" status`, `git log --grep=$PATTERN`). The message says the hook cannot know what the shell will expand there, so it blocks.
 - **False-positive traps it allows:** `git add reset.py`, `git log --grep=push`, `git show HEAD:merge.md` and `git commit-graph`.
 
 ### Failure behaviour
@@ -47,10 +48,15 @@ This is a string parser for the command text of the Bash and Monitor tools. It c
 - **Commands inside scripts:** a shell script, Makefile or npm script that runs git. The hook only sees `./script.sh`.
 - **Child processes:** Python `subprocess`, Node `child_process` and similar.
 - **git aliases:** for example `git ci` configured as `commit`, or `git -c alias.x=commit x`.
+- **A program word produced by a substitution:** `$(which git) commit`. The `commit` lands in a later segment than the `$(`, so the hook sees only a bare `$`, and it allows `$(pwd)/script.sh`-style commands.
 - **Substitution inside double quotes:** `echo "$(git push)"`. The whole quoted string is one word.
 - **Wrapper flags that take a separate value** but are not in the hook's list, for example `sudo -C 3 git push`.
 - **Destructive commands that are not on the list:** `git branch -m`/`-M`/`-f`. AGENTS.md does not forbid these, so the hook allows them.
 - **Tools other than Bash and Monitor:** the hook is registered with the matcher `Bash`, which Claude Code also applies to Monitor commands; any other tool is allowed. The Monitor behaviour follows the Claude Code 2.1.314 changelog and is covered by tests that send a Monitor-shaped payload. It was confirmed live on 5 November 2026 with Claude Code 2.1.318: `git tag -l` run through the Monitor tool was blocked, and the error was labelled `PreToolUse:Monitor`.
+
+### Second layer: Claude Code deny rules
+
+[`.claude/settings.json`](../.claude/settings.json) also has `permissions.deny` rules for the git subcommands in `DENIED_GIT_SUBCOMMANDS`, `git branch -d`, `-D` and `--delete`, `gh api`, `gh pr merge`, `gh release` and `gh repo delete` (`git restore` is not listed, because the hook allows `restore --staged`). These use Claude Code's own command parsing, which differs from this hook's: it recognises forms the hook may not, and the hook recognises forms it does not (and the two read quoting and expansion differently). Neither layer alone is complete; they overlap on purpose. The deny rules cover the invocation Claude usually produces and are not a security boundary around the program, per Claude Code's permissions documentation.
 
 ## spec-first-guard
 
