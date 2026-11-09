@@ -905,3 +905,13 @@ A running record of the work coding agents do in this repository, appended after
 - **Produced:** the rule in `block_autonomous_git.py` (segments now record when a `$(` or backtick cut them off); 8 new tests; 25 deny rules; a paragraph each in `agent-hooks/README.md` and `docs/permissions.md`; the test counts in `README.md`.
 - **Verified:** hook tests 104, ops tests 172, ruff clean; the Task 0 table re-run gives exit 2 for every bypass and exit 0 for every must-stay-allowed case. The deny-rule syntax was checked against Claude Code's permissions documentation (`:*` is equivalent to a trailing ` *`). A live check with read-only commands did not show the deny rules acting (see the report).
 - **Not done:** nothing staged or committed; no git or gh write.
+
+## 2026-11-09: security write-up and reporting policy (branch docs/security)
+
+- **Agent:** Claude Code, Claude Sonnet 5.5.
+- **Origin:** a prompt from the planning session (Prompt Q, PR 7b): a security document for the repository and a vulnerability-reporting policy, from text the planning session wrote.
+- **Task as given:** check every claim in the source text against the repository, fix what does not match, and add `docs/security.md` and `SECURITY.md`; link them from `AGENTS.md`, `README.md` and `docs/ci-cd.md`. Docs only; no git or gh writes.
+- **Findings (Task 0):** the source text matched the repository except in these places, corrected in `docs/security.md`: "the seed refuses synthetic-flagged tables" (it is the export, `ops/export_snapshot.py`, that refuses them; the seed checks sha256 and line counts); read-only transactions are in `backend/app/deps.py` and `backend/app/routers/health.py`, not a directory; "privacy in logs" now names the Cloud Run platform-log exception already stated in the README; `S608` has two documented exceptions; the on-call limits include a daily budget. GitHub and Google Cloud settings (ruleset, secret scanning, Dependabot, private reporting, spend cap, live checks) could not be seen and were taken from the prompt.
+- **Produced:** `docs/security.md`, `SECURITY.md`; one row in `AGENTS.md`; one Limitations bullet and one sentence in `README.md`; one line in `docs/ci-cd.md`.
+- **Verified:** the ops tests, including the docs-link test, pass (see the report).
+- **Not done:** nothing staged or committed; no code, test, workflow or settings change.

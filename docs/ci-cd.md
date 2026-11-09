@@ -107,3 +107,4 @@ Workflow pages: [CI](https://github.com/Sanjomwa/clio-findings-explorer/actions/
 
 - [docs/ci.md](ci.md): each CI job, CodeQL and Dependabot, and how to reproduce each check locally.
 - [docs/deploy.md](deploy.md): the one-time cloud setup, the promotion steps, rollback commands and costs.
+- [docs/security.md](security.md): each security layer, what it stops, the evidence and the known gaps.
