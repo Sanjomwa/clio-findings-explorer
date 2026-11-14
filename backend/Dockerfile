@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 # Built from the repository root (docker build -f backend/Dockerfile .) so the image carries
 # the curated content and the snapshot and runs without volumes. One image serves the API
