@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 # The on-call webhook receiver: standard library only, nothing to install.
 # Built with ops/oncall as the context. It runs as a non-root user with a read-only root
